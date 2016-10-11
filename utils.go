@@ -35,9 +35,9 @@ func defaults(root string) (map[string]Group, error) {
 	return out, nil
 }
 
-// UnifiedHierarchy returns all the groups in the default unified heirarchy
-func UnifiedHierarchy() (map[string]Group, error) {
-	root, err := UnifiedHierarchyMountPoint()
+// Unified returns all the groups in the default unified heirarchy
+func Unified() (map[string]Group, error) {
+	root, err := UnifiedMountPoint()
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +54,9 @@ func UnifiedHierarchy() (map[string]Group, error) {
 	return groups, nil
 }
 
-// UnifiedHierarchyMountPoint returns the mount point where the cgroup
+// UnifiedMountPoint returns the mount point where the cgroup
 // mountpoints are mounted in a unified hiearchy
-func UnifiedHierarchyMountPoint() (string, error) {
+func UnifiedMountPoint() (string, error) {
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
 		return "", err

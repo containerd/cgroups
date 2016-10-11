@@ -1,8 +1,6 @@
 package cgroups
 
 type Stats struct {
-	Path string
-
 	Hugetlb map[string]HugetlbStat
 	Pids    *PidsStat
 	Cpu     *CpuStat
