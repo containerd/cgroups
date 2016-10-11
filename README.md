@@ -1,6 +1,8 @@
 # cgroups
 
 Go package for creating, managing, inspecting, and destroying cgroups.
+The resources format for settings on the cgroup uses the OCI runtime-spec found
+[here](https://github.com/opencontainers/runtime-spec).
 
 ## Examples
 
@@ -26,6 +28,11 @@ control, err := cgroups.V1(cgroups.Unified, cgroups.StaticPath("/test"), &specs.
 defer control.Delete()
 ```
 
+### Load an existing cgroup
+
+```go
+control, err = cgroups.LoadV1(cgroups.Unified, cgroups.StaticPath("/test"))
+```
 
 ### Add a process to the cgroup
 
