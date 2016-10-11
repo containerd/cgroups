@@ -30,12 +30,8 @@ type Hierarchy func() (map[string]Group, error)
 
 type Path func(subsystem string) string
 
-func StaticPath(path string) Path {
-	return func(_ string) string {
-		return path
-	}
-}
-
+// Control handles interactions with the individual groups to perform
+// actions on them as them main interface to this cgroup package
 type Control interface {
 	Add(pid int) error
 	Delete() error

@@ -3,6 +3,7 @@ package cgroups
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -30,64 +31,10 @@ func defaults(root string) (map[string]Group, error) {
 	out["perf_event"] = NewPerfEvent(root)
 	out["cpuset"] = NewCputset(root)
 	out["cpu"] = NewCpu(root)
+	out["cpuacct"] = NewCpuacct(root)
 	out["memory"] = NewMemory(root)
 	out["blkio"] = NewBlkio(root)
 	return out, nil
-}
-
-// Unified returns all the groups in the default unified heirarchy
-func Unified() (map[string]Group, error) {
-	root, err := UnifiedMountPoint()
-	if err != nil {
-		return nil, err
-	}
-	groups, err := defaults(root)
-	if err != nil {
-		return nil, err
-	}
-	for n, g := range groups {
-		// check and remove the default groups that do not exist
-		if _, err := os.Lstat(g.Path("/")); err != nil {
-			delete(groups, n)
-		}
-	}
-	return groups, nil
-}
-
-// UnifiedMountPoint returns the mount point where the cgroup
-// mountpoints are mounted in a unified hiearchy
-func UnifiedMountPoint() (string, error) {
-	f, err := os.Open("/proc/self/mountinfo")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			return "", err
-		}
-		var (
-			text   = scanner.Text()
-			fields = strings.Split(text, " ")
-			// safe as mountinfo encodes mountpoints with spaces as \040.
-			index               = strings.Index(text, " - ")
-			postSeparatorFields = strings.Fields(text[index+3:])
-			numPostFields       = len(postSeparatorFields)
-		)
-		// this is an error as we can't detect if the mount is for "cgroup"
-		if numPostFields == 0 {
-			return "", fmt.Errorf("Found no fields post '-' in %q", text)
-		}
-		if postSeparatorFields[0] == "cgroup" {
-			// check that the mount is properly formated.
-			if numPostFields < 3 {
-				return "", fmt.Errorf("Error found less than 3 fields post '-' in %q", text)
-			}
-			return filepath.Dir(fields[4]), nil
-		}
-	}
-	return "", ErrMountPointNotExist
 }
 
 // remove will remove a cgroup path handling EAGAIN and EBUSY errors and
@@ -190,4 +137,40 @@ func parseKV(raw string) (string, uint64, error) {
 	default:
 		return "", 0, ErrInvalidFormat
 	}
+}
+
+func parseCgroupFile(path string) (map[string]string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return parseCgroupFromReader(f)
+}
+
+func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
+	var (
+		s       = bufio.NewScanner(r)
+		cgroups = make(map[string]string)
+	)
+	for s.Scan() {
+		if err := s.Err(); err != nil {
+			return nil, err
+		}
+		text := s.Text()
+		// from cgroups(7):
+		// /proc/[pid]/cgroup
+		// ...
+		// For each cgroup hierarchy ... there is one entry
+		// containing three colon-separated fields of the form:
+		//     hierarchy-ID:subsystem-list:cgroup-path
+		parts := strings.SplitN(text, ":", 3)
+		if len(parts) < 3 {
+			return nil, fmt.Errorf("invalid cgroup entry: must contain at least two colons: %v", text)
+		}
+		for _, subs := range strings.Split(parts[1], ",") {
+			cgroups[subs] = parts[2]
+		}
+	}
+	return cgroups, nil
 }

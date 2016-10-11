@@ -37,6 +37,6 @@ type mockHiearchy struct {
 	root string
 }
 
-func (m *MockHiearchy) remove() error {
+func (m *mockHiearchy) remove() error {
 	return os.RemoveAll(m.root)
 }

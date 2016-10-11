@@ -79,7 +79,7 @@ func (b *Blkio) Stat(path string, stats *Stats) error {
 				entry: stats.Blkio.IoServicedRecursive,
 			},
 			blkioStatSettings{
-				name:  "io_queue_recursive",
+				name:  "io_queued_recursive",
 				entry: stats.Blkio.IoQueuedRecursive,
 			},
 			blkioStatSettings{

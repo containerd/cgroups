@@ -32,6 +32,9 @@ func (c *Cpuset) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(c.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
+	if err := c.copyIfNeeded(c.Path(path), filepath.Dir(c.Path(path))); err != nil {
+		return err
+	}
 	if resources.CPU != nil {
 		for _, t := range []struct {
 			name  string
@@ -75,6 +78,9 @@ func (c *Cpuset) getValues(path string) (cpus []byte, mems []byte, err error) {
 // it's parent.
 func (c *Cpuset) ensureParent(current, root string) error {
 	parent := filepath.Dir(current)
+	if _, err := filepath.Rel(root, parent); err != nil {
+		return nil
+	}
 	if libcontainerUtils.CleanPath(parent) == root {
 		return nil
 	}

@@ -75,11 +75,8 @@ func (c *Cpu) Update(path string, resources *specs.Resources) error {
 }
 
 func (c *Cpu) Stat(path string, stats *Stats) error {
-	f, err := os.Open(filepath.Join(path, "cpu.stat"))
+	f, err := os.Open(filepath.Join(c.Path(path), "cpu.stat"))
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
 		return err
 	}
 	defer f.Close()
