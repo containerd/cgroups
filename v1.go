@@ -109,11 +109,14 @@ func (c *v1) Delete() error {
 }
 
 // Stat returns the current stats for the cgroup
-func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
+func (c *v1) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
 		return nil, c.err
+	}
+	if len(handlers) == 0 {
+		handlers = append(handlers, errPassthrough)
 	}
 	var (
 		stats = &Stats{}
@@ -126,10 +129,11 @@ func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
 			go func() {
 				defer wg.Done()
 				if err := ss.Stat(c.path(n), stats); err != nil {
-					if os.IsNotExist(err) && ignoreNotExist {
-						return
+					for _, eh := range handlers {
+						if herr := eh(err); herr != nil {
+							errs <- herr
+						}
 					}
-					errs <- err
 				}
 			}()
 		}

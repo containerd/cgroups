@@ -12,9 +12,9 @@ func StaticPath(path string) Path {
 	}
 }
 
-// SelfPath will next the cgroups based on the calling processes cgroup
+// NestedPath will next the cgroups based on the calling processes cgroup
 // nesting its child processes inside
-func SelfPath(suffix string) Path {
+func NestedPath(suffix string) Path {
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		panic(fmt.Errorf("unable to parse cgroups %s", err))

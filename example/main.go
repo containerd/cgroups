@@ -32,7 +32,7 @@ func demoCgroups() error {
 	if err := control.Add(cmd.Process.Pid); err != nil {
 		return err
 	}
-	stats, err := control.Stat(false)
+	stats, err := control.Stat()
 	if err != nil {
 		return err
 	}

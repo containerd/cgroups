@@ -50,7 +50,7 @@ func TestV1Stat(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	s, err := control.Stat(false)
+	s, err := control.Stat()
 	if err != nil {
 		t.Error(err)
 		return

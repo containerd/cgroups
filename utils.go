@@ -96,7 +96,6 @@ func hugePageSizes() ([]string, error) {
 	return pageSizes, nil
 }
 
-// Gets a single uint64 value from the specified cgroup file.
 func readUint(path string) (uint64, error) {
 	v, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -105,8 +104,6 @@ func readUint(path string) (uint64, error) {
 	return parseUint(strings.TrimSpace(string(v)), 10, 64)
 }
 
-// Saturates negative values at zero and returns a uint64.
-// Due to kernel bugs, some of the memory cgroup stats can be negative.
 func parseUint(s string, base, bitSize int) (uint64, error) {
 	v, err := strconv.ParseUint(s, base, bitSize)
 	if err != nil {
@@ -115,7 +112,9 @@ func parseUint(s string, base, bitSize int) (uint64, error) {
 		// 2. Handle negative values lesser than MinInt64
 		if intErr == nil && intValue < 0 {
 			return 0, nil
-		} else if intErr != nil && intErr.(*strconv.NumError).Err == strconv.ErrRange && intValue < 0 {
+		} else if intErr != nil &&
+			intErr.(*strconv.NumError).Err == strconv.ErrRange &&
+			intValue < 0 {
 			return 0, nil
 		}
 		return 0, err
@@ -123,8 +122,6 @@ func parseUint(s string, base, bitSize int) (uint64, error) {
 	return v, nil
 }
 
-// Parses a cgroup param and returns as name, value
-//  i.e. "io_service_bytes 1234" will return as io_service_bytes, 1234
 func parseKV(raw string) (string, uint64, error) {
 	parts := strings.Fields(raw)
 	switch len(parts) {
@@ -157,14 +154,10 @@ func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 		if err := s.Err(); err != nil {
 			return nil, err
 		}
-		text := s.Text()
-		// from cgroups(7):
-		// /proc/[pid]/cgroup
-		// ...
-		// For each cgroup hierarchy ... there is one entry
-		// containing three colon-separated fields of the form:
-		//     hierarchy-ID:subsystem-list:cgroup-path
-		parts := strings.SplitN(text, ":", 3)
+		var (
+			text  = s.Text()
+			parts = strings.SplitN(text, ":", 3)
+		)
 		if len(parts) < 3 {
 			return nil, fmt.Errorf("invalid cgroup entry: must contain at least two colons: %v", text)
 		}

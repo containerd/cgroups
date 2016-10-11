@@ -1,6 +1,9 @@
 package cgroups
 
-import "errors"
+import (
+	"errors"
+	"os"
+)
 
 var (
 	ErrInvalidPid          = errors.New("cgroups: pid must be greater than 0")
@@ -10,3 +13,16 @@ var (
 	ErrMemoryNotSupported  = errors.New("cgroups: memory cgroup not supported on this system")
 	ErrCgroupDeleted       = errors.New("cgroups: cgroup deleted")
 )
+
+type ErrorHandler func(err error) error
+
+func IgnoreNotExist(err error) error {
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+func errPassthrough(err error) error {
+	return err
+}

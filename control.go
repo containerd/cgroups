@@ -81,7 +81,7 @@ type Path func(subsystem Name) string
 type Cgroup interface {
 	Add(pid int) error
 	Delete() error
-	Stat(ignoreNotExist bool) (*Stats, error)
+	Stat(...ErrorHandler) (*Stats, error)
 	Update(resources *specs.Resources) error
 	Processes(recursive bool) ([]int, error)
 	Freeze() error
