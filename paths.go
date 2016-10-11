@@ -17,7 +17,19 @@ func StaticPath(path string) Path {
 func NestedPath(suffix string) Path {
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
-		panic(fmt.Errorf("unable to parse cgroups %s", err))
+		panic(err)
+	}
+	// localize the paths based on the root mount dest for nested cgroups
+	for n, p := range paths {
+		dest, err := getCgroupDestination(string(n))
+		if err != nil {
+			panic(err)
+		}
+		rel, err := filepath.Rel(dest, p)
+		if err != nil {
+			panic(err)
+		}
+		paths[n] = rel
 	}
 	return func(name Name) string {
 		root, ok := paths[string(name)]

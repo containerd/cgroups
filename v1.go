@@ -12,7 +12,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-// v1 returns a new control via the v1 cgroups interface
+// V1 returns a new control via the v1 cgroups interface
 func V1(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, error) {
 	subsystems, err := hierarchy()
 	if err != nil {

@@ -167,3 +167,24 @@ func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 	}
 	return cgroups, nil
 }
+
+func getCgroupDestination(subsystem string) (string, error) {
+	f, err := os.Open("/proc/self/mountinfo")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		if err := s.Err(); err != nil {
+			return "", err
+		}
+		fields := strings.Split(s.Text(), " ")
+		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
+			if opt == subsystem {
+				return fields[3], nil
+			}
+		}
+	}
+	return "", ErrNoCgroupMountDestination
+}

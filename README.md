@@ -31,7 +31,7 @@ defer control.Delete()
 ### Load an existing cgroup
 
 ```go
-control, err = cgroups.LoadV1(cgroups.Unified, cgroups.StaticPath("/test"))
+control, err = cgroups.V1Load(cgroups.Unified, cgroups.StaticPath("/test"))
 ```
 
 ### Add a process to the cgroup
