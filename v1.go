@@ -36,11 +36,33 @@ func V1(hiearchy Hierarchy, path Path, resources *specs.Resources) (Control, err
 	}, nil
 }
 
+// V1Load will load an existing cgroup and allow it to be controlled
+func V1Load(hierarchy Hierarchy, path Path) (Control, error) {
+	groups, err := hierarchy()
+	if err != nil {
+		return nil, err
+	}
+	// check the the groups still exist
+	for n, g := range groups {
+		if _, err := os.Lstat(g.Path(path(n))); err != nil {
+			if os.IsNotExist(err) {
+				return nil, ErrCgroupDeleted
+			}
+			return nil, err
+		}
+	}
+	return &v1{
+		path:   path,
+		groups: groups,
+	}, nil
+}
+
 type v1 struct {
 	path Path
 
 	groups map[string]Group
 	mu     sync.Mutex
+	err    error
 }
 
 // Add writes the provided pid to each of the groups in the control group
@@ -50,6 +72,9 @@ func (c *v1) Add(pid int) error {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	for n, g := range c.groups {
 		if err := ioutil.WriteFile(
 			filepath.Join(g.Path(c.path(n)), cgroupProcs),
@@ -66,6 +91,9 @@ func (c *v1) Add(pid int) error {
 func (c *v1) Delete() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	var errors []string
 	for n, g := range c.groups {
 		path := g.Path(c.path(n))
@@ -76,7 +104,7 @@ func (c *v1) Delete() error {
 	if len(errors) > 0 {
 		return fmt.Errorf("cgroups: unable to remove paths %s", strings.Join(errors, ", "))
 	}
-	// TODO: mark the v1 as deleted
+	c.err = ErrCgroupDeleted
 	return nil
 }
 
@@ -84,6 +112,9 @@ func (c *v1) Delete() error {
 func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
 	var (
 		stats = &Stats{}
 		wg    = &sync.WaitGroup{}
@@ -114,6 +145,9 @@ func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
 func (c *v1) Update(resources *specs.Resources) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	for n, s := range c.groups {
 		if u, ok := s.(Updater); ok {
 			if err := u.Update(c.path(n), resources); err != nil {
@@ -128,6 +162,9 @@ func (c *v1) Update(resources *specs.Resources) error {
 func (c *v1) Processes(recursive bool) ([]int, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
 	path := c.groups[defaultGroup].Path(c.path(defaultGroup))
 	if !recursive {
 		return readPids(path)
@@ -154,6 +191,9 @@ func (c *v1) Processes(recursive bool) ([]int, error) {
 func (c *v1) Freeze() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	g, ok := c.groups[freezerName]
 	if !ok {
 		return ErrFreezerNotSupported
@@ -164,6 +204,9 @@ func (c *v1) Freeze() error {
 func (c *v1) Thaw() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	g, ok := c.groups[freezerName]
 	if !ok {
 		return ErrFreezerNotSupported
@@ -176,6 +219,9 @@ func (c *v1) Thaw() error {
 func (c *v1) OOMEventFD() (uintptr, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.err != nil {
+		return 0, c.err
+	}
 	g, ok := c.groups[memoryName]
 	if !ok {
 		return 0, ErrMemoryNotSupported

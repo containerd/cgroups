@@ -8,4 +8,5 @@ var (
 	ErrInvalidFormat       = errors.New("cgroups: parsing file with invalid format failed")
 	ErrFreezerNotSupported = errors.New("cgroups: freezer cgroup not supported on this system")
 	ErrMemoryNotSupported  = errors.New("cgroups: memory cgroup not supported on this system")
+	ErrCgroupDeleted       = errors.New("cgroups: cgroup deleted")
 )
