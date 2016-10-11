@@ -41,11 +41,13 @@ func (c *Cpuacct) Stat(path string, stats *Stats) error {
 	if err != nil {
 		return err
 	}
+	stats.cpuMu.Lock()
 	cpu := stats.Cpu
 	if cpu == nil {
 		cpu = &CpuStat{}
 		stats.Cpu = cpu
 	}
+	stats.cpuMu.Unlock()
 	cpu.Usage.Total = total
 	cpu.Usage.User = user
 	cpu.Usage.Kernel = kernel

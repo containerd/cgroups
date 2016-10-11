@@ -84,16 +84,29 @@ func (c *v1) Delete() error {
 func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	stats := &Stats{}
+	var (
+		stats = &Stats{}
+		wg    = &sync.WaitGroup{}
+		errs  = make(chan error, len(c.groups))
+	)
 	for n, s := range c.groups {
 		if g, ok := s.(Stater); ok {
-			if err := g.Stat(c.path(n), stats); err != nil {
-				if os.IsNotExist(err) && ignoreNotExist {
-					continue
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := g.Stat(c.path(n), stats); err != nil {
+					if os.IsNotExist(err) && ignoreNotExist {
+						return
+					}
+					errs <- err
 				}
-				return nil, err
-			}
+			}()
 		}
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		return nil, err
 	}
 	return stats, nil
 }
@@ -156,4 +169,16 @@ func (c *v1) Thaw() error {
 		return ErrFreezerNotSupported
 	}
 	return g.(*Freezer).Thaw(c.path(freezerName))
+}
+
+// OOMEventFD returns the memory cgroup's out of memory event fd that triggers
+// when processes inside the cgroup receive an oom event
+func (c *v1) OOMEventFD() (uintptr, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	g, ok := c.groups[memoryName]
+	if !ok {
+		return 0, ErrMemoryNotSupported
+	}
+	return g.(*Memory).OOMEventFD(c.path(memoryName))
 }

@@ -140,6 +140,34 @@ func (m *Memory) Stat(path string, stats *Stats) error {
 	return nil
 }
 
+func (m *Memory) OOMEventFD(path string) (uintptr, error) {
+	root := m.Path(path)
+	f, err := os.Open(filepath.Join(root, "memory.oom_control"))
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	fd, _, serr := syscall.RawSyscall(syscall.SYS_EVENTFD2, 0, syscall.FD_CLOEXEC, 0)
+	if serr != 0 {
+		return 0, serr
+	}
+	if err := writeEventFD(root, f.Fd(), fd); err != nil {
+		syscall.Close(int(fd))
+		return 0, err
+	}
+	return fd, nil
+}
+
+func writeEventFD(root string, cfd, efd uintptr) error {
+	f, err := os.OpenFile(filepath.Join(root, "cgroup.event_control"), os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	_, err = f.WriteString(fmt.Sprintf("%d %d", efd, cfd))
+	f.Close()
+	return err
+}
+
 func (m *Memory) parseStats(path string) (map[string]uint64, error) {
 	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
 	if err != nil {

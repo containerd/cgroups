@@ -1,6 +1,10 @@
 package cgroups
 
+import "sync"
+
 type Stats struct {
+	cpuMu sync.Mutex
+
 	Hugetlb map[string]HugetlbStat
 	Pids    *PidsStat
 	Cpu     *CpuStat

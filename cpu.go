@@ -81,11 +81,13 @@ func (c *Cpu) Stat(path string, stats *Stats) error {
 	}
 	defer f.Close()
 	// get or create the cpu field because cpuacct can also set values on this struct
+	stats.cpuMu.Lock()
 	cpu := stats.Cpu
 	if cpu == nil {
 		cpu = &CpuStat{}
 		stats.Cpu = cpu
 	}
+	stats.cpuMu.Unlock()
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		if err := sc.Err(); err != nil {

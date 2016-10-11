@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os/exec"
+	"syscall"
 
 	"github.com/crosbymichael/cgroups"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -19,6 +20,11 @@ func demoCgroups() error {
 	if err != nil {
 		return err
 	}
+	fd, err := control.OOMEventFD()
+	if err != nil {
+		return err
+	}
+	defer syscall.Close(int(fd))
 	cmd := exec.Command("sleep", "2")
 	if err := cmd.Start(); err != nil {
 		return err

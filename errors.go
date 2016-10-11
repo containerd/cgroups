@@ -7,4 +7,5 @@ var (
 	ErrMountPointNotExist  = errors.New("cgroups: cgroup mountpoint does not exist")
 	ErrInvalidFormat       = errors.New("cgroups: parsing file with invalid format failed")
 	ErrFreezerNotSupported = errors.New("cgroups: freezer cgroup not supported on this system")
+	ErrMemoryNotSupported  = errors.New("cgroups: memory cgroup not supported on this system")
 )

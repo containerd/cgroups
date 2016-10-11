@@ -5,6 +5,7 @@ import specs "github.com/opencontainers/runtime-spec/specs-go"
 const (
 	defaultGroup   = "devices"
 	freezerName    = "freezer"
+	memoryName     = "memory"
 	cgroupProcs    = "cgroup.procs"
 	defaultDirPerm = 0600
 )
@@ -40,4 +41,5 @@ type Control interface {
 	Processes(recursive bool) ([]int, error)
 	Freeze() error
 	Thaw() error
+	OOMEventFD() (uintptr, error)
 }
