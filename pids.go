@@ -10,21 +10,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewPids(root string) *Pids {
-	return &Pids{
-		root: filepath.Join(root, "pids"),
+func NewPids(root string) *PidsController {
+	return &PidsController{
+		root: filepath.Join(root, string(Pids)),
 	}
 }
 
-type Pids struct {
+type PidsController struct {
 	root string
 }
 
-func (p *Pids) Path(path string) string {
+func (p *PidsController) Path(path string) string {
 	return filepath.Join(p.root, path)
 }
 
-func (p *Pids) Create(path string, resources *specs.Resources) error {
+func (p *PidsController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(p.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -32,17 +32,17 @@ func (p *Pids) Create(path string, resources *specs.Resources) error {
 		return ioutil.WriteFile(
 			filepath.Join(p.Path(path), "pids.max"),
 			[]byte(strconv.FormatInt(*resources.Pids.Limit, 10)),
-			0,
+			defaultFilePerm,
 		)
 	}
 	return nil
 }
 
-func (p *Pids) Update(path string, resources *specs.Resources) error {
+func (p *PidsController) Update(path string, resources *specs.Resources) error {
 	return p.Create(path, resources)
 }
 
-func (p *Pids) Stat(path string, stats *Stats) error {
+func (p *PidsController) Stat(path string, stats *Stats) error {
 	current, err := readUint(filepath.Join(p.Path(path), "pids.current"))
 	if err != nil {
 		return err

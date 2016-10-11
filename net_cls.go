@@ -9,21 +9,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewNetCls(root string) *NetCls {
-	return &NetCls{
-		root: filepath.Join(root, "net_cls"),
+func NewNetCls(root string) *NetCLSController {
+	return &NetCLSController{
+		root: filepath.Join(root, string(NetCLS)),
 	}
 }
 
-type NetCls struct {
+type NetCLSController struct {
 	root string
 }
 
-func (n *NetCls) Path(path string) string {
+func (n *NetCLSController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }
 
-func (n *NetCls) Create(path string, resources *specs.Resources) error {
+func (n *NetCLSController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(n.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func (n *NetCls) Create(path string, resources *specs.Resources) error {
 		return ioutil.WriteFile(
 			filepath.Join(n.Path(path), "net_cls_classid_u"),
 			[]byte(strconv.FormatUint(uint64(*resources.Network.ClassID), 10)),
-			0,
+			defaultFilePerm,
 		)
 	}
 	return nil

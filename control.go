@@ -1,16 +1,61 @@
 package cgroups
 
-import specs "github.com/opencontainers/runtime-spec/specs-go"
+import (
+	"os"
 
-const (
-	defaultGroup   = "devices"
-	freezerName    = "freezer"
-	memoryName     = "memory"
-	cgroupProcs    = "cgroup.procs"
-	defaultDirPerm = 0600
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-type Group interface {
+type Name string
+
+const (
+	Devices   Name = "devices"
+	Hugetlb   Name = "hugetlb"
+	Freezer   Name = "freezer"
+	Pids      Name = "pids"
+	NetCLS    Name = "net_cls"
+	NetPrio   Name = "net_prio"
+	PerfEvent Name = "perf_event"
+	Cpuset    Name = "cpuset"
+	Cpu       Name = "cpu"
+	Cpuacct   Name = "cpuacct"
+	Memory    Name = "memory"
+	Blkio     Name = "blkio"
+)
+
+// Subsystems returns a complete list of the default cgroups
+// avaliable on most linux systems
+func Subsystems() []Name {
+	return []Name{
+		Devices,
+		Hugetlb,
+		Freezer,
+		Pids,
+		NetCLS,
+		NetPrio,
+		PerfEvent,
+		Cpuset,
+		Cpu,
+		Cpuacct,
+		Memory,
+		Blkio,
+	}
+}
+
+const (
+	cgroupProcs    = "cgroup.procs"
+	defaultGroup   = Devices
+	defaultDirPerm = 0755
+)
+
+// defaultFilePerm is a var so that the test framework can change the filemode
+// of all files created when the tests are running.  The difference between the
+// tests and real world use is that files like "cgroup.procs" will exist when writing
+// to a read cgroup filesystem and do not exist prior when running in the tests.
+// this is set to a non 0 value in the test code
+var defaultFilePerm = os.FileMode(0)
+
+type Subsystem interface {
 	Path(path string) string
 }
 
@@ -27,13 +72,13 @@ type Updater interface {
 }
 
 // Hierarchy enableds both unified and split hierarchy for cgroups
-type Hierarchy func() (map[string]Group, error)
+type Hierarchy func() (map[Name]Subsystem, error)
 
-type Path func(subsystem string) string
+type Path func(subsystem Name) string
 
-// Control handles interactions with the individual groups to perform
+// Cgroup handles interactions with the individual groups to perform
 // actions on them as them main interface to this cgroup package
-type Control interface {
+type Cgroup interface {
 	Add(pid int) error
 	Delete() error
 	Stat(ignoreNotExist bool) (*Stats, error)

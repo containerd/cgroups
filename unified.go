@@ -9,27 +9,27 @@ import (
 )
 
 // Unified returns all the groups in the default unified heirarchy
-func Unified() (map[string]Group, error) {
-	root, err := UnifiedMountPoint()
+func Unified() (map[Name]Subsystem, error) {
+	root, err := unifiedMountPoint()
 	if err != nil {
 		return nil, err
 	}
-	groups, err := defaults(root)
+	subsystems, err := defaults(root)
 	if err != nil {
 		return nil, err
 	}
-	for n, g := range groups {
+	for n, s := range subsystems {
 		// check and remove the default groups that do not exist
-		if _, err := os.Lstat(g.Path("/")); err != nil {
-			delete(groups, n)
+		if _, err := os.Lstat(s.Path("/")); err != nil {
+			delete(subsystems, n)
 		}
 	}
-	return groups, nil
+	return subsystems, nil
 }
 
-// UnifiedMountPoint returns the mount point where the cgroup
+// unifiedMountPoint returns the mount point where the cgroup
 // mountpoints are mounted in a unified hiearchy
-func UnifiedMountPoint() (string, error) {
+func unifiedMountPoint() (string, error) {
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
 		return "", err

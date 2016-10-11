@@ -11,21 +11,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewCpu(root string) *Cpu {
-	return &Cpu{
-		root: filepath.Join(root, "cpu"),
+func NewCpu(root string) *CpuController {
+	return &CpuController{
+		root: filepath.Join(root, string(Cpu)),
 	}
 }
 
-type Cpu struct {
+type CpuController struct {
 	root string
 }
 
-func (c *Cpu) Path(path string) string {
+func (c *CpuController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *Cpu) Create(path string, resources *specs.Resources) error {
+func (c *CpuController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(c.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (c *Cpu) Create(path string, resources *specs.Resources) error {
 				if err := ioutil.WriteFile(
 					filepath.Join(c.Path(path), fmt.Sprintf("cpu.%s", t.name)),
 					[]byte(strconv.FormatUint(*t.value, 10)),
-					0,
+					defaultFilePerm,
 				); err != nil {
 					return err
 				}
@@ -70,11 +70,11 @@ func (c *Cpu) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (c *Cpu) Update(path string, resources *specs.Resources) error {
+func (c *CpuController) Update(path string, resources *specs.Resources) error {
 	return c.Create(path, resources)
 }
 
-func (c *Cpu) Stat(path string, stats *Stats) error {
+func (c *CpuController) Stat(path string, stats *Stats) error {
 	f, err := os.Open(filepath.Join(c.Path(path), "cpu.stat"))
 	if err != nil {
 		return err

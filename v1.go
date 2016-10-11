@@ -13,38 +13,38 @@ import (
 )
 
 // v1 returns a new control via the v1 cgroups interface
-func V1(hiearchy Hierarchy, path Path, resources *specs.Resources) (Control, error) {
-	groups, err := hiearchy()
+func V1(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, error) {
+	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
 	}
-	for name, g := range groups {
-		if c, ok := g.(Creator); ok {
+	for name, s := range subsystems {
+		if c, ok := s.(Creator); ok {
 			if err := c.Create(path(name), resources); err != nil {
 				return nil, err
 			}
 		} else {
 			// do the default create if the group does not have a custom one
-			if err := os.MkdirAll(g.Path(path(name)), defaultDirPerm); err != nil {
+			if err := os.MkdirAll(s.Path(path(name)), defaultDirPerm); err != nil {
 				return nil, err
 			}
 		}
 	}
 	return &v1{
-		path:   path,
-		groups: groups,
+		path:       path,
+		subsystems: subsystems,
 	}, nil
 }
 
 // V1Load will load an existing cgroup and allow it to be controlled
-func V1Load(hierarchy Hierarchy, path Path) (Control, error) {
-	groups, err := hierarchy()
+func V1Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
+	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
 	}
-	// check the the groups still exist
-	for n, g := range groups {
-		if _, err := os.Lstat(g.Path(path(n))); err != nil {
+	// check the the subsystems still exist
+	for n, s := range subsystems {
+		if _, err := os.Lstat(s.Path(path(n))); err != nil {
 			if os.IsNotExist(err) {
 				return nil, ErrCgroupDeleted
 			}
@@ -52,20 +52,20 @@ func V1Load(hierarchy Hierarchy, path Path) (Control, error) {
 		}
 	}
 	return &v1{
-		path:   path,
-		groups: groups,
+		path:       path,
+		subsystems: subsystems,
 	}, nil
 }
 
 type v1 struct {
 	path Path
 
-	groups map[string]Group
-	mu     sync.Mutex
-	err    error
+	subsystems map[Name]Subsystem
+	mu         sync.Mutex
+	err        error
 }
 
-// Add writes the provided pid to each of the groups in the control group
+// Add writes the provided pid to each of the subsystems in the control group
 func (c *v1) Add(pid int) error {
 	if pid <= 0 {
 		return ErrInvalidPid
@@ -75,11 +75,11 @@ func (c *v1) Add(pid int) error {
 	if c.err != nil {
 		return c.err
 	}
-	for n, g := range c.groups {
+	for n, s := range c.subsystems {
 		if err := ioutil.WriteFile(
-			filepath.Join(g.Path(c.path(n)), cgroupProcs),
+			filepath.Join(s.Path(c.path(n)), cgroupProcs),
 			[]byte(strconv.Itoa(pid)),
-			0,
+			defaultFilePerm,
 		); err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (c *v1) Add(pid int) error {
 	return nil
 }
 
-// Delete will remove the control group from each of the groups registered
+// Delete will remove the control group from each of the subsystems registered
 func (c *v1) Delete() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -95,8 +95,8 @@ func (c *v1) Delete() error {
 		return c.err
 	}
 	var errors []string
-	for n, g := range c.groups {
-		path := g.Path(c.path(n))
+	for n, s := range c.subsystems {
+		path := s.Path(c.path(n))
 		if err := remove(path); err != nil {
 			errors = append(errors, path)
 		}
@@ -118,14 +118,14 @@ func (c *v1) Stat(ignoreNotExist bool) (*Stats, error) {
 	var (
 		stats = &Stats{}
 		wg    = &sync.WaitGroup{}
-		errs  = make(chan error, len(c.groups))
+		errs  = make(chan error, len(c.subsystems))
 	)
-	for n, s := range c.groups {
-		if g, ok := s.(Stater); ok {
+	for n, s := range c.subsystems {
+		if ss, ok := s.(Stater); ok {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				if err := g.Stat(c.path(n), stats); err != nil {
+				if err := ss.Stat(c.path(n), stats); err != nil {
 					if os.IsNotExist(err) && ignoreNotExist {
 						return
 					}
@@ -148,7 +148,7 @@ func (c *v1) Update(resources *specs.Resources) error {
 	if c.err != nil {
 		return c.err
 	}
-	for n, s := range c.groups {
+	for n, s := range c.subsystems {
 		if u, ok := s.(Updater); ok {
 			if err := u.Update(c.path(n), resources); err != nil {
 				return err
@@ -165,7 +165,7 @@ func (c *v1) Processes(recursive bool) ([]int, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
-	path := c.groups[defaultGroup].Path(c.path(defaultGroup))
+	path := c.subsystems[defaultGroup].Path(c.path(defaultGroup))
 	if !recursive {
 		return readPids(path)
 	}
@@ -194,11 +194,11 @@ func (c *v1) Freeze() error {
 	if c.err != nil {
 		return c.err
 	}
-	g, ok := c.groups[freezerName]
+	s, ok := c.subsystems[Freezer]
 	if !ok {
 		return ErrFreezerNotSupported
 	}
-	return g.(*Freezer).Freeze(c.path(freezerName))
+	return s.(*FreezerController).Freeze(c.path(Freezer))
 }
 
 func (c *v1) Thaw() error {
@@ -207,11 +207,11 @@ func (c *v1) Thaw() error {
 	if c.err != nil {
 		return c.err
 	}
-	g, ok := c.groups[freezerName]
+	s, ok := c.subsystems[Freezer]
 	if !ok {
 		return ErrFreezerNotSupported
 	}
-	return g.(*Freezer).Thaw(c.path(freezerName))
+	return s.(*FreezerController).Thaw(c.path(Freezer))
 }
 
 // OOMEventFD returns the memory cgroup's out of memory event fd that triggers
@@ -222,9 +222,9 @@ func (c *v1) OOMEventFD() (uintptr, error) {
 	if c.err != nil {
 		return 0, c.err
 	}
-	g, ok := c.groups[memoryName]
+	s, ok := c.subsystems[Memory]
 	if !ok {
 		return 0, ErrMemoryNotSupported
 	}
-	return g.(*Memory).OOMEventFD(c.path(memoryName))
+	return s.(*MemoryController).OOMEventFD(c.path(Memory))
 }

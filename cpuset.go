@@ -11,21 +11,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewCputset(root string) *Cpuset {
-	return &Cpuset{
-		root: filepath.Join(root, "cpuset"),
+func NewCputset(root string) *CpusetController {
+	return &CpusetController{
+		root: filepath.Join(root, string(Cpuset)),
 	}
 }
 
-type Cpuset struct {
+type CpusetController struct {
 	root string
 }
 
-func (c *Cpuset) Path(path string) string {
+func (c *CpusetController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *Cpuset) Create(path string, resources *specs.Resources) error {
+func (c *CpusetController) Create(path string, resources *specs.Resources) error {
 	if err := c.ensureParent(c.Path(path), c.root); err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (c *Cpuset) Create(path string, resources *specs.Resources) error {
 				if err := ioutil.WriteFile(
 					filepath.Join(c.Path(path), fmt.Sprintf("cpuset.%s", t.name)),
 					[]byte(*t.value),
-					0,
+					defaultFilePerm,
 				); err != nil {
 					return err
 				}
@@ -63,7 +63,7 @@ func (c *Cpuset) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (c *Cpuset) getValues(path string) (cpus []byte, mems []byte, err error) {
+func (c *CpusetController) getValues(path string) (cpus []byte, mems []byte, err error) {
 	if cpus, err = ioutil.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (c *Cpuset) getValues(path string) (cpus []byte, mems []byte, err error) {
 // ensureParent makes sure that the parent directory of current is created
 // and populated with the proper cpus and mems files copied from
 // it's parent.
-func (c *Cpuset) ensureParent(current, root string) error {
+func (c *CpusetController) ensureParent(current, root string) error {
 	parent := filepath.Dir(current)
 	if _, err := filepath.Rel(root, parent); err != nil {
 		return nil
@@ -99,7 +99,7 @@ func (c *Cpuset) ensureParent(current, root string) error {
 
 // copyIfNeeded copies the cpuset.cpus and cpuset.mems from the parent
 // directory to the current directory if the file's contents are 0
-func (c *Cpuset) copyIfNeeded(current, parent string) error {
+func (c *CpusetController) copyIfNeeded(current, parent string) error {
 	var (
 		err                      error
 		currentCpus, currentMems []byte
@@ -115,7 +115,7 @@ func (c *Cpuset) copyIfNeeded(current, parent string) error {
 		if err := ioutil.WriteFile(
 			filepath.Join(current, "cpuset.cpus"),
 			parentCpus,
-			0,
+			defaultFilePerm,
 		); err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ func (c *Cpuset) copyIfNeeded(current, parent string) error {
 		if err := ioutil.WriteFile(
 			filepath.Join(current, "cpuset.mems"),
 			parentMems,
-			0,
+			defaultFilePerm,
 		); err != nil {
 			return err
 		}

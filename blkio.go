@@ -12,21 +12,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewBlkio(root string) *Blkio {
-	return &Blkio{
-		root: filepath.Join(root, "blkio"),
+func NewBlkio(root string) *BlkioController {
+	return &BlkioController{
+		root: filepath.Join(root, string(Blkio)),
 	}
 }
 
-type Blkio struct {
+type BlkioController struct {
 	root string
 }
 
-func (b *Blkio) Path(path string) string {
+func (b *BlkioController) Path(path string) string {
 	return filepath.Join(b.root, path)
 }
 
-func (b *Blkio) Create(path string, resources *specs.Resources) error {
+func (b *BlkioController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(b.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (b *Blkio) Create(path string, resources *specs.Resources) error {
 			if err := ioutil.WriteFile(
 				filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", t.name)),
 				t.format(t.value),
-				0,
+				defaultFilePerm,
 			); err != nil {
 				return err
 			}
@@ -47,11 +47,11 @@ func (b *Blkio) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (b *Blkio) Update(path string, resources *specs.Resources) error {
+func (b *BlkioController) Update(path string, resources *specs.Resources) error {
 	return b.Create(path, resources)
 }
 
-func (b *Blkio) Stat(path string, stats *Stats) error {
+func (b *BlkioController) Stat(path string, stats *Stats) error {
 	stats.Blkio = &BlkioStat{}
 	settings := []blkioStatSettings{
 		{
@@ -108,7 +108,7 @@ func (b *Blkio) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (b *Blkio) readEntry(path, name string, entry []BlkioEntry) error {
+func (b *BlkioController) readEntry(path, name string, entry []BlkioEntry) error {
 	f, err := os.Open(filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", name)))
 	if err != nil {
 		return err

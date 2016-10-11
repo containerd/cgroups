@@ -13,21 +13,21 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewMemory(root string) *Memory {
-	return &Memory{
-		root: filepath.Join(root, "memory"),
+func NewMemory(root string) *MemoryController {
+	return &MemoryController{
+		root: filepath.Join(root, string(Memory)),
 	}
 }
 
-type Memory struct {
+type MemoryController struct {
 	root string
 }
 
-func (m *Memory) Path(path string) string {
+func (m *MemoryController) Path(path string) string {
 	return filepath.Join(m.root, path)
 }
 
-func (m *Memory) Create(path string, resources *specs.Resources) error {
+func (m *MemoryController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(m.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (m *Memory) Create(path string, resources *specs.Resources) error {
 			if err := ioutil.WriteFile(
 				filepath.Join(m.Path(path), "memory.kmem.limit_in_bytes"),
 				[]byte(strconv.FormatInt(i, 10)),
-				0,
+				defaultFilePerm,
 			); err != nil {
 				return checkEBUSY(err)
 			}
@@ -52,7 +52,7 @@ func (m *Memory) Create(path string, resources *specs.Resources) error {
 	return m.set(path, getMemorySettings(resources))
 }
 
-func (m *Memory) Update(path string, resources *specs.Resources) error {
+func (m *MemoryController) Update(path string, resources *specs.Resources) error {
 	if resources.Memory == nil {
 		return nil
 	}
@@ -74,7 +74,7 @@ func (m *Memory) Update(path string, resources *specs.Resources) error {
 	return m.set(path, settings)
 }
 
-func (m *Memory) Stat(path string, stats *Stats) error {
+func (m *MemoryController) Stat(path string, stats *Stats) error {
 	raw, err := m.parseStats(path)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (m *Memory) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (m *Memory) OOMEventFD(path string) (uintptr, error) {
+func (m *MemoryController) OOMEventFD(path string) (uintptr, error) {
 	root := m.Path(path)
 	f, err := os.Open(filepath.Join(root, "memory.oom_control"))
 	if err != nil {
@@ -168,7 +168,7 @@ func writeEventFD(root string, cfd, efd uintptr) error {
 	return err
 }
 
-func (m *Memory) parseStats(path string) (map[string]uint64, error) {
+func (m *MemoryController) parseStats(path string) (map[string]uint64, error) {
 	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
 	if err != nil {
 		return nil, err
@@ -191,13 +191,13 @@ func (m *Memory) parseStats(path string) (map[string]uint64, error) {
 	return out, nil
 }
 
-func (m *Memory) set(path string, settings []memorySettings) error {
+func (m *MemoryController) set(path string, settings []memorySettings) error {
 	for _, t := range settings {
 		if t.value != nil {
 			if err := ioutil.WriteFile(
 				filepath.Join(m.Path(path), fmt.Sprintf("memory.%s", t.name)),
 				[]byte(strconv.FormatUint(*t.value, 10)),
-				0,
+				defaultFilePerm,
 			); err != nil {
 				return err
 			}

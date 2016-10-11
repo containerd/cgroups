@@ -2,16 +2,16 @@ package cgroups
 
 import "path/filepath"
 
-func NewPerfEvent(root string) *PerfEvent {
-	return &PerfEvent{
-		root: filepath.Join(root, "perf_event"),
+func NewPerfEvent(root string) *PerfEventController {
+	return &PerfEventController{
+		root: filepath.Join(root, string(PerfEvent)),
 	}
 }
 
-type PerfEvent struct {
+type PerfEventController struct {
 	root string
 }
 
-func (p *PerfEvent) Path(path string) string {
+func (p *PerfEventController) Path(path string) string {
 	return filepath.Join(p.root, path)
 }

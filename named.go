@@ -2,18 +2,18 @@ package cgroups
 
 import "path/filepath"
 
-func NewNamed(root, name string) *Named {
-	return &Named{
+func NewNamed(root string, name Name) *NamedController {
+	return &NamedController{
 		root: root,
 		name: name,
 	}
 }
 
-type Named struct {
+type NamedController struct {
 	root string
-	name string
+	name Name
 }
 
-func (n *Named) Path(path string) string {
-	return filepath.Join(n.root, n.name, path)
+func (n *NamedController) Path(path string) string {
+	return filepath.Join(n.root, string(n.name), path)
 }

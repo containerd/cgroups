@@ -16,21 +16,21 @@ const (
 	wildcard        = -1
 )
 
-func NewDevices(root string) *Devices {
-	return &Devices{
-		root: filepath.Join(root, "devices"),
+func NewDevices(root string) *DevicesController {
+	return &DevicesController{
+		root: filepath.Join(root, string(Devices)),
 	}
 }
 
-type Devices struct {
+type DevicesController struct {
 	root string
 }
 
-func (d *Devices) Path(path string) string {
+func (d *DevicesController) Path(path string) string {
 	return filepath.Join(d.root, path)
 }
 
-func (d *Devices) Create(path string, resources *specs.Resources) error {
+func (d *DevicesController) Create(path string, resources *specs.Resources) error {
 	// do not set devices if running inside a user namespace as it will fail anyways
 	if system.RunningInUserNS() {
 		return nil
@@ -46,7 +46,7 @@ func (d *Devices) Create(path string, resources *specs.Resources) error {
 		if err := ioutil.WriteFile(
 			filepath.Join(d.Path(path), file),
 			[]byte(deviceString(device)),
-			0,
+			defaultFilePerm,
 		); err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (d *Devices) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (d *Devices) Update(path string, resources *specs.Resources) error {
+func (d *DevicesController) Update(path string, resources *specs.Resources) error {
 	return d.Create(path, resources)
 }
 

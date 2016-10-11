@@ -7,7 +7,7 @@ import (
 
 // StaticPath returns a static path to use for all cgroups
 func StaticPath(path string) Path {
-	return func(_ string) string {
+	return func(_ Name) string {
 		return path
 	}
 }
@@ -19,11 +19,11 @@ func SelfPath(suffix string) Path {
 	if err != nil {
 		panic(fmt.Errorf("unable to parse cgroups %s", err))
 	}
-	return func(groupName string) string {
-		root, ok := paths[groupName]
+	return func(name Name) string {
+		root, ok := paths[string(name)]
 		if !ok {
-			if root, ok = paths[fmt.Sprintf("name=%s", groupName)]; !ok {
-				return ""
+			if root, ok = paths[fmt.Sprintf("name=%s", name)]; !ok {
+				panic(fmt.Errorf("unable to find %q in controller set", name))
 			}
 		}
 		return filepath.Join(root, suffix)

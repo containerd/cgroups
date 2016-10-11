@@ -15,25 +15,25 @@ import (
 )
 
 // defaults returns all known groups
-func defaults(root string) (map[string]Group, error) {
-	out := make(map[string]Group)
-	out["systemd"] = NewNamed(root, "systemd")
-	out["devices"] = NewDevices(root)
+func defaults(root string) (map[Name]Subsystem, error) {
+	out := make(map[Name]Subsystem)
+	out[Name("systemd")] = NewNamed(root, "systemd")
+	out[Devices] = NewDevices(root)
 	h, err := NewHugetlb(root)
 	if err != nil {
 		return nil, err
 	}
-	out["hugetlb"] = h
-	out["freezer"] = NewFreezer(root)
-	out["pids"] = NewPids(root)
-	out["net_cls"] = NewNetCls(root)
-	out["net_prio"] = NewNetPrio(root)
-	out["perf_event"] = NewPerfEvent(root)
-	out["cpuset"] = NewCputset(root)
-	out["cpu"] = NewCpu(root)
-	out["cpuacct"] = NewCpuacct(root)
-	out["memory"] = NewMemory(root)
-	out["blkio"] = NewBlkio(root)
+	out[Hugetlb] = h
+	out[Freezer] = NewFreezer(root)
+	out[Pids] = NewPids(root)
+	out[NetCLS] = NewNetCls(root)
+	out[NetPrio] = NewNetPrio(root)
+	out[PerfEvent] = NewPerfEvent(root)
+	out[Cpuset] = NewCputset(root)
+	out[Cpu] = NewCpu(root)
+	out[Cpuacct] = NewCpuacct(root)
+	out[Memory] = NewMemory(root)
+	out[Blkio] = NewBlkio(root)
 	return out, nil
 }
 

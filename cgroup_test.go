@@ -6,37 +6,50 @@ import (
 	"path/filepath"
 )
 
-func newMock() (*mockHiearchy, error) {
-	dir, err := ioutil.TempDir("", "cgroups")
+func init() {
+	defaultFilePerm = 0666
+}
+
+func newMock() (*mockCgroup, error) {
+	root, err := ioutil.TempDir("", "cgroups")
 	if err != nil {
 		return nil, err
 	}
-	for _, name := range []string{
-		"cpu",
-		"cpuset",
-		"cpuacct",
-		"pids",
-		"memory",
-		"net_cls",
-		"net_prio",
-		"hugetlb",
-		"freezer",
-		"blkio",
-		"perf_event",
-	} {
-		if err := os.MkdirAll(filepath.Join(dir, name), 0600); err != nil {
+	subsystems := make(map[Name]Subsystem)
+	for _, n := range Subsystems() {
+		name := string(n)
+		if err := os.MkdirAll(filepath.Join(root, name), defaultDirPerm); err != nil {
 			return nil, err
 		}
+		subsystems[n] = &mockSubsystem{
+			root: root,
+			name: n,
+		}
 	}
-	return &mockHiearchy{
-		root: dir,
+	return &mockCgroup{
+		root:       root,
+		subsystems: subsystems,
 	}, nil
 }
 
-type mockHiearchy struct {
-	root string
+type mockCgroup struct {
+	root       string
+	subsystems map[Name]Subsystem
 }
 
-func (m *mockHiearchy) remove() error {
+func (m *mockCgroup) delete() error {
 	return os.RemoveAll(m.root)
+}
+
+func (m *mockCgroup) hierarchy() (map[Name]Subsystem, error) {
+	return m.subsystems, nil
+}
+
+type mockSubsystem struct {
+	root string
+	name Name
+}
+
+func (m *mockSubsystem) Path(path string) string {
+	return filepath.Join(m.root, string(m.name), path)
 }
