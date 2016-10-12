@@ -20,7 +20,7 @@ uses the v1 implementation of cgroups.
 
 ```go
 shares := 100
-control, err := cgroups.V1(cgroups.Unified, cgroups.StaticPath("/test"), &specs.Resources{
+control, err := cgroups.New(cgroups.Unified, cgroups.StaticPath("/test"), &specs.Resources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
@@ -32,7 +32,7 @@ defer control.Delete()
 
 
 ```go
-control, err := cgroups.V1(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
+control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
@@ -43,7 +43,7 @@ control, err := cgroups.V1(cgroups.Systemd, cgroups.Slice("system.slice", "runc-
 ### Load an existing cgroup
 
 ```go
-control, err = cgroups.V1Load(cgroups.Unified, cgroups.StaticPath("/test"))
+control, err = cgroups.Load(cgroups.Unified, cgroups.StaticPath("/test"))
 ```
 
 ### Add a process to the cgroup

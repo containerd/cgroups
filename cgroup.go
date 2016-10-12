@@ -12,8 +12,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-// V1 returns a new control via the v1 cgroups interface
-func V1(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, error) {
+// New returns a new control via the cgroup cgroups interface
+func New(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, error) {
 	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
@@ -30,14 +30,14 @@ func V1(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, err
 			}
 		}
 	}
-	return &v1{
+	return &cgroup{
 		path:       path,
 		subsystems: subsystems,
 	}, nil
 }
 
-// V1Load will load an existing cgroup and allow it to be controlled
-func V1Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
+// Load will load an existing cgroup and allow it to be controlled
+func Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
 	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
@@ -51,13 +51,13 @@ func V1Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
 			return nil, err
 		}
 	}
-	return &v1{
+	return &cgroup{
 		path:       path,
 		subsystems: subsystems,
 	}, nil
 }
 
-type v1 struct {
+type cgroup struct {
 	path Path
 
 	subsystems []Subsystem
@@ -66,7 +66,7 @@ type v1 struct {
 }
 
 // Add writes the provided pid to each of the subsystems in the control group
-func (c *v1) Add(pid int) error {
+func (c *cgroup) Add(pid int) error {
 	if pid <= 0 {
 		return ErrInvalidPid
 	}
@@ -88,7 +88,7 @@ func (c *v1) Add(pid int) error {
 }
 
 // Delete will remove the control group from each of the subsystems registered
-func (c *v1) Delete() error {
+func (c *cgroup) Delete() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -117,7 +117,7 @@ func (c *v1) Delete() error {
 }
 
 // Stat returns the current stats for the cgroup
-func (c *v1) Stat(handlers ...ErrorHandler) (*Stats, error) {
+func (c *cgroup) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -154,7 +154,7 @@ func (c *v1) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	return stats, nil
 }
 
-func (c *v1) Update(resources *specs.Resources) error {
+func (c *cgroup) Update(resources *specs.Resources) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -171,7 +171,7 @@ func (c *v1) Update(resources *specs.Resources) error {
 }
 
 // Processes returns the pids of processes running inside the cgroup
-func (c *v1) Processes(recursive bool) ([]int, error) {
+func (c *cgroup) Processes(recursive bool) ([]int, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -201,7 +201,7 @@ func (c *v1) Processes(recursive bool) ([]int, error) {
 	return pids, err
 }
 
-func (c *v1) Freeze() error {
+func (c *cgroup) Freeze() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -214,7 +214,7 @@ func (c *v1) Freeze() error {
 	return s.(*freezerController).Freeze(c.path(Freezer))
 }
 
-func (c *v1) Thaw() error {
+func (c *cgroup) Thaw() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -229,7 +229,7 @@ func (c *v1) Thaw() error {
 
 // OOMEventFD returns the memory cgroup's out of memory event fd that triggers
 // when processes inside the cgroup receive an oom event
-func (c *v1) OOMEventFD() (uintptr, error) {
+func (c *cgroup) OOMEventFD() (uintptr, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -242,7 +242,7 @@ func (c *v1) OOMEventFD() (uintptr, error) {
 	return s.(*memoryController).OOMEventFD(c.path(Memory))
 }
 
-func (c *v1) State() State {
+func (c *cgroup) State() State {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil && c.err == ErrCgroupDeleted {
@@ -259,7 +259,7 @@ func (c *v1) State() State {
 	return state
 }
 
-func (c *v1) getSubsystem(n Name) Subsystem {
+func (c *cgroup) getSubsystem(n Name) Subsystem {
 	for _, s := range c.subsystems {
 		if s.Name() == n {
 			return s
