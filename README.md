@@ -28,6 +28,18 @@ control, err := cgroups.V1(cgroups.Unified, cgroups.StaticPath("/test"), &specs.
 defer control.Delete()
 ```
 
+### Create with systemd slice support
+
+
+```go
+control, err := cgroups.V1(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
+    CPU: &specs.CPU{
+        Shares: &shares,
+    },
+})
+
+```
+
 ### Load an existing cgroup
 
 ```go
