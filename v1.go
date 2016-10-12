@@ -19,11 +19,11 @@ func V1(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, err
 		return nil, err
 	}
 	for _, s := range subsystems {
-		if c, ok := s.(Creator); ok {
+		if c, ok := s.(creator); ok {
 			if err := c.Create(path(s.Name()), resources); err != nil {
 				return nil, err
 			}
-		} else if c, ok := s.(Pather); ok {
+		} else if c, ok := s.(pather); ok {
 			// do the default create if the group does not have a custom one
 			if err := os.MkdirAll(c.Path(path(s.Name())), defaultDirPerm); err != nil {
 				return nil, err
@@ -96,13 +96,13 @@ func (c *v1) Delete() error {
 	}
 	var errors []string
 	for _, s := range c.subsystems {
-		if d, ok := s.(Deleter); ok {
+		if d, ok := s.(deleter); ok {
 			if err := d.Delete(c.path(s.Name())); err != nil {
 				errors = append(errors, string(s.Name()))
 			}
 			continue
 		}
-		if p, ok := s.(Pather); ok {
+		if p, ok := s.(pather); ok {
 			path := p.Path(c.path(s.Name()))
 			if err := remove(path); err != nil {
 				errors = append(errors, path)
@@ -132,7 +132,7 @@ func (c *v1) Stat(handlers ...ErrorHandler) (*Stats, error) {
 		errs  = make(chan error, len(c.subsystems))
 	)
 	for _, s := range c.subsystems {
-		if ss, ok := s.(Stater); ok {
+		if ss, ok := s.(stater); ok {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -161,7 +161,7 @@ func (c *v1) Update(resources *specs.Resources) error {
 		return c.err
 	}
 	for _, s := range c.subsystems {
-		if u, ok := s.(Updater); ok {
+		if u, ok := s.(updater); ok {
 			if err := u.Update(c.path(s.Name()), resources); err != nil {
 				return err
 			}
@@ -178,7 +178,7 @@ func (c *v1) Processes(recursive bool) ([]int, error) {
 		return nil, c.err
 	}
 	s := c.getSubsystem(Devices)
-	path := s.(*DevicesController).Path(c.path(defaultGroup))
+	path := s.(*devicesController).Path(c.path(defaultGroup))
 	if !recursive {
 		return readPids(path)
 	}
@@ -211,7 +211,7 @@ func (c *v1) Freeze() error {
 	if s == nil {
 		return ErrFreezerNotSupported
 	}
-	return s.(*FreezerController).Freeze(c.path(Freezer))
+	return s.(*freezerController).Freeze(c.path(Freezer))
 }
 
 func (c *v1) Thaw() error {
@@ -224,7 +224,7 @@ func (c *v1) Thaw() error {
 	if s == nil {
 		return ErrFreezerNotSupported
 	}
-	return s.(*FreezerController).Thaw(c.path(Freezer))
+	return s.(*freezerController).Thaw(c.path(Freezer))
 }
 
 // OOMEventFD returns the memory cgroup's out of memory event fd that triggers
@@ -239,7 +239,7 @@ func (c *v1) OOMEventFD() (uintptr, error) {
 	if s == nil {
 		return 0, ErrMemoryNotSupported
 	}
-	return s.(*MemoryController).OOMEventFD(c.path(Memory))
+	return s.(*memoryController).OOMEventFD(c.path(Memory))
 }
 
 func (c *v1) State() State {
@@ -252,7 +252,7 @@ func (c *v1) State() State {
 	if s == nil {
 		return Thawed
 	}
-	state, err := s.(*FreezerController).state(c.path(Freezer))
+	state, err := s.(*freezerController).state(c.path(Freezer))
 	if err != nil {
 		return Unknown
 	}

@@ -11,25 +11,25 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewCpu(root string) *CpuController {
-	return &CpuController{
+func NewCpu(root string) *cpuController {
+	return &cpuController{
 		root: filepath.Join(root, string(Cpu)),
 	}
 }
 
-type CpuController struct {
+type cpuController struct {
 	root string
 }
 
-func (c *CpuController) Name() Name {
+func (c *cpuController) Name() Name {
 	return Cpu
 }
 
-func (c *CpuController) Path(path string) string {
+func (c *cpuController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *CpuController) Create(path string, resources *specs.Resources) error {
+func (c *cpuController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(c.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -74,11 +74,11 @@ func (c *CpuController) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (c *CpuController) Update(path string, resources *specs.Resources) error {
+func (c *cpuController) Update(path string, resources *specs.Resources) error {
 	return c.Create(path, resources)
 }
 
-func (c *CpuController) Stat(path string, stats *Stats) error {
+func (c *cpuController) Stat(path string, stats *Stats) error {
 	f, err := os.Open(filepath.Join(c.Path(path), "cpu.stat"))
 	if err != nil {
 		return err

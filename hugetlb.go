@@ -10,32 +10,32 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewHugetlb(root string) (*HugetlbController, error) {
+func NewHugetlb(root string) (*hugetlbController, error) {
 	sizes, err := hugePageSizes()
 	if err != nil {
 		return nil, nil
 	}
 
-	return &HugetlbController{
+	return &hugetlbController{
 		root:  filepath.Join(root, string(Hugetlb)),
 		sizes: sizes,
 	}, nil
 }
 
-type HugetlbController struct {
+type hugetlbController struct {
 	root  string
 	sizes []string
 }
 
-func (h *HugetlbController) Name() Name {
+func (h *hugetlbController) Name() Name {
 	return Hugetlb
 }
 
-func (h *HugetlbController) Path(path string) string {
+func (h *hugetlbController) Path(path string) string {
 	return filepath.Join(h.root, path)
 }
 
-func (h *HugetlbController) Create(path string, resources *specs.Resources) error {
+func (h *hugetlbController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(h.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (h *HugetlbController) Create(path string, resources *specs.Resources) erro
 	return nil
 }
 
-func (h *HugetlbController) Stat(path string, stats *Stats) error {
+func (h *hugetlbController) Stat(path string, stats *Stats) error {
 	stats.Hugetlb = make(map[string]HugetlbStat)
 	for _, size := range h.sizes {
 		s, err := h.readSizeStat(path, size)
@@ -63,7 +63,7 @@ func (h *HugetlbController) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (h *HugetlbController) readSizeStat(path, size string) (HugetlbStat, error) {
+func (h *hugetlbController) readSizeStat(path, size string) (HugetlbStat, error) {
 	var s HugetlbStat
 	for _, t := range []struct {
 		name  string

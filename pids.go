@@ -10,25 +10,25 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewPids(root string) *PidsController {
-	return &PidsController{
+func NewPids(root string) *pidsController {
+	return &pidsController{
 		root: filepath.Join(root, string(Pids)),
 	}
 }
 
-type PidsController struct {
+type pidsController struct {
 	root string
 }
 
-func (p *PidsController) Name() Name {
+func (p *pidsController) Name() Name {
 	return Pids
 }
 
-func (p *PidsController) Path(path string) string {
+func (p *pidsController) Path(path string) string {
 	return filepath.Join(p.root, path)
 }
 
-func (p *PidsController) Create(path string, resources *specs.Resources) error {
+func (p *pidsController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(p.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -42,11 +42,11 @@ func (p *PidsController) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (p *PidsController) Update(path string, resources *specs.Resources) error {
+func (p *pidsController) Update(path string, resources *specs.Resources) error {
 	return p.Create(path, resources)
 }
 
-func (p *PidsController) Stat(path string, stats *Stats) error {
+func (p *pidsController) Stat(path string, stats *Stats) error {
 	current, err := readUint(filepath.Join(p.Path(path), "pids.current"))
 	if err != nil {
 		return err

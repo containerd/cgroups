@@ -16,25 +16,25 @@ const (
 	wildcard        = -1
 )
 
-func NewDevices(root string) *DevicesController {
-	return &DevicesController{
+func NewDevices(root string) *devicesController {
+	return &devicesController{
 		root: filepath.Join(root, string(Devices)),
 	}
 }
 
-type DevicesController struct {
+type devicesController struct {
 	root string
 }
 
-func (d *DevicesController) Name() Name {
+func (d *devicesController) Name() Name {
 	return Devices
 }
 
-func (d *DevicesController) Path(path string) string {
+func (d *devicesController) Path(path string) string {
 	return filepath.Join(d.root, path)
 }
 
-func (d *DevicesController) Create(path string, resources *specs.Resources) error {
+func (d *devicesController) Create(path string, resources *specs.Resources) error {
 	// do not set devices if running inside a user namespace as it will fail anyways
 	if system.RunningInUserNS() {
 		return nil
@@ -58,7 +58,7 @@ func (d *DevicesController) Create(path string, resources *specs.Resources) erro
 	return nil
 }
 
-func (d *DevicesController) Update(path string, resources *specs.Resources) error {
+func (d *devicesController) Update(path string, resources *specs.Resources) error {
 	return d.Create(path, resources)
 }
 

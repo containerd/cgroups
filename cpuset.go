@@ -11,25 +11,25 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewCputset(root string) *CpusetController {
-	return &CpusetController{
+func NewCputset(root string) *cpusetController {
+	return &cpusetController{
 		root: filepath.Join(root, string(Cpuset)),
 	}
 }
 
-type CpusetController struct {
+type cpusetController struct {
 	root string
 }
 
-func (c *CpusetController) Name() Name {
+func (c *cpusetController) Name() Name {
 	return Cpuset
 }
 
-func (c *CpusetController) Path(path string) string {
+func (c *cpusetController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *CpusetController) Create(path string, resources *specs.Resources) error {
+func (c *cpusetController) Create(path string, resources *specs.Resources) error {
 	if err := c.ensureParent(c.Path(path), c.root); err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (c *CpusetController) Create(path string, resources *specs.Resources) error
 	return nil
 }
 
-func (c *CpusetController) getValues(path string) (cpus []byte, mems []byte, err error) {
+func (c *cpusetController) getValues(path string) (cpus []byte, mems []byte, err error) {
 	if cpus, err = ioutil.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (c *CpusetController) getValues(path string) (cpus []byte, mems []byte, err
 // ensureParent makes sure that the parent directory of current is created
 // and populated with the proper cpus and mems files copied from
 // it's parent.
-func (c *CpusetController) ensureParent(current, root string) error {
+func (c *cpusetController) ensureParent(current, root string) error {
 	parent := filepath.Dir(current)
 	if _, err := filepath.Rel(root, parent); err != nil {
 		return nil
@@ -103,7 +103,7 @@ func (c *CpusetController) ensureParent(current, root string) error {
 
 // copyIfNeeded copies the cpuset.cpus and cpuset.mems from the parent
 // directory to the current directory if the file's contents are 0
-func (c *CpusetController) copyIfNeeded(current, parent string) error {
+func (c *cpusetController) copyIfNeeded(current, parent string) error {
 	var (
 		err                      error
 		currentCpus, currentMems []byte

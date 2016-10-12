@@ -9,25 +9,25 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewNetPrio(root string) *NetPrioController {
-	return &NetPrioController{
+func NewNetPrio(root string) *netprioController {
+	return &netprioController{
 		root: filepath.Join(root, string(NetPrio)),
 	}
 }
 
-type NetPrioController struct {
+type netprioController struct {
 	root string
 }
 
-func (n *NetPrioController) Name() Name {
+func (n *netprioController) Name() Name {
 	return NetPrio
 }
 
-func (n *NetPrioController) Path(path string) string {
+func (n *netprioController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }
 
-func (n *NetPrioController) Create(path string, resources *specs.Resources) error {
+func (n *netprioController) Create(path string, resources *specs.Resources) error {
 	if err := os.MkdirAll(n.Path(path), defaultDirPerm); err != nil {
 		return err
 	}

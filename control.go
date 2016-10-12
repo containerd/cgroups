@@ -59,27 +59,27 @@ type Subsystem interface {
 	Name() Name
 }
 
-type Pather interface {
+type pather interface {
 	Subsystem
 	Path(path string) string
 }
 
-type Creator interface {
+type creator interface {
 	Subsystem
 	Create(path string, resources *specs.Resources) error
 }
 
-type Deleter interface {
+type deleter interface {
 	Subsystem
 	Delete(path string) error
 }
 
-type Stater interface {
+type stater interface {
 	Subsystem
 	Stat(path string, stats *Stats) error
 }
 
-type Updater interface {
+type updater interface {
 	Subsystem
 	Update(path string, resources *specs.Resources) error
 }

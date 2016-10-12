@@ -14,25 +14,25 @@ const nanosecondsInSecond = 1000000000
 
 var clockTicks = uint64(system.GetClockTicks())
 
-func NewCpuacct(root string) *CpuacctController {
-	return &CpuacctController{
+func NewCpuacct(root string) *cpuacctController {
+	return &cpuacctController{
 		root: filepath.Join(root, string(Cpuacct)),
 	}
 }
 
-type CpuacctController struct {
+type cpuacctController struct {
 	root string
 }
 
-func (c *CpuacctController) Name() Name {
+func (c *cpuacctController) Name() Name {
 	return Cpuacct
 }
 
-func (c *CpuacctController) Path(path string) string {
+func (c *cpuacctController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *CpuacctController) Stat(path string, stats *Stats) error {
+func (c *cpuacctController) Stat(path string, stats *Stats) error {
 	user, kernel, err := c.getUsage(path)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (c *CpuacctController) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (c *CpuacctController) percpuUsage(path string) ([]uint64, error) {
+func (c *cpuacctController) percpuUsage(path string) ([]uint64, error) {
 	var usage []uint64
 	data, err := ioutil.ReadFile(filepath.Join(c.Path(path), "cpuacct.usage_percpu"))
 	if err != nil {
@@ -75,7 +75,7 @@ func (c *CpuacctController) percpuUsage(path string) ([]uint64, error) {
 	return usage, nil
 }
 
-func (c *CpuacctController) getUsage(path string) (user uint64, kernel uint64, err error) {
+func (c *cpuacctController) getUsage(path string) (user uint64, kernel uint64, err error) {
 	statPath := filepath.Join(c.Path(path), "cpuacct.stat")
 	data, err := ioutil.ReadFile(statPath)
 	if err != nil {
