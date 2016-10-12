@@ -242,6 +242,23 @@ func (c *v1) OOMEventFD() (uintptr, error) {
 	return s.(*MemoryController).OOMEventFD(c.path(Memory))
 }
 
+func (c *v1) State() State {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil && c.err == ErrCgroupDeleted {
+		return Deleted
+	}
+	s := c.getSubsystem(Freezer)
+	if s == nil {
+		return Thawed
+	}
+	state, err := s.(*FreezerController).state(c.path(Freezer))
+	if err != nil {
+		return Unknown
+	}
+	return state
+}
+
 func (c *v1) getSubsystem(n Name) Subsystem {
 	for _, s := range c.subsystems {
 		if s.Name() == n {

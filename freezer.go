@@ -7,13 +7,6 @@ import (
 	"time"
 )
 
-type freezerState string
-
-const (
-	frozen freezerState = "FROZEN"
-	thawed freezerState = "THAWED"
-)
-
 func NewFreezer(root string) *FreezerController {
 	return &FreezerController{
 		root: filepath.Join(root, string(Freezer)),
@@ -33,35 +26,42 @@ func (f *FreezerController) Path(path string) string {
 }
 
 func (f *FreezerController) Freeze(path string) error {
-	if err := f.changeState(path, frozen); err != nil {
+	if err := f.changeState(path, Frozen); err != nil {
 		return err
 	}
-	return f.waitState(path, frozen)
+	return f.waitState(path, Frozen)
 }
 
 func (f *FreezerController) Thaw(path string) error {
-	if err := f.changeState(path, thawed); err != nil {
+	if err := f.changeState(path, Thawed); err != nil {
 		return err
 	}
-	return f.waitState(path, thawed)
+	return f.waitState(path, Thawed)
 }
 
-func (f *FreezerController) changeState(path string, state freezerState) error {
+func (f *FreezerController) changeState(path string, state State) error {
 	return ioutil.WriteFile(
 		filepath.Join(f.root, path, "freezer.state"),
-		[]byte(state),
+		[]byte(strings.ToUpper(string(state))),
 		defaultFilePerm,
 	)
 }
 
-func (f *FreezerController) waitState(path string, state freezerState) error {
-	file := filepath.Join(f.root, path, "freezer.state")
+func (f *FreezerController) state(path string) (State, error) {
+	current, err := ioutil.ReadFile(filepath.Join(f.root, path, "freezer.state"))
+	if err != nil {
+		return "", err
+	}
+	return State(strings.ToLower(strings.TrimSpace(string(current)))), nil
+}
+
+func (f *FreezerController) waitState(path string, state State) error {
 	for {
-		current, err := ioutil.ReadFile(file)
+		current, err := f.state(path)
 		if err != nil {
 			return err
 		}
-		if freezerState(strings.TrimSpace(string(current))) == state {
+		if current == state {
 			return nil
 		}
 		time.Sleep(1 * time.Millisecond)

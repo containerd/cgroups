@@ -89,6 +89,16 @@ type Hierarchy func() ([]Subsystem, error)
 
 type Path func(subsystem Name) string
 
+type State string
+
+const (
+	Unknown  State = ""
+	Thawed   State = "thawed"
+	Frozen   State = "frozen"
+	Freezing State = "freezing"
+	Deleted  State = "deleted"
+)
+
 // Cgroup handles interactions with the individual groups to perform
 // actions on them as them main interface to this cgroup package
 type Cgroup interface {
@@ -100,4 +110,5 @@ type Cgroup interface {
 	Freeze() error
 	Thaw() error
 	OOMEventFD() (uintptr, error)
+	State() State
 }
