@@ -21,6 +21,10 @@ type CpusetController struct {
 	root string
 }
 
+func (c *CpusetController) Name() Name {
+	return Cpuset
+}
+
 func (c *CpusetController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }

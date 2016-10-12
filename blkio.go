@@ -22,6 +22,10 @@ type BlkioController struct {
 	root string
 }
 
+func (b *BlkioController) Name() Name {
+	return Blkio
+}
+
 func (b *BlkioController) Path(path string) string {
 	return filepath.Join(b.root, path)
 }

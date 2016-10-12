@@ -9,7 +9,7 @@ import (
 )
 
 // Unified returns all the groups in the default unified heirarchy
-func Unified() (map[Name]Subsystem, error) {
+func Unified() ([]Subsystem, error) {
 	root, err := unifiedMountPoint()
 	if err != nil {
 		return nil, err
@@ -18,13 +18,14 @@ func Unified() (map[Name]Subsystem, error) {
 	if err != nil {
 		return nil, err
 	}
-	for n, s := range subsystems {
+	var enabled []Subsystem
+	for _, s := range pathers(subsystems) {
 		// check and remove the default groups that do not exist
-		if _, err := os.Lstat(s.Path("/")); err != nil {
-			delete(subsystems, n)
+		if _, err := os.Lstat(s.Path("/")); err == nil {
+			enabled = append(enabled, s)
 		}
 	}
-	return subsystems, nil
+	return enabled, nil
 }
 
 // unifiedMountPoint returns the mount point where the cgroup

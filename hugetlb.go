@@ -27,6 +27,10 @@ type HugetlbController struct {
 	sizes []string
 }
 
+func (h *HugetlbController) Name() Name {
+	return Hugetlb
+}
+
 func (h *HugetlbController) Path(path string) string {
 	return filepath.Join(h.root, path)
 }

@@ -56,23 +56,36 @@ const (
 var defaultFilePerm = os.FileMode(0)
 
 type Subsystem interface {
+	Name() Name
+}
+
+type Pather interface {
+	Subsystem
 	Path(path string) string
 }
 
 type Creator interface {
+	Subsystem
 	Create(path string, resources *specs.Resources) error
 }
 
+type Deleter interface {
+	Subsystem
+	Delete(path string) error
+}
+
 type Stater interface {
+	Subsystem
 	Stat(path string, stats *Stats) error
 }
 
 type Updater interface {
+	Subsystem
 	Update(path string, resources *specs.Resources) error
 }
 
 // Hierarchy enableds both unified and split hierarchy for cgroups
-type Hierarchy func() (map[Name]Subsystem, error)
+type Hierarchy func() ([]Subsystem, error)
 
 type Path func(subsystem Name) string
 

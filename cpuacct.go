@@ -24,6 +24,10 @@ type CpuacctController struct {
 	root string
 }
 
+func (c *CpuacctController) Name() Name {
+	return Cpuacct
+}
+
 func (c *CpuacctController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }

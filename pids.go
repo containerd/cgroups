@@ -20,6 +20,10 @@ type PidsController struct {
 	root string
 }
 
+func (p *PidsController) Name() Name {
+	return Pids
+}
+
 func (p *PidsController) Path(path string) string {
 	return filepath.Join(p.root, path)
 }

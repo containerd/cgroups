@@ -26,6 +26,10 @@ type DevicesController struct {
 	root string
 }
 
+func (d *DevicesController) Name() Name {
+	return Devices
+}
+
 func (d *DevicesController) Path(path string) string {
 	return filepath.Join(d.root, path)
 }

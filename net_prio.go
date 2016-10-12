@@ -19,6 +19,10 @@ type NetPrioController struct {
 	root string
 }
 
+func (n *NetPrioController) Name() Name {
+	return NetPrio
+}
+
 func (n *NetPrioController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }

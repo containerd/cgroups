@@ -2,6 +2,7 @@ package cgroups
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -17,7 +18,7 @@ func TestSelfPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dp := paths["devices"]
+	dp := strings.TrimPrefix(paths["devices"], "/")
 	path := NestedPath("test")
 	p := path("devices")
 	if p != filepath.Join(dp, "test") {

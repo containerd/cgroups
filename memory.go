@@ -23,6 +23,10 @@ type MemoryController struct {
 	root string
 }
 
+func (m *MemoryController) Name() Name {
+	return Memory
+}
+
 func (m *MemoryController) Path(path string) string {
 	return filepath.Join(m.root, path)
 }

@@ -19,6 +19,10 @@ type NetCLSController struct {
 	root string
 }
 
+func (n *NetCLSController) Name() Name {
+	return NetCLS
+}
+
 func (n *NetCLSController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }

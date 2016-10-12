@@ -12,13 +12,17 @@ import (
 var shares = uint64(100)
 
 func demoCgroups() error {
-	path := cgroups.NestedPath("test")
-	for _, n := range append(cgroups.Subsystems(), cgroups.Name("systemd")) {
-		log.Println(n, path(n))
+	control, err := cgroups.V1(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
+		CPU: &specs.CPU{
+			Shares: &shares,
+		},
+	})
+	if err != nil {
+		return err
 	}
-	return nil
+	return control.Delete()
 
-	control, err := cgroups.V1(cgroups.Unified, cgroups.StaticPath("/testv1"), &specs.Resources{
+	control, err = cgroups.V1(cgroups.Unified, cgroups.StaticPath("/testv1"), &specs.Resources{
 		CPU: &specs.CPU{
 			Shares: &shares,
 		},

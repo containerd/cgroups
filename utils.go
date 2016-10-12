@@ -15,26 +15,26 @@ import (
 )
 
 // defaults returns all known groups
-func defaults(root string) (map[Name]Subsystem, error) {
-	out := make(map[Name]Subsystem)
-	out[Name("systemd")] = NewNamed(root, "systemd")
-	out[Devices] = NewDevices(root)
+func defaults(root string) ([]Subsystem, error) {
 	h, err := NewHugetlb(root)
 	if err != nil {
 		return nil, err
 	}
-	out[Hugetlb] = h
-	out[Freezer] = NewFreezer(root)
-	out[Pids] = NewPids(root)
-	out[NetCLS] = NewNetCls(root)
-	out[NetPrio] = NewNetPrio(root)
-	out[PerfEvent] = NewPerfEvent(root)
-	out[Cpuset] = NewCputset(root)
-	out[Cpu] = NewCpu(root)
-	out[Cpuacct] = NewCpuacct(root)
-	out[Memory] = NewMemory(root)
-	out[Blkio] = NewBlkio(root)
-	return out, nil
+	return []Subsystem{
+		NewNamed(root, "systemd"),
+		NewDevices(root),
+		h,
+		NewFreezer(root),
+		NewPids(root),
+		NewNetCls(root),
+		NewNetPrio(root),
+		NewPerfEvent(root),
+		NewCputset(root),
+		NewCpu(root),
+		NewCpuacct(root),
+		NewMemory(root),
+		NewBlkio(root),
+	}, nil
 }
 
 // remove will remove a cgroup path handling EAGAIN and EBUSY errors and
@@ -147,8 +147,8 @@ func parseCgroupFile(path string) (map[string]string, error) {
 
 func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 	var (
-		s       = bufio.NewScanner(r)
 		cgroups = make(map[string]string)
+		s       = bufio.NewScanner(r)
 	)
 	for s.Scan() {
 		if err := s.Err(); err != nil {
@@ -179,7 +179,7 @@ func getCgroupDestination(subsystem string) (string, error) {
 		if err := s.Err(); err != nil {
 			return "", err
 		}
-		fields := strings.Split(s.Text(), " ")
+		fields := strings.Fields(s.Text())
 		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
 			if opt == subsystem {
 				return fields[3], nil
@@ -187,4 +187,14 @@ func getCgroupDestination(subsystem string) (string, error) {
 		}
 	}
 	return "", ErrNoCgroupMountDestination
+}
+
+func pathers(subystems []Subsystem) []Pather {
+	var out []Pather
+	for _, s := range subystems {
+		if p, ok := s.(Pather); ok {
+			out = append(out, p)
+		}
+	}
+	return out
 }

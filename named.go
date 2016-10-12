@@ -14,6 +14,10 @@ type NamedController struct {
 	name Name
 }
 
+func (n *NamedController) Name() Name {
+	return n.name
+}
+
 func (n *NamedController) Path(path string) string {
 	return filepath.Join(n.root, string(n.name), path)
 }

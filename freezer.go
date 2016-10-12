@@ -24,6 +24,10 @@ type FreezerController struct {
 	root string
 }
 
+func (f *FreezerController) Name() Name {
+	return Freezer
+}
+
 func (f *FreezerController) Path(path string) string {
 	return filepath.Join(f.root, path)
 }
