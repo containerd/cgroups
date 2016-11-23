@@ -27,7 +27,7 @@ func (n *netprioController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }
 
-func (n *netprioController) Create(path string, resources *specs.Resources) error {
+func (n *netprioController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(n.Path(path), defaultDirPerm); err != nil {
 		return err
 	}

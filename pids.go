@@ -28,21 +28,21 @@ func (p *pidsController) Path(path string) string {
 	return filepath.Join(p.root, path)
 }
 
-func (p *pidsController) Create(path string, resources *specs.Resources) error {
+func (p *pidsController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(p.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
-	if resources.Pids != nil && resources.Pids.Limit != nil && *resources.Pids.Limit > 0 {
+	if resources.Pids != nil && resources.Pids.Limit > 0 {
 		return ioutil.WriteFile(
 			filepath.Join(p.Path(path), "pids.max"),
-			[]byte(strconv.FormatInt(*resources.Pids.Limit, 10)),
+			[]byte(strconv.FormatInt(resources.Pids.Limit, 10)),
 			defaultFilePerm,
 		)
 	}
 	return nil
 }
 
-func (p *pidsController) Update(path string, resources *specs.Resources) error {
+func (p *pidsController) Update(path string, resources *specs.LinuxResources) error {
 	return p.Create(path, resources)
 }
 

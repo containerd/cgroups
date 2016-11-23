@@ -13,7 +13,7 @@ import (
 )
 
 // New returns a new control via the cgroup cgroups interface
-func New(hierarchy Hierarchy, path Path, resources *specs.Resources) (Cgroup, error) {
+func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources) (Cgroup, error) {
 	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	return stats, nil
 }
 
-func (c *cgroup) Update(resources *specs.Resources) error {
+func (c *cgroup) Update(resources *specs.LinuxResources) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {

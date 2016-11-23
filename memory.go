@@ -31,7 +31,7 @@ func (m *memoryController) Path(path string) string {
 	return filepath.Join(m.root, path)
 }
 
-func (m *memoryController) Create(path string, resources *specs.Resources) error {
+func (m *memoryController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(m.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (m *memoryController) Create(path string, resources *specs.Resources) error
 	return m.set(path, getMemorySettings(resources))
 }
 
-func (m *memoryController) Update(path string, resources *specs.Resources) error {
+func (m *memoryController) Update(path string, resources *specs.LinuxResources) error {
 	if resources.Memory == nil {
 		return nil
 	}
@@ -215,7 +215,7 @@ type memorySettings struct {
 	value *uint64
 }
 
-func getMemorySettings(resources *specs.Resources) []memorySettings {
+func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 	mem := resources.Memory
 	return []memorySettings{
 		{
@@ -257,7 +257,7 @@ func checkEBUSY(err error) error {
 	return err
 }
 
-func getOomControlValue(resources *specs.Resources) *uint64 {
+func getOomControlValue(resources *specs.LinuxResources) *uint64 {
 	if resources.DisableOOMKiller != nil && *resources.DisableOOMKiller {
 		i := uint64(1)
 		return &i

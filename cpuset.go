@@ -29,7 +29,7 @@ func (c *cpusetController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *cpusetController) Create(path string, resources *specs.Resources) error {
+func (c *cpusetController) Create(path string, resources *specs.LinuxResources) error {
 	if err := c.ensureParent(c.Path(path), c.root); err != nil {
 		return err
 	}

@@ -35,14 +35,14 @@ func (h *hugetlbController) Path(path string) string {
 	return filepath.Join(h.root, path)
 }
 
-func (h *hugetlbController) Create(path string, resources *specs.Resources) error {
+func (h *hugetlbController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(h.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
 	for _, limit := range resources.HugepageLimits {
 		if err := ioutil.WriteFile(
-			filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", *limit.Pagesize, "limit_in_bytes"}, ".")),
-			[]byte(strconv.FormatUint(*limit.Limit, 10)),
+			filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", limit.Pagesize, "limit_in_bytes"}, ".")),
+			[]byte(strconv.FormatUint(limit.Limit, 10)),
 			defaultFilePerm,
 		); err != nil {
 			return err

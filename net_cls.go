@@ -27,7 +27,7 @@ func (n *netclsController) Path(path string) string {
 	return filepath.Join(n.root, path)
 }
 
-func (n *netclsController) Create(path string, resources *specs.Resources) error {
+func (n *netclsController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(n.Path(path), defaultDirPerm); err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ func (c *cpuController) Path(path string) string {
 	return filepath.Join(c.root, path)
 }
 
-func (c *cpuController) Create(path string, resources *specs.Resources) error {
+func (c *cpuController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(c.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (c *cpuController) Create(path string, resources *specs.Resources) error {
 	return nil
 }
 
-func (c *cpuController) Update(path string, resources *specs.Resources) error {
+func (c *cpuController) Update(path string, resources *specs.LinuxResources) error {
 	return c.Create(path, resources)
 }
 

@@ -66,7 +66,7 @@ type pather interface {
 
 type creator interface {
 	Subsystem
-	Create(path string, resources *specs.Resources) error
+	Create(path string, resources *specs.LinuxResources) error
 }
 
 type deleter interface {
@@ -81,7 +81,7 @@ type stater interface {
 
 type updater interface {
 	Subsystem
-	Update(path string, resources *specs.Resources) error
+	Update(path string, resources *specs.LinuxResources) error
 }
 
 // Hierarchy enableds both unified and split hierarchy for cgroups
@@ -105,7 +105,7 @@ type Cgroup interface {
 	Add(pid int) error
 	Delete() error
 	Stat(...ErrorHandler) (*Stats, error)
-	Update(resources *specs.Resources) error
+	Update(resources *specs.LinuxResources) error
 	Processes(recursive bool) ([]int, error)
 	Freeze() error
 	Thaw() error

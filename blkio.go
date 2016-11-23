@@ -30,7 +30,7 @@ func (b *blkioController) Path(path string) string {
 	return filepath.Join(b.root, path)
 }
 
-func (b *blkioController) Create(path string, resources *specs.Resources) error {
+func (b *blkioController) Create(path string, resources *specs.LinuxResources) error {
 	if err := os.MkdirAll(b.Path(path), defaultDirPerm); err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (b *blkioController) Create(path string, resources *specs.Resources) error 
 	return nil
 }
 
-func (b *blkioController) Update(path string, resources *specs.Resources) error {
+func (b *blkioController) Update(path string, resources *specs.LinuxResources) error {
 	return b.Create(path, resources)
 }
 
@@ -160,7 +160,7 @@ func (b *blkioController) readEntry(path, name string, entry []BlkioEntry) error
 	}
 	return nil
 }
-func createBlkioSettings(blkio *specs.BlockIO) []blkioSettings {
+func createBlkioSettings(blkio *specs.LinuxBlockIO) []blkioSettings {
 	settings := []blkioSettings{
 		{
 			name:   "weight",
@@ -188,7 +188,7 @@ func createBlkioSettings(blkio *specs.BlockIO) []blkioSettings {
 	}
 	for _, t := range []struct {
 		name string
-		list []specs.ThrottleDevice
+		list []specs.LinuxThrottleDevice
 	}{
 		{
 			name: "throttle.read_bps_device",
@@ -234,17 +234,17 @@ func uintf(v interface{}) []byte {
 }
 
 func weightdev(v interface{}) []byte {
-	wd := v.(specs.WeightDevice)
+	wd := v.(specs.LinuxWeightDevice)
 	return []byte(fmt.Sprintf("%d:%d %d", wd.Major, wd.Minor, wd.Weight))
 }
 
 func weightleafdev(v interface{}) []byte {
-	wd := v.(specs.WeightDevice)
+	wd := v.(specs.LinuxWeightDevice)
 	return []byte(fmt.Sprintf("%d:%d %d", wd.Major, wd.Minor, wd.LeafWeight))
 }
 
 func throttleddev(v interface{}) []byte {
-	td := v.(specs.ThrottleDevice)
+	td := v.(specs.LinuxThrottleDevice)
 	return []byte(fmt.Sprintf("%d:%d %d", td.Major, td.Minor, td.Rate))
 }
 

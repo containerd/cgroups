@@ -34,7 +34,7 @@ func (d *devicesController) Path(path string) string {
 	return filepath.Join(d.root, path)
 }
 
-func (d *devicesController) Create(path string, resources *specs.Resources) error {
+func (d *devicesController) Create(path string, resources *specs.LinuxResources) error {
 	// do not set devices if running inside a user namespace as it will fail anyways
 	if system.RunningInUserNS() {
 		return nil
@@ -58,11 +58,11 @@ func (d *devicesController) Create(path string, resources *specs.Resources) erro
 	return nil
 }
 
-func (d *devicesController) Update(path string, resources *specs.Resources) error {
+func (d *devicesController) Update(path string, resources *specs.LinuxResources) error {
 	return d.Create(path, resources)
 }
 
-func deviceString(device specs.DeviceCgroup) string {
+func deviceString(device specs.LinuxDeviceCgroup) string {
 	return fmt.Sprintf("%c %s:%s %s",
 		*device.Type,
 		deviceNumber(device.Major),
