@@ -60,11 +60,11 @@ func (b *blkioController) Stat(path string, stats *Stats) error {
 	settings := []blkioStatSettings{
 		{
 			name:  "throttle.io_serviced",
-			entry: stats.Blkio.IoServicedRecursive,
+			entry: &stats.Blkio.IoServicedRecursive,
 		},
 		{
 			name:  "throttle.io_service_bytes",
-			entry: stats.Blkio.IoServiceBytesRecursive,
+			entry: &stats.Blkio.IoServiceBytesRecursive,
 		},
 	}
 	// Try to read CFQ stats available on all CFQ enabled kernels first
@@ -72,35 +72,35 @@ func (b *blkioController) Stat(path string, stats *Stats) error {
 		settings = append(settings,
 			blkioStatSettings{
 				name:  "sectors_recursive",
-				entry: stats.Blkio.SectorsRecursive,
+				entry: &stats.Blkio.SectorsRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_service_bytes_recursive",
-				entry: stats.Blkio.IoServiceBytesRecursive,
+				entry: &stats.Blkio.IoServiceBytesRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_serviced_recursive",
-				entry: stats.Blkio.IoServicedRecursive,
+				entry: &stats.Blkio.IoServicedRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_queued_recursive",
-				entry: stats.Blkio.IoQueuedRecursive,
+				entry: &stats.Blkio.IoQueuedRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_service_time_recursive",
-				entry: stats.Blkio.IoServiceTimeRecursive,
+				entry: &stats.Blkio.IoServiceTimeRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_wait_time_recursive",
-				entry: stats.Blkio.IoWaitTimeRecursive,
+				entry: &stats.Blkio.IoWaitTimeRecursive,
 			},
 			blkioStatSettings{
 				name:  "io_merged_recursive",
-				entry: stats.Blkio.IoMergedRecursive,
+				entry: &stats.Blkio.IoMergedRecursive,
 			},
 			blkioStatSettings{
 				name:  "time_recursive",
-				entry: stats.Blkio.IoTimeRecursive,
+				entry: &stats.Blkio.IoTimeRecursive,
 			},
 		)
 	}
@@ -112,7 +112,7 @@ func (b *blkioController) Stat(path string, stats *Stats) error {
 	return nil
 }
 
-func (b *blkioController) readEntry(path, name string, entry []BlkioEntry) error {
+func (b *blkioController) readEntry(path, name string, entry *[]BlkioEntry) error {
 	f, err := os.Open(filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", name)))
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func (b *blkioController) readEntry(path, name string, entry []BlkioEntry) error
 		if err != nil {
 			return err
 		}
-		entry = append(entry, BlkioEntry{
+		*entry = append(*entry, BlkioEntry{
 			Major: major,
 			Minor: minor,
 			Op:    op,
@@ -226,7 +226,7 @@ type blkioSettings struct {
 
 type blkioStatSettings struct {
 	name  string
-	entry []BlkioEntry
+	entry *[]BlkioEntry
 }
 
 func uintf(v interface{}) []byte {
