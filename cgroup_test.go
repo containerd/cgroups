@@ -70,7 +70,7 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.delete()
-	control, err := New(mock.hierarchy, StaticPath("test"), &specs.Resources{})
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -97,7 +97,7 @@ func TestStat(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.delete()
-	control, err := New(mock.hierarchy, StaticPath("test"), &specs.Resources{})
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -119,7 +119,7 @@ func TestAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.delete()
-	control, err := New(mock.hierarchy, StaticPath("test"), &specs.Resources{})
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -152,7 +152,7 @@ func TestLoad(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.delete()
-	control, err := New(mock.hierarchy, StaticPath("test"), &specs.Resources{})
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -173,7 +173,7 @@ func TestDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.delete()
-	control, err := New(mock.hierarchy, StaticPath("test"), &specs.Resources{})
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
 	if err != nil {
 		t.Error(err)
 		return
