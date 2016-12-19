@@ -65,7 +65,7 @@ func (s *SystemdController) Name() Name {
 	return SystemdDbus
 }
 
-func (s *SystemdController) Create(path string, resources *specs.Resources) error {
+func (s *SystemdController) Create(path string, resources *specs.LinuxResources) error {
 	slice, name := splitName(path)
 	properties := []systemdDbus.Property{
 		systemdDbus.PropDescription(fmt.Sprintf("libcontainer container %s", name)),
