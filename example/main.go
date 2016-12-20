@@ -12,8 +12,8 @@ import (
 var shares = uint64(100)
 
 func demoCgroups() error {
-	control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
-		CPU: &specs.CPU{
+	control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.LinuxResources{
+		CPU: &specs.LinuxCPU{
 			Shares: &shares,
 		},
 	})
@@ -22,8 +22,8 @@ func demoCgroups() error {
 	}
 	return control.Delete()
 
-	control, err = cgroups.New(cgroups.Unified, cgroups.StaticPath("/testv1"), &specs.Resources{
-		CPU: &specs.CPU{
+	control, err = cgroups.New(cgroups.Unified, cgroups.StaticPath("/testv1"), &specs.LinuxResources{
+		CPU: &specs.LinuxCPU{
 			Shares: &shares,
 		},
 	})
