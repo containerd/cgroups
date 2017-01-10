@@ -21,7 +21,7 @@ func TestSelfPath(t *testing.T) {
 	dp := strings.TrimPrefix(paths["devices"], "/")
 	path := NestedPath("test")
 	p := path("devices")
-	if p != filepath.Join(dp, "test") {
-		t.Fatalf("expected self path of %q but received %q", filepath.Join(dp, "test"), p)
+	if p != filepath.Join("/", dp, "test") {
+		t.Fatalf("expected self path of %q but received %q", filepath.Join("/", dp, "test"), p)
 	}
 }

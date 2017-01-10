@@ -12,8 +12,8 @@ func StaticPath(path string) Path {
 	}
 }
 
-// NestedPath will next the cgroups based on the calling processes cgroup
-// nesting its child processes inside
+// NestedPath will nest the cgroups based on the calling processes cgroup
+// placing its child processes inside its own path
 func NestedPath(suffix string) Path {
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
@@ -29,7 +29,10 @@ func NestedPath(suffix string) Path {
 		if err != nil {
 			panic(err)
 		}
-		paths[n] = rel
+		if rel == "." {
+			rel = dest
+		}
+		paths[n] = filepath.Join("/", rel)
 	}
 	return func(name Name) string {
 		root, ok := paths[string(name)]
