@@ -60,7 +60,7 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 	if resources.Memory == nil {
 		return nil
 	}
-	g := func(v *uint64) bool {
+	g := func(v *int64) bool {
 		return v != nil && *v > 0
 	}
 	settings := getMemorySettings(resources)
@@ -71,7 +71,7 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 		if err != nil {
 			return err
 		}
-		if current < *resources.Memory.Swap {
+		if current < uint64(*resources.Memory.Swap) {
 			settings[0], settings[1] = settings[1], settings[0]
 		}
 	}
@@ -200,7 +200,7 @@ func (m *memoryController) set(path string, settings []memorySettings) error {
 		if t.value != nil {
 			if err := ioutil.WriteFile(
 				filepath.Join(m.Path(path), fmt.Sprintf("memory.%s", t.name)),
-				[]byte(strconv.FormatUint(*t.value, 10)),
+				[]byte(strconv.FormatInt(*t.value, 10)),
 				defaultFilePerm,
 			); err != nil {
 				return err
@@ -212,11 +212,16 @@ func (m *memoryController) set(path string, settings []memorySettings) error {
 
 type memorySettings struct {
 	name  string
-	value *uint64
+	value *int64
 }
 
 func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 	mem := resources.Memory
+	var swappiness *int64
+	if mem.Swappiness != nil {
+		v := int64(*mem.Swappiness)
+		swappiness = &v
+	}
 	return []memorySettings{
 		{
 			name:  "limit_in_bytes",
@@ -240,7 +245,7 @@ func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 		},
 		{
 			name:  "swappiness",
-			value: mem.Swappiness,
+			value: swappiness,
 		},
 	}
 }
@@ -257,9 +262,9 @@ func checkEBUSY(err error) error {
 	return err
 }
 
-func getOomControlValue(resources *specs.LinuxResources) *uint64 {
+func getOomControlValue(resources *specs.LinuxResources) *int64 {
 	if resources.DisableOOMKiller != nil && *resources.DisableOOMKiller {
-		i := uint64(1)
+		i := int64(1)
 		return &i
 	}
 	return nil

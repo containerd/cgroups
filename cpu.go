@@ -35,41 +35,47 @@ func (c *cpuController) Create(path string, resources *specs.LinuxResources) err
 	}
 	if cpu := resources.CPU; cpu != nil {
 		for _, t := range []struct {
-			name  string
-			value *uint64
+			name   string
+			ivalue *int64
+			uvalue *uint64
 		}{
 			{
-				name:  "rt_period_us",
-				value: cpu.RealtimePeriod,
+				name:   "rt_period_us",
+				uvalue: cpu.RealtimePeriod,
 			},
 			{
-				name:  "rt_runtime_us",
-				value: cpu.RealtimeRuntime,
+				name:   "rt_runtime_us",
+				ivalue: cpu.RealtimeRuntime,
 			},
 			{
-				name:  "shares",
-				value: cpu.Shares,
+				name:   "shares",
+				uvalue: cpu.Shares,
 			},
 			{
-				name:  "cfs_period_us",
-				value: cpu.Period,
+				name:   "cfs_period_us",
+				uvalue: cpu.Period,
 			},
 			{
-				name:  "cfs_quota_us",
-				value: cpu.Quota,
+				name:   "cfs_quota_us",
+				ivalue: cpu.Quota,
 			},
 		} {
-			if t.value != nil {
+			var value []byte
+			if t.uvalue != nil {
+				value = []byte(strconv.FormatUint(*t.uvalue, 10))
+			} else if t.ivalue != nil {
+				value = []byte(strconv.FormatInt(*t.ivalue, 10))
+			}
+			if value != nil {
 				if err := ioutil.WriteFile(
 					filepath.Join(c.Path(path), fmt.Sprintf("cpu.%s", t.name)),
-					[]byte(strconv.FormatUint(*t.value, 10)),
+					value,
 					defaultFilePerm,
 				); err != nil {
 					return err
 				}
 			}
 		}
-
 	}
 	return nil
 }
