@@ -87,8 +87,6 @@ type updater interface {
 // Hierarchy enableds both unified and split hierarchy for cgroups
 type Hierarchy func() ([]Subsystem, error)
 
-type Path func(subsystem Name) string
-
 type State string
 
 const (

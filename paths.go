@@ -5,10 +5,12 @@ import (
 	"path/filepath"
 )
 
+type Path func(subsystem Name) (string, error)
+
 // StaticPath returns a static path to use for all cgroups
 func StaticPath(path string) Path {
-	return func(_ Name) string {
-		return path
+	return func(_ Name) (string, error) {
+		return path, nil
 	}
 }
 
@@ -17,30 +19,36 @@ func StaticPath(path string) Path {
 func NestedPath(suffix string) Path {
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
-		panic(err)
+		return errorPath(err)
 	}
 	// localize the paths based on the root mount dest for nested cgroups
 	for n, p := range paths {
 		dest, err := getCgroupDestination(string(n))
 		if err != nil {
-			panic(err)
+			return errorPath(err)
 		}
 		rel, err := filepath.Rel(dest, p)
 		if err != nil {
-			panic(err)
+			return errorPath(err)
 		}
 		if rel == "." {
 			rel = dest
 		}
 		paths[n] = filepath.Join("/", rel)
 	}
-	return func(name Name) string {
+	return func(name Name) (string, error) {
 		root, ok := paths[string(name)]
 		if !ok {
 			if root, ok = paths[fmt.Sprintf("name=%s", name)]; !ok {
-				panic(fmt.Errorf("unable to find %q in controller set", name))
+				return "", fmt.Errorf("unable to find %q in controller set", name)
 			}
 		}
-		return filepath.Join(root, suffix)
+		return filepath.Join(root, suffix), nil
+	}
+}
+
+func errorPath(err error) Path {
+	return func(_ Name) (string, error) {
+		return "", err
 	}
 }

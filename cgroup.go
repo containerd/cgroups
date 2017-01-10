@@ -20,12 +20,20 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources) (Cgrou
 	}
 	for _, s := range subsystems {
 		if c, ok := s.(creator); ok {
-			if err := c.Create(path(s.Name()), resources); err != nil {
+			p, err := path(s.Name())
+			if err != nil {
+				return nil, err
+			}
+			if err := c.Create(p, resources); err != nil {
 				return nil, err
 			}
 		} else if c, ok := s.(pather); ok {
+			p, err := path(s.Name())
+			if err != nil {
+				return nil, err
+			}
 			// do the default create if the group does not have a custom one
-			if err := os.MkdirAll(c.Path(path(s.Name())), defaultDirPerm); err != nil {
+			if err := os.MkdirAll(c.Path(p), defaultDirPerm); err != nil {
 				return nil, err
 			}
 		}
@@ -44,7 +52,11 @@ func Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
 	}
 	// check the the subsystems still exist
 	for _, s := range pathers(subsystems) {
-		if _, err := os.Lstat(s.Path(path(s.Name()))); err != nil {
+		p, err := path(s.Name())
+		if err != nil {
+			return nil, err
+		}
+		if _, err := os.Lstat(s.Path(p)); err != nil {
 			if os.IsNotExist(err) {
 				return nil, ErrCgroupDeleted
 			}
@@ -76,8 +88,12 @@ func (c *cgroup) Add(pid int) error {
 		return c.err
 	}
 	for _, s := range pathers(c.subsystems) {
+		p, err := c.path(s.Name())
+		if err != nil {
+			return err
+		}
 		if err := ioutil.WriteFile(
-			filepath.Join(s.Path(c.path(s.Name())), cgroupProcs),
+			filepath.Join(s.Path(p), cgroupProcs),
 			[]byte(strconv.Itoa(pid)),
 			defaultFilePerm,
 		); err != nil {
@@ -97,13 +113,21 @@ func (c *cgroup) Delete() error {
 	var errors []string
 	for _, s := range c.subsystems {
 		if d, ok := s.(deleter); ok {
-			if err := d.Delete(c.path(s.Name())); err != nil {
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return err
+			}
+			if err := d.Delete(sp); err != nil {
 				errors = append(errors, string(s.Name()))
 			}
 			continue
 		}
 		if p, ok := s.(pather); ok {
-			path := p.Path(c.path(s.Name()))
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return err
+			}
+			path := p.Path(sp)
 			if err := remove(path); err != nil {
 				errors = append(errors, path)
 			}
@@ -133,10 +157,14 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	)
 	for _, s := range c.subsystems {
 		if ss, ok := s.(stater); ok {
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return nil, err
+			}
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				if err := ss.Stat(c.path(s.Name()), stats); err != nil {
+				if err := ss.Stat(sp, stats); err != nil {
 					for _, eh := range handlers {
 						if herr := eh(err); herr != nil {
 							errs <- herr
@@ -162,7 +190,11 @@ func (c *cgroup) Update(resources *specs.LinuxResources) error {
 	}
 	for _, s := range c.subsystems {
 		if u, ok := s.(updater); ok {
-			if err := u.Update(c.path(s.Name()), resources); err != nil {
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return err
+			}
+			if err := u.Update(sp, resources); err != nil {
 				return err
 			}
 		}
@@ -178,12 +210,16 @@ func (c *cgroup) Processes(recursive bool) ([]int, error) {
 		return nil, c.err
 	}
 	s := c.getSubsystem(Devices)
-	path := s.(*devicesController).Path(c.path(defaultGroup))
+	sp, err := c.path(defaultGroup)
+	if err != nil {
+		return nil, err
+	}
+	path := s.(*devicesController).Path(sp)
 	if !recursive {
 		return readPids(path)
 	}
 	var pids []int
-	err := filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -211,7 +247,11 @@ func (c *cgroup) Freeze() error {
 	if s == nil {
 		return ErrFreezerNotSupported
 	}
-	return s.(*freezerController).Freeze(c.path(Freezer))
+	sp, err := c.path(Freezer)
+	if err != nil {
+		return err
+	}
+	return s.(*freezerController).Freeze(sp)
 }
 
 func (c *cgroup) Thaw() error {
@@ -224,7 +264,11 @@ func (c *cgroup) Thaw() error {
 	if s == nil {
 		return ErrFreezerNotSupported
 	}
-	return s.(*freezerController).Thaw(c.path(Freezer))
+	sp, err := c.path(Freezer)
+	if err != nil {
+		return err
+	}
+	return s.(*freezerController).Thaw(sp)
 }
 
 // OOMEventFD returns the memory cgroup's out of memory event fd that triggers
@@ -239,7 +283,11 @@ func (c *cgroup) OOMEventFD() (uintptr, error) {
 	if s == nil {
 		return 0, ErrMemoryNotSupported
 	}
-	return s.(*memoryController).OOMEventFD(c.path(Memory))
+	sp, err := c.path(Memory)
+	if err != nil {
+		return 0, err
+	}
+	return s.(*memoryController).OOMEventFD(sp)
 }
 
 func (c *cgroup) State() State {
@@ -252,7 +300,11 @@ func (c *cgroup) State() State {
 	if s == nil {
 		return Thawed
 	}
-	state, err := s.(*freezerController).state(c.path(Freezer))
+	sp, err := c.path(Freezer)
+	if err != nil {
+		return Unknown
+	}
+	state, err := s.(*freezerController).state(sp)
 	if err != nil {
 		return Unknown
 	}
