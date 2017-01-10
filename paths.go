@@ -7,6 +7,10 @@ import (
 
 type Path func(subsystem Name) (string, error)
 
+func RootPath(subsysem Name) (string, error) {
+	return "/", nil
+}
+
 // StaticPath returns a static path to use for all cgroups
 func StaticPath(path string) Path {
 	return func(_ Name) (string, error) {
