@@ -77,6 +77,12 @@ type cgroup struct {
 	err        error
 }
 
+// Subsystems returns all the subsystems that are currently being
+// consumed by the group
+func (c *cgroup) Subsystems() []Subsystem {
+	return c.subsystems
+}
+
 // Add writes the provided pid to each of the subsystems in the control group
 func (c *cgroup) Add(pid int) error {
 	if pid <= 0 {

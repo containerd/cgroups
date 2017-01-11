@@ -42,6 +42,7 @@ type Cgroup interface {
 	Thaw() error
 	OOMEventFD() (uintptr, error)
 	State() State
+	Subsystems() []Subsystem
 }
 
 // Subsystems returns a complete list of the default cgroups

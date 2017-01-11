@@ -88,8 +88,8 @@ func (c *cpusetController) Stat(path string, stats *Stats) error {
 		cpu = &CpuStat{}
 		stats.Cpu = cpu
 	}
-	cpu.Cpus = string(cpus)
-	cpu.Mems = string(mems)
+	cpu.Cpus = string(bytes.Trim(cpus, "\n"))
+	cpu.Mems = string(bytes.Trim(mems, "\n"))
 	stats.cpuMu.Unlock()
 	return nil
 }
