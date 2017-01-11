@@ -81,7 +81,7 @@ if err := control.Thaw(); err != nil {
 ### List all processes in the cgroup or recursively
 
 ```go
-processes, err := control.Processes(recursive)
+processes, err := control.Processes(cgroups.Devices, recursive)
 ```
 
 ### Get Stats on the cgroup
@@ -100,7 +100,7 @@ err := control.MoveTo(destionation)
 
 ## LICENSE
 
-Copyright (c) 2016 Michael Crosby. crosbymichael@gmail.com
+Copyright (c) 2016-2017 Michael Crosby. crosbymichael@gmail.com
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation 
