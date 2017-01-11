@@ -54,15 +54,15 @@ func remove(path string) error {
 }
 
 // readPids will read all the pids in a cgroup by the provided path
-func readPids(path string) ([]int, error) {
+func readPids(path string, subsystem Name) ([]Process, error) {
 	f, err := os.Open(filepath.Join(path, cgroupProcs))
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 	var (
+		out []Process
 		s   = bufio.NewScanner(f)
-		out = []int{}
 	)
 	for s.Scan() {
 		if t := s.Text(); t != "" {
@@ -70,7 +70,11 @@ func readPids(path string) ([]int, error) {
 			if err != nil {
 				return nil, err
 			}
-			out = append(out, pid)
+			out = append(out, Process{
+				Pid:       pid,
+				Subsystem: subsystem,
+				Path:      path,
+			})
 		}
 	}
 	return out, nil

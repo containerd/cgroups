@@ -23,6 +23,27 @@ const (
 	Blkio     Name = "blkio"
 )
 
+type Process struct {
+	Subsystem Name
+	Pid       int
+	Path      string
+}
+
+// Cgroup handles interactions with the individual groups to perform
+// actions on them as them main interface to this cgroup package
+type Cgroup interface {
+	Add(pid int) error
+	AddProcess(Process) error
+	Delete() error
+	Stat(...ErrorHandler) (*Stats, error)
+	Update(resources *specs.LinuxResources) error
+	Processes(Name, bool) ([]Process, error)
+	Freeze() error
+	Thaw() error
+	OOMEventFD() (uintptr, error)
+	State() State
+}
+
 // Subsystems returns a complete list of the default cgroups
 // avaliable on most linux systems
 func Subsystems() []Name {
@@ -44,7 +65,6 @@ func Subsystems() []Name {
 
 const (
 	cgroupProcs    = "cgroup.procs"
-	defaultGroup   = Devices
 	defaultDirPerm = 0755
 )
 
@@ -96,17 +116,3 @@ const (
 	Freezing State = "freezing"
 	Deleted  State = "deleted"
 )
-
-// Cgroup handles interactions with the individual groups to perform
-// actions on them as them main interface to this cgroup package
-type Cgroup interface {
-	Add(pid int) error
-	Delete() error
-	Stat(...ErrorHandler) (*Stats, error)
-	Update(resources *specs.LinuxResources) error
-	Processes(recursive bool) ([]int, error)
-	Freeze() error
-	Thaw() error
-	OOMEventFD() (uintptr, error)
-	State() State
-}

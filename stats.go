@@ -26,6 +26,8 @@ type PidsStat struct {
 type CpuStat struct {
 	Usage      CpuUsage
 	Throttling Throttle
+	Cpus       string
+	Mems       string
 }
 
 type CpuUsage struct {

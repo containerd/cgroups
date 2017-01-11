@@ -103,6 +103,11 @@ func (c *cgroup) Add(pid int) error {
 	return nil
 }
 
+// AddProcess moves the provided process into the new cgroup
+func (c *cgroup) AddProcess(p Process) error {
+	return c.Add(p.Pid)
+}
+
 // Delete will remove the control group from each of the subsystems registered
 func (c *cgroup) Delete() error {
 	c.mu.Lock()
@@ -182,6 +187,7 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*Stats, error) {
 	return stats, nil
 }
 
+// Update updates the cgroup with the new resource values provided
 func (c *cgroup) Update(resources *specs.LinuxResources) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -202,23 +208,24 @@ func (c *cgroup) Update(resources *specs.LinuxResources) error {
 	return nil
 }
 
-// Processes returns the pids of processes running inside the cgroup
-func (c *cgroup) Processes(recursive bool) ([]int, error) {
+// Processes returns the processes running inside the cgroup along
+// with the subsystem used, pid, and path
+func (c *cgroup) Processes(subsystem Name, recursive bool) ([]Process, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
 		return nil, c.err
 	}
-	s := c.getSubsystem(Devices)
-	sp, err := c.path(defaultGroup)
+	s := c.getSubsystem(subsystem)
+	sp, err := c.path(subsystem)
 	if err != nil {
 		return nil, err
 	}
-	path := s.(*devicesController).Path(sp)
+	path := s.(pather).Path(sp)
 	if !recursive {
-		return readPids(path)
+		return readPids(path, subsystem)
 	}
-	var pids []int
+	var processes []Process
 	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -227,16 +234,17 @@ func (c *cgroup) Processes(recursive bool) ([]int, error) {
 		if name != cgroupProcs {
 			return nil
 		}
-		cpids, err := readPids(dir)
+		procs, err := readPids(dir, subsystem)
 		if err != nil {
 			return err
 		}
-		pids = append(pids, cpids...)
+		processes = append(processes, procs...)
 		return nil
 	})
-	return pids, err
+	return processes, err
 }
 
+// Freeze freezes the entire cgroup and all the processes inside it
 func (c *cgroup) Freeze() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -254,6 +262,7 @@ func (c *cgroup) Freeze() error {
 	return s.(*freezerController).Freeze(sp)
 }
 
+// Thaw thaws out the cgroup and all the processes inside it
 func (c *cgroup) Thaw() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -290,6 +299,7 @@ func (c *cgroup) OOMEventFD() (uintptr, error) {
 	return s.(*memoryController).OOMEventFD(sp)
 }
 
+// State returns the state of the cgroup and its processes
 func (c *cgroup) State() State {
 	c.mu.Lock()
 	defer c.mu.Unlock()
