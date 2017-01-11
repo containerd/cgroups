@@ -43,6 +43,7 @@ type Cgroup interface {
 	OOMEventFD() (uintptr, error)
 	State() State
 	Subsystems() []Subsystem
+	MoveTo(Cgroup) error
 }
 
 // Subsystems returns a complete list of the default cgroups

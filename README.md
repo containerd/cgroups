@@ -90,6 +90,14 @@ processes, err := control.Processes(recursive)
 stats, err := control.Stat()
 ```
 
+### Move process across cgroups
+
+This allows you to take processes from one cgroup and move them to another.
+
+```go
+err := control.MoveTo(destionation)
+```
+
 ## LICENSE
 
 Copyright (c) 2016 Michael Crosby. crosbymichael@gmail.com

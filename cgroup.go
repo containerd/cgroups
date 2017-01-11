@@ -327,6 +327,23 @@ func (c *cgroup) State() State {
 	return state
 }
 
+// MoveTo does a recursive move subsystem by subsystem of all the processes
+// inside the group
+func (c *cgroup) MoveTo(destination Cgroup) error {
+	for _, s := range c.subsystems {
+		processes, err := c.Processes(s.Name(), true)
+		if err != nil {
+			return err
+		}
+		for _, p := range processes {
+			if err := destination.AddProcess(p); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (c *cgroup) getSubsystem(n Name) Subsystem {
 	for _, s := range c.subsystems {
 		if s.Name() == n {
