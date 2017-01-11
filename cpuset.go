@@ -68,10 +68,10 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 }
 
 func (c *cpusetController) getValues(path string) (cpus []byte, mems []byte, err error) {
-	if cpus, err = ioutil.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil {
+	if cpus, err = ioutil.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil && !os.IsNotExist(err) {
 		return
 	}
-	if mems, err = ioutil.ReadFile(filepath.Join(path, "cpuset.mems")); err != nil {
+	if mems, err = ioutil.ReadFile(filepath.Join(path, "cpuset.mems")); err != nil && !os.IsNotExist(err) {
 		return
 	}
 	return cpus, mems, nil
