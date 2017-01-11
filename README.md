@@ -51,7 +51,7 @@ control, err = cgroups.Load(cgroups.Unified, cgroups.StaticPath("/test"))
 ### Add a process to the cgroup
 
 ```go
-if err := control.Add(1234); err != nil {
+if err := control.Add(Process{Pid:1234}); err != nil {
 }
 ```
 

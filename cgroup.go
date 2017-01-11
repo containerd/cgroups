@@ -82,9 +82,9 @@ func (c *cgroup) Subsystems() []Subsystem {
 	return c.subsystems
 }
 
-// Add writes the provided pid to each of the subsystems in the control group
-func (c *cgroup) Add(pid int) error {
-	if pid <= 0 {
+// Add moves the provided process into the new cgroup
+func (c *cgroup) Add(process Process) error {
+	if process.Pid <= 0 {
 		return ErrInvalidPid
 	}
 	c.mu.Lock()
@@ -99,18 +99,13 @@ func (c *cgroup) Add(pid int) error {
 		}
 		if err := ioutil.WriteFile(
 			filepath.Join(s.Path(p), cgroupProcs),
-			[]byte(strconv.Itoa(pid)),
+			[]byte(strconv.Itoa(process.Pid)),
 			defaultFilePerm,
 		); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// AddProcess moves the provided process into the new cgroup
-func (c *cgroup) AddProcess(p Process) error {
-	return c.Add(p.Pid)
 }
 
 // Delete will remove the control group from each of the subsystems registered
@@ -335,7 +330,7 @@ func (c *cgroup) MoveTo(destination Cgroup) error {
 			return err
 		}
 		for _, p := range processes {
-			if err := destination.AddProcess(p); err != nil {
+			if err := destination.Add(p); err != nil {
 				return err
 			}
 		}

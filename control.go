@@ -30,8 +30,7 @@ type Process struct {
 // Cgroup handles interactions with the individual groups to perform
 // actions on them as them main interface to this cgroup package
 type Cgroup interface {
-	Add(pid int) error
-	AddProcess(Process) error
+	Add(Process) error
 	Delete() error
 	Stat(...ErrorHandler) (*Stats, error)
 	Update(resources *specs.LinuxResources) error

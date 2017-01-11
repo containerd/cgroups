@@ -125,7 +125,7 @@ func TestAdd(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := control.Add(1234); err != nil {
+	if err := control.Add(Process{Pid: 1234}); err != nil {
 		t.Error(err)
 		return
 	}
@@ -205,7 +205,7 @@ func TestCreateSubCgroup(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := sub.Add(1234); err != nil {
+	if err := sub.Add(Process{Pid: 1234}); err != nil {
 		t.Error(err)
 		return
 	}
