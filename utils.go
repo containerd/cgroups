@@ -12,6 +12,7 @@ import (
 	"time"
 
 	units "github.com/docker/go-units"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // defaults returns all known groups
@@ -201,4 +202,26 @@ func pathers(subystems []Subsystem) []pather {
 		}
 	}
 	return out
+}
+
+func initializeSubsystem(s Subsystem, path Path, resources *specs.LinuxResources) error {
+	if c, ok := s.(creator); ok {
+		p, err := path(s.Name())
+		if err != nil {
+			return err
+		}
+		if err := c.Create(p, resources); err != nil {
+			return err
+		}
+	} else if c, ok := s.(pather); ok {
+		p, err := path(s.Name())
+		if err != nil {
+			return err
+		}
+		// do the default create if the group does not have a custom one
+		if err := os.MkdirAll(c.Path(p), defaultDirPerm); err != nil {
+			return err
+		}
+	}
+	return nil
 }

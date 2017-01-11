@@ -48,6 +48,7 @@ type Cgroup interface {
 	State() State
 	Subsystems() []Subsystem
 	MoveTo(Cgroup) error
+	New(string, *specs.LinuxResources) (Cgroup, error)
 }
 
 // Subsystems returns a complete list of the default cgroups

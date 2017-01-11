@@ -98,6 +98,12 @@ This allows you to take processes from one cgroup and move them to another.
 err := control.MoveTo(destionation)
 ```
 
+### Create subcgroup
+
+```go
+subCgroup, err := control.New("child", resources)
+```
+
 ## LICENSE
 
 Copyright (c) 2016-2017 Michael Crosby. crosbymichael@gmail.com

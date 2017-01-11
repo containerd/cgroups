@@ -51,6 +51,16 @@ func NestedPath(suffix string) Path {
 	}
 }
 
+func subPath(path Path, subName string) Path {
+	return func(name Name) (string, error) {
+		p, err := path(name)
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(p, subName), nil
+	}
+}
+
 func errorPath(err error) Path {
 	return func(_ Name) (string, error) {
 		return "", err

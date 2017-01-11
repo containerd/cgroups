@@ -1,6 +1,7 @@
 package cgroups
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -129,21 +130,26 @@ func TestAdd(t *testing.T) {
 		return
 	}
 	for _, s := range Subsystems() {
-		data, err := ioutil.ReadFile(filepath.Join(mock.root, string(s), "test", "cgroup.procs"))
-		if err != nil {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
 			t.Error(err)
-			return
-		}
-		v, err := strconv.Atoi(string(data))
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		if v != 1234 {
-			t.Errorf("expectd pid 1234 but received %d", v)
 			return
 		}
 	}
+}
+
+func checkPid(mock *mockCgroup, path string, expected int) error {
+	data, err := ioutil.ReadFile(filepath.Join(mock.root, path, "cgroup.procs"))
+	if err != nil {
+		return err
+	}
+	v, err := strconv.Atoi(string(data))
+	if err != nil {
+		return err
+	}
+	if v != expected {
+		return fmt.Errorf("expectd pid %d but received %d", expected, v)
+	}
+	return nil
 }
 
 func TestLoad(t *testing.T) {
@@ -180,5 +186,33 @@ func TestDelete(t *testing.T) {
 	}
 	if err := control.Delete(); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestCreateSubCgroup(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	sub, err := control.New("child", &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := sub.Add(1234); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range Subsystems() {
+		if err := checkPid(mock, filepath.Join(string(s), "test", "child"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
 	}
 }

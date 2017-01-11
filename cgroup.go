@@ -19,23 +19,8 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources) (Cgrou
 		return nil, err
 	}
 	for _, s := range subsystems {
-		if c, ok := s.(creator); ok {
-			p, err := path(s.Name())
-			if err != nil {
-				return nil, err
-			}
-			if err := c.Create(p, resources); err != nil {
-				return nil, err
-			}
-		} else if c, ok := s.(pather); ok {
-			p, err := path(s.Name())
-			if err != nil {
-				return nil, err
-			}
-			// do the default create if the group does not have a custom one
-			if err := os.MkdirAll(c.Path(p), defaultDirPerm); err != nil {
-				return nil, err
-			}
+		if err := initializeSubsystem(s, path, resources); err != nil {
+			return nil, err
 		}
 	}
 	return &cgroup{
@@ -75,6 +60,20 @@ type cgroup struct {
 	subsystems []Subsystem
 	mu         sync.Mutex
 	err        error
+}
+
+// New returns a new sub cgroup
+func (c *cgroup) New(name string, resources *specs.LinuxResources) (Cgroup, error) {
+	path := subPath(c.path, name)
+	for _, s := range c.subsystems {
+		if err := initializeSubsystem(s, path, resources); err != nil {
+			return nil, err
+		}
+	}
+	return &cgroup{
+		path:       path,
+		subsystems: c.subsystems,
+	}, nil
 }
 
 // Subsystems returns all the subsystems that are currently being
