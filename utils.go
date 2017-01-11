@@ -16,6 +16,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+var isUserNS = system.RunningInUserNS()
+
 // defaults returns all known groups
 func defaults(root string) ([]Subsystem, error) {
 	h, err := NewHugetlb(root)
@@ -38,7 +40,7 @@ func defaults(root string) ([]Subsystem, error) {
 	}
 	// only add the devices cgroup if we are not in a user namespace
 	// because modifications are not allowed
-	if !system.RunningInUserNS() {
+	if !isUserNS {
 		s = append(s, NewDevices(root))
 	}
 	return s, nil

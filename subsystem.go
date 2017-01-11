@@ -23,8 +23,7 @@ const (
 // Subsystems returns a complete list of the default cgroups
 // avaliable on most linux systems
 func Subsystems() []Name {
-	return []Name{
-		Devices,
+	n := []Name{
 		Hugetlb,
 		Freezer,
 		Pids,
@@ -37,6 +36,10 @@ func Subsystems() []Name {
 		Memory,
 		Blkio,
 	}
+	if !isUserNS {
+		n = append(n, Devices)
+	}
+	return n
 }
 
 type Subsystem interface {
