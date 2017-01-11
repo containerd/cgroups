@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-// Unified returns all the groups in the default unified heirarchy
-func Unified() ([]Subsystem, error) {
-	root, err := unifiedMountPoint()
+// V1 returns all the groups in the default cgroups mountpoint in a single hierarchy
+func V1() ([]Subsystem, error) {
+	root, err := v1MountPoint()
 	if err != nil {
 		return nil, err
 	}
@@ -28,9 +28,9 @@ func Unified() ([]Subsystem, error) {
 	return enabled, nil
 }
 
-// unifiedMountPoint returns the mount point where the cgroup
-// mountpoints are mounted in a unified hiearchy
-func unifiedMountPoint() (string, error) {
+// v1MountPoint returns the mount point where the cgroup
+// mountpoints are mounted in a single hiearchy
+func v1MountPoint() (string, error) {
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
 		return "", err

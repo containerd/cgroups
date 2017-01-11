@@ -1,6 +1,10 @@
 package cgroups
 
-import specs "github.com/opencontainers/runtime-spec/specs-go"
+import (
+	"fmt"
+
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+)
 
 // Name is a typed name for a cgroup subsystem
 type Name string
@@ -69,4 +73,22 @@ type stater interface {
 type updater interface {
 	Subsystem
 	Update(path string, resources *specs.LinuxResources) error
+}
+
+// SingleSubsystem returns a single cgroup subsystem within the base Hierarchy
+func SingleSubsystem(baseHierarchy Hierarchy, subsystem Name) Hierarchy {
+	return func() ([]Subsystem, error) {
+		subsystems, err := baseHierarchy()
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range subsystems {
+			if s.Name() == subsystem {
+				return []Subsystem{
+					s,
+				}, nil
+			}
+		}
+		return nil, fmt.Errorf("unable to find subsystem %s", subsystem)
+	}
 }
