@@ -30,16 +30,29 @@ type Process struct {
 // Cgroup handles interactions with the individual groups to perform
 // actions on them as them main interface to this cgroup package
 type Cgroup interface {
-	Add(Process) error
-	Delete() error
-	Stat(...ErrorHandler) (*Stats, error)
-	Update(resources *specs.LinuxResources) error
-	Processes(Name, bool) ([]Process, error)
-	Freeze() error
-	Thaw() error
-	OOMEventFD() (uintptr, error)
-	State() State
-	Subsystems() []Subsystem
-	MoveTo(Cgroup) error
+	// New creates a new cgroup under the calling cgroup
 	New(string, *specs.LinuxResources) (Cgroup, error)
+	// Add adds a process to the cgroup
+	Add(Process) error
+	// Delete removes the cgroup as a whole
+	Delete() error
+	// MoveTo moves all the processes under the calling cgroup to the provided one
+	// subsystems are moved one at a time
+	MoveTo(Cgroup) error
+	// Stat returns the stats for all subsystems in the cgroup
+	Stat(...ErrorHandler) (*Stats, error)
+	// Update updates all the subsystems with the provided resource changes
+	Update(resources *specs.LinuxResources) error
+	// Processes returns all the processes in a select subsystem for the cgroup
+	Processes(Name, bool) ([]Process, error)
+	// Freeze freezes or pauses all processes inside the cgroup
+	Freeze() error
+	// Thaw thaw or resumes all processes inside the cgroup
+	Thaw() error
+	// OOMEventFD returns the memory subsystem's event fd for OOM events
+	OOMEventFD() (uintptr, error)
+	// State returns the cgroups current state
+	State() State
+	// Subsystems returns all the subsystems in the cgroup
+	Subsystems() []Subsystem
 }
