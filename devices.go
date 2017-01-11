@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/opencontainers/runc/libcontainer/system"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -35,10 +34,6 @@ func (d *devicesController) Path(path string) string {
 }
 
 func (d *devicesController) Create(path string, resources *specs.LinuxResources) error {
-	// do not set devices if running inside a user namespace as it will fail anyways
-	if system.RunningInUserNS() {
-		return nil
-	}
 	if err := os.MkdirAll(d.Path(path), defaultDirPerm); err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	units "github.com/docker/go-units"
+	"github.com/opencontainers/runc/libcontainer/system"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -21,9 +22,8 @@ func defaults(root string) ([]Subsystem, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []Subsystem{
+	s := []Subsystem{
 		NewNamed(root, "systemd"),
-		NewDevices(root),
 		h,
 		NewFreezer(root),
 		NewPids(root),
@@ -35,7 +35,13 @@ func defaults(root string) ([]Subsystem, error) {
 		NewCpuacct(root),
 		NewMemory(root),
 		NewBlkio(root),
-	}, nil
+	}
+	// only add the devices cgroup if we are not in a user namespace
+	// because modifications are not allowed
+	if !system.RunningInUserNS() {
+		s = append(s, NewDevices(root))
+	}
+	return s, nil
 }
 
 // remove will remove a cgroup path handling EAGAIN and EBUSY errors and
