@@ -6,6 +6,7 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
+// Name is a typed name for a cgroup subsystem
 type Name string
 
 const (
@@ -24,9 +25,12 @@ const (
 )
 
 type Process struct {
+	// Subsystem is the name of the subsystem that the process is in
 	Subsystem Name
-	Pid       int
-	Path      string
+	// Pid is the process id of the process
+	Pid int
+	// Path is the full path of the subsystem and location that the process is in
+	Path string
 }
 
 // Cgroup handles interactions with the individual groups to perform
@@ -109,6 +113,7 @@ type updater interface {
 // Hierarchy enableds both unified and split hierarchy for cgroups
 type Hierarchy func() ([]Subsystem, error)
 
+// State is a type that represents the state of the current cgroup
 type State string
 
 const (

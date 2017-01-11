@@ -15,8 +15,10 @@ var (
 	ErrNoCgroupMountDestination = errors.New("cgroups: cannot found cgroup mount destination")
 )
 
+// ErrorHandler is a function that handles and acts on errors
 type ErrorHandler func(err error) error
 
+// IgnoreNotExist ignores any errors that are for not existing files
 func IgnoreNotExist(err error) error {
 	if os.IsNotExist(err) {
 		return nil
