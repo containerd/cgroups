@@ -32,3 +32,14 @@ func TestSelfPath(t *testing.T) {
 		t.Fatalf("expected self path of %q but received %q", filepath.Join("/", dp, "test"), p)
 	}
 }
+
+func TestRootPath(t *testing.T) {
+	p, err := RootPath(Cpu)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if p != "/" {
+		t.Errorf("expected / but received %q", p)
+	}
+}

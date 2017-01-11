@@ -164,3 +164,54 @@ func TestCreateSubCgroup(t *testing.T) {
 		}
 	}
 }
+
+func TestFreezeThaw(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := control.Freeze(); err != nil {
+		t.Error(err)
+		return
+	}
+	if state := control.State(); state != Frozen {
+		t.Errorf("expected %q but received %q", Frozen, state)
+		return
+	}
+	if err := control.Thaw(); err != nil {
+		t.Error(err)
+		return
+	}
+	if state := control.State(); state != Thawed {
+		t.Errorf("expected %q but received %q", Thawed, state)
+		return
+	}
+}
+
+func TestSubsystems(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	cache := make(map[Name]struct{})
+	for _, s := range control.Subsystems() {
+		cache[s.Name()] = struct{}{}
+	}
+	for _, s := range Subsystems() {
+		if _, ok := cache[s]; !ok {
+			t.Errorf("expected subsystem %q but not found", s)
+		}
+	}
+}
