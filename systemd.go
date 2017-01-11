@@ -68,7 +68,7 @@ func (s *SystemdController) Name() Name {
 func (s *SystemdController) Create(path string, resources *specs.LinuxResources) error {
 	slice, name := splitName(path)
 	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription(fmt.Sprintf("libcontainer container %s", name)),
+		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", name)),
 		systemdDbus.PropWants(slice),
 		newProperty("DefaultDependencies", false),
 		newProperty("Delegate", true),

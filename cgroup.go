@@ -64,6 +64,11 @@ type cgroup struct {
 
 // New returns a new sub cgroup
 func (c *cgroup) New(name string, resources *specs.LinuxResources) (Cgroup, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
 	path := subPath(c.path, name)
 	for _, s := range c.subsystems {
 		if err := initializeSubsystem(s, path, resources); err != nil {
@@ -92,6 +97,10 @@ func (c *cgroup) Add(process Process) error {
 	if c.err != nil {
 		return c.err
 	}
+	return c.add(process)
+}
+
+func (c *cgroup) add(process Process) error {
 	for _, s := range pathers(c.subsystems) {
 		p, err := c.path(s.Name())
 		if err != nil {
@@ -216,19 +225,23 @@ func (c *cgroup) Processes(subsystem Name, recursive bool) ([]Process, error) {
 	if c.err != nil {
 		return nil, c.err
 	}
+	return c.processes(subsystem, recursive)
+}
+
+func (c *cgroup) processes(subsystem Name, recursive bool) ([]Process, error) {
 	s := c.getSubsystem(subsystem)
 	sp, err := c.path(subsystem)
 	if err != nil {
 		return nil, err
 	}
 	path := s.(pather).Path(sp)
-	if !recursive {
-		return readPids(path, subsystem)
-	}
 	var processes []Process
 	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
+		}
+		if !recursive && info.IsDir() {
+			return filepath.SkipDir
 		}
 		dir, name := filepath.Split(p)
 		if name != cgroupProcs {
@@ -324,8 +337,13 @@ func (c *cgroup) State() State {
 // MoveTo does a recursive move subsystem by subsystem of all the processes
 // inside the group
 func (c *cgroup) MoveTo(destination Cgroup) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
 	for _, s := range c.subsystems {
-		processes, err := c.Processes(s.Name(), true)
+		processes, err := c.processes(s.Name(), true)
 		if err != nil {
 			return err
 		}
