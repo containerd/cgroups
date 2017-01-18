@@ -59,10 +59,10 @@ func (d *devicesController) Update(path string, resources *specs.LinuxResources)
 
 func deviceString(device specs.LinuxDeviceCgroup) string {
 	return fmt.Sprintf("%c %s:%s %s",
-		*device.Type,
+		&device.Type,
 		deviceNumber(device.Major),
 		deviceNumber(device.Minor),
-		*device.Access,
+		&device.Access,
 	)
 }
 

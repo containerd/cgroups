@@ -46,11 +46,11 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 		}{
 			{
 				name:  "cpus",
-				value: resources.CPU.Cpus,
+				value: &resources.CPU.Cpus,
 			},
 			{
 				name:  "mems",
-				value: resources.CPU.Mems,
+				value: &resources.CPU.Mems,
 			},
 		} {
 			if t.value != nil {

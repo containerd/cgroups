@@ -21,8 +21,8 @@ uses the v1 implementation of cgroups.
 
 
 ```go
-shares := 100
-control, err := cgroups.New(cgroups.V1, cgroups.StaticPath("/test"), &specs.Resources{
+shares := uint64(100)
+control, err := cgroups.New(cgroups.V1, cgroups.StaticPath("/test"), &specs.LinuxResources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
@@ -34,7 +34,7 @@ defer control.Delete()
 
 
 ```go
-control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.Resources{
+control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.LinuxResources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
@@ -51,7 +51,7 @@ control, err = cgroups.Load(cgroups.V1, cgroups.StaticPath("/test"))
 ### Add a process to the cgroup
 
 ```go
-if err := control.Add(Process{Pid:1234}); err != nil {
+if err := control.Add(cgroups.Process{Pid:1234}); err != nil {
 }
 ```
 
@@ -60,8 +60,8 @@ if err := control.Add(Process{Pid:1234}); err != nil {
 To update the resources applied in the cgroup
 
 ```go
-shares = 200
-if err := control.Update(&specs.Resources{
+shares = uint64(200)
+if err := control.Update(&specs.LinuxResources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
