@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/crosbymichael/cgroups.svg?branch=master)](https://travis-ci.org/crosbymichael/cgroups)
 
+[![codecov](https://codecov.io/gh/crosbymichael/cgroups/branch/master/graph/badge.svg)](https://codecov.io/gh/crosbymichael/cgroups)
+
 Go package for creating, managing, inspecting, and destroying cgroups.
 The resources format for settings on the cgroup uses the OCI runtime-spec found
 [here](https://github.com/opencontainers/runtime-spec).
