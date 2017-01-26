@@ -97,7 +97,7 @@ stats, err := control.Stat()
 This allows you to take processes from one cgroup and move them to another.
 
 ```go
-err := control.MoveTo(destionation)
+err := control.MoveTo(destination)
 ```
 
 ### Create subcgroup
