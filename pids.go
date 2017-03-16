@@ -63,7 +63,7 @@ func (p *pidsController) Stat(path string, stats *Stats) error {
 	}
 	stats.Pids = &PidsStat{
 		Current: current,
-		Max:     max,
+		Limit:   max,
 	}
 	return nil
 }
