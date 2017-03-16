@@ -60,7 +60,7 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 	if resources.Memory == nil {
 		return nil
 	}
-	g := func(v *int64) bool {
+	g := func(v *uint64) bool {
 		return v != nil && *v > 0
 	}
 	settings := getMemorySettings(resources)
@@ -200,7 +200,7 @@ func (m *memoryController) set(path string, settings []memorySettings) error {
 		if t.value != nil {
 			if err := ioutil.WriteFile(
 				filepath.Join(m.Path(path), fmt.Sprintf("memory.%s", t.name)),
-				[]byte(strconv.FormatInt(*t.value, 10)),
+				[]byte(strconv.FormatUint(*t.value, 10)),
 				defaultFilePerm,
 			); err != nil {
 				return err
@@ -212,14 +212,14 @@ func (m *memoryController) set(path string, settings []memorySettings) error {
 
 type memorySettings struct {
 	name  string
-	value *int64
+	value *uint64
 }
 
 func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 	mem := resources.Memory
-	var swappiness *int64
+	var swappiness *uint64
 	if mem.Swappiness != nil {
-		v := int64(*mem.Swappiness)
+		v := uint64(*mem.Swappiness)
 		swappiness = &v
 	}
 	return []memorySettings{
@@ -262,9 +262,9 @@ func checkEBUSY(err error) error {
 	return err
 }
 
-func getOomControlValue(resources *specs.LinuxResources) *int64 {
+func getOomControlValue(resources *specs.LinuxResources) *uint64 {
 	if resources.DisableOOMKiller != nil && *resources.DisableOOMKiller {
-		i := int64(1)
+		i := uint64(1)
 		return &i
 	}
 	return nil
