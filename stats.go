@@ -20,20 +20,18 @@ type HugetlbStat struct {
 
 type PidsStat struct {
 	Current uint64
-	Max     uint64
+	Limit   uint64
 }
 
 type CpuStat struct {
 	Usage      CpuUsage
 	Throttling Throttle
-	Cpus       string
-	Mems       string
 }
 
 type CpuUsage struct {
 	// Units: nanoseconds.
 	Total  uint64
-	Percpu []uint64
+	PerCpu []uint64
 	Kernel uint64
 	User   uint64
 }
@@ -50,7 +48,8 @@ type MemoryStat struct {
 	Swap      MemoryEntry
 	Kernel    MemoryEntry
 	KernelTCP MemoryEntry
-	Raw       map[string]uint64
+	// TODO: remove Raw and add type safe entries for the rest of the values
+	Raw map[string]uint64
 }
 
 type MemoryEntry struct {
