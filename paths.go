@@ -25,6 +25,20 @@ func NestedPath(suffix string) Path {
 	if err != nil {
 		return errorPath(err)
 	}
+	return existingPath(paths, suffix)
+}
+
+// PidPath will return the correct cgroup paths for an existing process running inside a cgroup
+// This is commonly used for the Load function to restore an existing container
+func PidPath(pid int) Path {
+	paths, err := parseCgroupFile(fmt.Sprintf("/proc/%d/cgroup", pid))
+	if err != nil {
+		return errorPath(err)
+	}
+	return existingPath(paths, "")
+}
+
+func existingPath(paths map[string]string, suffix string) Path {
 	// localize the paths based on the root mount dest for nested cgroups
 	for n, p := range paths {
 		dest, err := getCgroupDestination(string(n))
@@ -47,7 +61,10 @@ func NestedPath(suffix string) Path {
 				return "", fmt.Errorf("unable to find %q in controller set", name)
 			}
 		}
-		return filepath.Join(root, suffix), nil
+		if suffix != "" {
+			return filepath.Join(root, suffix), nil
+		}
+		return root, nil
 	}
 }
 
