@@ -6,13 +6,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/opencontainers/runc/libcontainer/system"
 )
 
 const nanosecondsInSecond = 1000000000
 
-var clockTicks = uint64(system.GetClockTicks())
+var clockTicks = getClockTicks()
 
 func NewCpuacct(root string) *cpuacctController {
 	return &cpuacctController{

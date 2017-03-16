@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	libcontainerUtils "github.com/opencontainers/runc/libcontainer/utils"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -102,7 +101,7 @@ func (c *cpusetController) ensureParent(current, root string) error {
 	if _, err := filepath.Rel(root, parent); err != nil {
 		return nil
 	}
-	if libcontainerUtils.CleanPath(parent) == root {
+	if cleanPath(parent) == root {
 		return nil
 	}
 	// Avoid infinite recursion.
