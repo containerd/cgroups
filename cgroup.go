@@ -197,6 +197,10 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*Stats, error) {
 }
 
 // Update updates the cgroup with the new resource values provided
+//
+// Be prepared to handle EBUSY when trying to update a cgroup with
+// live processes and other operations like Stats being performed at the
+// same time
 func (c *cgroup) Update(resources *specs.LinuxResources) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -316,6 +320,7 @@ func (c *cgroup) OOMEventFD() (uintptr, error) {
 func (c *cgroup) State() State {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.checkExists()
 	if c.err != nil && c.err == ErrCgroupDeleted {
 		return Deleted
 	}
@@ -363,4 +368,19 @@ func (c *cgroup) getSubsystem(n Name) Subsystem {
 		}
 	}
 	return nil
+}
+
+func (c *cgroup) checkExists() {
+	for _, s := range pathers(c.subsystems) {
+		p, err := c.path(s.Name())
+		if err != nil {
+			return
+		}
+		if _, err := os.Lstat(s.Path(p)); err != nil {
+			if os.IsNotExist(err) {
+				c.err = ErrCgroupDeleted
+				return
+			}
+		}
+	}
 }

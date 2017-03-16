@@ -76,23 +76,6 @@ func (c *cpusetController) getValues(path string) (cpus []byte, mems []byte, err
 	return cpus, mems, nil
 }
 
-func (c *cpusetController) Stat(path string, stats *Stats) error {
-	cpus, mems, err := c.getValues(path)
-	if err != nil {
-		return err
-	}
-	stats.cpuMu.Lock()
-	cpu := stats.Cpu
-	if cpu == nil {
-		cpu = &CpuStat{}
-		stats.Cpu = cpu
-	}
-	cpu.Cpus = string(bytes.Trim(cpus, "\n"))
-	cpu.Mems = string(bytes.Trim(mems, "\n"))
-	stats.cpuMu.Unlock()
-	return nil
-}
-
 // ensureParent makes sure that the parent directory of current is created
 // and populated with the proper cpus and mems files copied from
 // it's parent.

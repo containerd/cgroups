@@ -20,20 +20,18 @@ type HugetlbStat struct {
 
 type PidsStat struct {
 	Current uint64
-	Max     uint64
+	Limit   uint64
 }
 
 type CpuStat struct {
 	Usage      CpuUsage
 	Throttling Throttle
-	Cpus       string
-	Mems       string
 }
 
 type CpuUsage struct {
 	// Units: nanoseconds.
 	Total  uint64
-	Percpu []uint64
+	PerCpu []uint64
 	Kernel uint64
 	User   uint64
 }
@@ -45,12 +43,43 @@ type Throttle struct {
 }
 
 type MemoryStat struct {
-	Cache     uint64
+	Cache                   uint64
+	RSS                     uint64
+	RSSHuge                 uint64
+	MappedFile              uint64
+	Dirty                   uint64
+	Writeback               uint64
+	PgPgIn                  uint64
+	PgPgOut                 uint64
+	PgFault                 uint64
+	PgMajFault              uint64
+	InactiveAnon            uint64
+	ActiveAnon              uint64
+	InactiveFile            uint64
+	ActiveFile              uint64
+	Unevictable             uint64
+	HierarchicalMemoryLimit uint64
+	HierarchicalSwapLimit   uint64
+	TotalCache              uint64
+	TotalRSS                uint64
+	TotalRSSHuge            uint64
+	TotalMappedFile         uint64
+	TotalDirty              uint64
+	TotalWriteback          uint64
+	TotalPgPgIn             uint64
+	TotalPgPgOut            uint64
+	TotalPgFault            uint64
+	TotalPgMajFault         uint64
+	TotalInactiveAnon       uint64
+	TotalActiveAnon         uint64
+	TotalInactiveFile       uint64
+	TotalActiveFile         uint64
+	TotalUnevictable        uint64
+
 	Usage     MemoryEntry
 	Swap      MemoryEntry
 	Kernel    MemoryEntry
 	KernelTCP MemoryEntry
-	Raw       map[string]uint64
 }
 
 type MemoryEntry struct {
