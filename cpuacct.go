@@ -53,7 +53,7 @@ func (c *cpuacctController) Stat(path string, stats *Stats) error {
 	cpu.Usage.Total = total
 	cpu.Usage.User = user
 	cpu.Usage.Kernel = kernel
-	cpu.Usage.Percpu = percpu
+	cpu.Usage.PerCpu = percpu
 	return nil
 }
 

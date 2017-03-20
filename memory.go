@@ -3,6 +3,7 @@ package cgroups
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -79,13 +80,14 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 }
 
 func (m *memoryController) Stat(path string, stats *Stats) error {
-	raw, err := m.parseStats(path)
+	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
 	if err != nil {
 		return err
 	}
-	stats.Memory = &MemoryStat{
-		Raw:   raw,
-		Cache: raw["cache"],
+	defer f.Close()
+	stats.Memory = &MemoryStat{}
+	if err := m.parseStats(f, stats.Memory); err != nil {
+		return err
 	}
 	for _, t := range []struct {
 		module string
@@ -172,27 +174,56 @@ func writeEventFD(root string, cfd, efd uintptr) error {
 	return err
 }
 
-func (m *memoryController) parseStats(path string) (map[string]uint64, error) {
-	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
+func (m *memoryController) parseStats(r io.Reader, stat *MemoryStat) error {
 	var (
-		out = make(map[string]uint64)
-		sc  = bufio.NewScanner(f)
+		raw  = make(map[string]uint64)
+		sc   = bufio.NewScanner(r)
+		line int
 	)
 	for sc.Scan() {
 		if err := sc.Err(); err != nil {
-			return nil, err
+			return err
 		}
 		key, v, err := parseKV(sc.Text())
 		if err != nil {
-			return nil, err
+			return fmt.Errorf("%d: %v", line, err)
 		}
-		out[key] = v
+		raw[key] = v
+		line++
 	}
-	return out, nil
+	stat.Cache = raw["cache"]
+	stat.RSS = raw["rss"]
+	stat.RSSHuge = raw["rss_huge"]
+	stat.MappedFile = raw["mapped_file"]
+	stat.Dirty = raw["dirty"]
+	stat.Writeback = raw["writeback"]
+	stat.PgPgIn = raw["pgpgin"]
+	stat.PgPgOut = raw["pgpgout"]
+	stat.PgFault = raw["pgfault"]
+	stat.PgMajFault = raw["pgmajfault"]
+	stat.InactiveAnon = raw["inactive_anon"]
+	stat.ActiveAnon = raw["active_anon"]
+	stat.InactiveFile = raw["inactive_file"]
+	stat.ActiveFile = raw["active_file"]
+	stat.Unevictable = raw["unevictable"]
+	stat.HierarchicalMemoryLimit = raw["hierarchical_memory_limit"]
+	stat.HierarchicalSwapLimit = raw["hierarchical_memsw_limit"]
+	stat.TotalCache = raw["total_cache"]
+	stat.TotalRSS = raw["total_rss"]
+	stat.TotalRSSHuge = raw["total_rss_huge"]
+	stat.TotalMappedFile = raw["total_mapped_file"]
+	stat.TotalDirty = raw["total_dirty"]
+	stat.TotalWriteback = raw["total_writeback"]
+	stat.TotalPgPgIn = raw["total_pgpgin"]
+	stat.TotalPgPgOut = raw["total_pgpgout"]
+	stat.TotalPgFault = raw["total_pgfault"]
+	stat.TotalPgMajFault = raw["total_pgmajfault"]
+	stat.TotalInactiveAnon = raw["total_inactive_anon"]
+	stat.TotalActiveAnon = raw["total_active_anon"]
+	stat.TotalInactiveFile = raw["total_inactive_file"]
+	stat.TotalActiveFile = raw["total_active_file"]
+	stat.TotalUnevictable = raw["total_unevictable"]
+	return nil
 }
 
 func (m *memoryController) set(path string, settings []memorySettings) error {

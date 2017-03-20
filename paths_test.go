@@ -1,6 +1,7 @@
 package cgroups
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -30,6 +31,22 @@ func TestSelfPath(t *testing.T) {
 	}
 	if p != filepath.Join("/", dp, "test") {
 		t.Fatalf("expected self path of %q but received %q", filepath.Join("/", dp, "test"), p)
+	}
+}
+
+func TestPidPath(t *testing.T) {
+	paths, err := parseCgroupFile("/proc/self/cgroup")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dp := strings.TrimPrefix(paths["devices"], "/")
+	path := PidPath(os.Getpid())
+	p, err := path("devices")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p != filepath.Join("/", dp) {
+		t.Fatalf("expected self path of %q but received %q", filepath.Join("/", dp), p)
 	}
 }
 
