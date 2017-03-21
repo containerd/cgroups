@@ -80,6 +80,13 @@ func (c *Collector) Add(id string, cg cgroups.Cgroup) error {
 	return nil
 }
 
+// Remove removes the provided cgroup by id from the collector
+func (c *Collector) Remove(id string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.cgroups, id)
+}
+
 func blkioValues(l []cgroups.BlkioEntry) []value {
 	var out []value
 	for _, e := range l {
