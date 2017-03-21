@@ -36,7 +36,7 @@ type oom struct {
 	c  cgroups.Cgroup
 }
 
-func (o *OOMCollector) Monitor(id string, cg cgroups.Cgroup) error {
+func (o *OOMCollector) Add(id string, cg cgroups.Cgroup) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	fd, err := cg.OOMEventFD()
