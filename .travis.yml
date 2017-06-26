@@ -2,6 +2,10 @@ language: go
 go:
     - 1.7.x
 
+install:
+    - go get -t ./...
+    - cd $GOPATH/src/github.com/prometheus/client_golang && git checkout v0.8.0
+
 script:
     - go test -race -coverprofile=coverage.txt -covermode=atomic
 
