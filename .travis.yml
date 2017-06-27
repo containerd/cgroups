@@ -1,11 +1,10 @@
 language: go
 go:
-    - 1.7.x
+    - 1.8.x
 
 install:
     - mkdir -p $GOPATH/src/github.com/prometheus $GOPATH/src/github.com/opencontainers
-    - cd $GOPATH/src/github.com/prometheus && git clone https://github.com/prometheus/client_golang.git && cd client_golang && git checkout v0.8.0
-    - cd $GOPATH/src/github.com/opencontainers && git clone https://github.com/opencontainers/runtime-spec && cd runtime-spec && git checkout v1.0.0-rc5
+    - cd $GOPATH/src/github.com/opencontainers && git clone https://github.com/opencontainers/runtime-spec && cd runtime-spec && git checkout 198f23f827eea397d4331d7eb048d9d4c7ff7bee
     - cd $GOPATH/src/github.com/containerd/cgroups
     - go get -t ./...
 
