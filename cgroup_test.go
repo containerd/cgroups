@@ -85,6 +85,41 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestListPids(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := control.Add(Process{Pid: 1234}); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range Subsystems() {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+	procs, err := control.Processes(Freezer, false)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if l := len(procs); l != 1 {
+		t.Errorf("should have one process but received %d", l)
+		return
+	}
+	if procs[0].Pid != 1234 {
+		t.Errorf("expected pid %d but received %d", 1234, procs[0].Pid)
+	}
+}
+
 func readValue(mock *mockCgroup, path string) (string, error) {
 	data, err := ioutil.ReadFile(filepath.Join(mock.root, path))
 	if err != nil {
