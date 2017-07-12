@@ -4,7 +4,7 @@ go:
 
 install:
     - mkdir -p $GOPATH/src/github.com/prometheus $GOPATH/src/github.com/opencontainers
-    - cd $GOPATH/src/github.com/opencontainers && git clone https://github.com/opencontainers/runtime-spec && cd runtime-spec && git checkout 198f23f827eea397d4331d7eb048d9d4c7ff7bee
+    - cd $GOPATH/src/github.com/opencontainers && git clone https://github.com/opencontainers/runtime-spec && cd runtime-spec && git checkout 96de01bbb42c7af89bff100e10a9f0fb62e75bfb
     - cd $GOPATH/src/github.com/containerd/cgroups
     - go get -t ./...
 
