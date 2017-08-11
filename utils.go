@@ -81,8 +81,8 @@ func defaults(root string) ([]Subsystem, error) {
 // remove will remove a cgroup path handling EAGAIN and EBUSY errors and
 // retrying the remove after a exp timeout
 func remove(path string) error {
+	delay := 10 * time.Millisecond
 	for i := 0; i < 5; i++ {
-		delay := 10 * time.Millisecond
 		if i != 0 {
 			time.Sleep(delay)
 			delay *= 2
