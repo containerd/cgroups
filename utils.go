@@ -204,7 +204,7 @@ func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 			parts = strings.SplitN(text, ":", 3)
 		)
 		if len(parts) < 3 {
-			return nil, fmt.Errorf("invalid cgroup entry: must contain at least two colons: %v", text)
+			return nil, fmt.Errorf("invalid cgroup entry: %q", text)
 		}
 		for _, subs := range strings.Split(parts[1], ",") {
 			if subs != "" {
