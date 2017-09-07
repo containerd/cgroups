@@ -1,3 +1,5 @@
+// +build linux
+
 package cgroups
 
 func getClockTicks() uint64 {

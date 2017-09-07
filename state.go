@@ -1,3 +1,5 @@
+// +build linux
+
 package cgroups
 
 // State is a type that represents the state of the current cgroup
