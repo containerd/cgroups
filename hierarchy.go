@@ -1,3 +1,5 @@
+// +build linux
+
 package cgroups
 
 // Hierarchy enableds both unified and split hierarchy for cgroups
