@@ -19,6 +19,12 @@ func TestStaticPath(t *testing.T) {
 }
 
 func TestSelfPath(t *testing.T) {
+	_, err := v1MountPoint()
+	if err == ErrMountPointNotExist {
+		t.Skip("skipping test that requires cgroup hierarchy")
+	} else if err != nil {
+		t.Fatal(err)
+	}
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
@@ -35,6 +41,12 @@ func TestSelfPath(t *testing.T) {
 }
 
 func TestPidPath(t *testing.T) {
+	_, err := v1MountPoint()
+	if err == ErrMountPointNotExist {
+		t.Skip("skipping test that requires cgroup hierarchy")
+	} else if err != nil {
+		t.Fatal(err)
+	}
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
