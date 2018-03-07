@@ -47,6 +47,14 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOStat"
       json_name: "blkio"
     }
+    field {
+      name: "rdma"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v1.RdmaStat"
+      json_name: "rdma"
+    }
   }
   message_type {
     name: "HugetlbStat"
@@ -581,6 +589,49 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "value"
+    }
+  }
+  message_type {
+    name: "RdmaStat"
+    field {
+      name: "current"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v1.RdmaEntry"
+      json_name: "current"
+    }
+    field {
+      name: "limit"
+      number: 2
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v1.RdmaEntry"
+      json_name: "limit"
+    }
+  }
+  message_type {
+    name: "RdmaEntry"
+    field {
+      name: "device"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "device"
+    }
+    field {
+      name: "hca_handles"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "hca_handles"
+    }
+    field {
+      name: "hca_objects"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "hca_objects"
     }
   }
   syntax: "proto3"
