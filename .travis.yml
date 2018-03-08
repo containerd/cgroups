@@ -1,6 +1,7 @@
 language: go
 go:
-    - 1.8.x
+    - 1.10.x
+    - tip
 
 install:
     - mkdir -p $GOPATH/src/github.com/prometheus $GOPATH/src/github.com/opencontainers
