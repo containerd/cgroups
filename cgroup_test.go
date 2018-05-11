@@ -101,6 +101,29 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestAddTask(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := control.AddTask(Process{Pid: 1234}); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range Subsystems() {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
 func TestListPids(t *testing.T) {
 	mock, err := newMock()
 	if err != nil {
@@ -155,6 +178,21 @@ func checkPid(mock *mockCgroup, path string, expected int) error {
 	}
 	if v != expected {
 		return fmt.Errorf("expectd pid %d but received %d", expected, v)
+	}
+	return nil
+}
+
+func checkTaskid(mock *mockCgroup, path string, expected int) error {
+	data, err := readValue(mock, filepath.Join(path, cgroupTasks))
+	if err != nil {
+		return err
+	}
+	v, err := strconv.Atoi(string(data))
+	if err != nil {
+		return err
+	}
+	if v != expected {
+		return fmt.Errorf("expectd task id %d but received %d", expected, v)
 	}
 	return nil
 }
@@ -218,6 +256,16 @@ func TestCreateSubCgroup(t *testing.T) {
 	}
 	for _, s := range Subsystems() {
 		if err := checkPid(mock, filepath.Join(string(s), "test", "child"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+	if err := sub.AddTask(Process{Pid: 5678}); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range Subsystems() {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test", "child"), 5678); err != nil {
 			t.Error(err)
 			return
 		}
