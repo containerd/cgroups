@@ -54,7 +54,7 @@ func Slice(slice, name string) Path {
 		slice = defaultSlice
 	}
 	return func(subsystem Name) (string, error) {
-		return filepath.Join(slice, unitName(name)), nil
+		return filepath.Join(slice, name), nil
 	}
 }
 
