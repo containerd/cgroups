@@ -8,8 +8,15 @@ install:
     - cd $GOPATH/src/github.com/opencontainers && git clone https://github.com/opencontainers/runtime-spec && cd runtime-spec && git checkout fa4b36aa9c99e00c2ef7b5c0013c84100ede5f4e
     - cd $GOPATH/src/github.com/containerd/cgroups
     - go get -t ./...
+    - go get -u github.com/vbatts/git-validation
+    - go get -u github.com/kunalkushwaha/ltag
+
+before_script:
+    - pushd ..; git clone https://github.com/containerd/project; popd
 
 script:
+    - DCO_VERBOSITY=-q ../project/script/validate/dco
+    - ../project/script/validate/fileheader ../project/
     - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
