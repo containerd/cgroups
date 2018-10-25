@@ -48,11 +48,12 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources) (Cgrou
 
 // Load will load an existing cgroup and allow it to be controlled
 func Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
+	var activeSubsystems []Subsystem
 	subsystems, err := hierarchy()
 	if err != nil {
 		return nil, err
 	}
-	// check the the subsystems still exist
+	// check that the subsystems still exist, and keep only those that actually exist
 	for _, s := range pathers(subsystems) {
 		p, err := path(s.Name())
 		if err != nil {
@@ -63,14 +64,15 @@ func Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
 		}
 		if _, err := os.Lstat(s.Path(p)); err != nil {
 			if os.IsNotExist(err) {
-				return nil, ErrCgroupDeleted
+				continue
 			}
 			return nil, err
 		}
+		activeSubsystems = append(activeSubsystems, s)
 	}
 	return &cgroup{
 		path:       path,
-		subsystems: subsystems,
+		subsystems: activeSubsystems,
 	}, nil
 }
 
