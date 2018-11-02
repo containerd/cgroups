@@ -197,6 +197,20 @@ func checkTaskid(mock *mockCgroup, path string, expected int) error {
 	return nil
 }
 
+func mockNewNotInRdma(subsystems []Subsystem, path Path, resources *specs.LinuxResources) (Cgroup, error) {
+	for _, s := range subsystems {
+		if s.Name() != Rdma {
+			if err := initializeSubsystem(s, path, resources); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return &cgroup{
+		path:       path,
+		subsystems: subsystems,
+	}, nil
+}
+
 func TestLoad(t *testing.T) {
 	mock, err := newMock()
 	if err != nil {
@@ -214,6 +228,36 @@ func TestLoad(t *testing.T) {
 	}
 	if control == nil {
 		t.Error("control is nil")
+		return
+	}
+}
+
+func TestLoadWithMissingSubsystems(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	subsystems, err := mock.hierarchy()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	control, err := mockNewNotInRdma(subsystems, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if control, err = Load(mock.hierarchy, StaticPath("test")); err != nil {
+		t.Error(err)
+		return
+	}
+	if control == nil {
+		t.Error("control is nil")
+		return
+	}
+	if len(control.Subsystems()) != len(subsystems) - 1 {
+		t.Error("wrong number of active subsystems")
 		return
 	}
 }
