@@ -159,6 +159,41 @@ func TestListPids(t *testing.T) {
 	}
 }
 
+func TestListTasksPids(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := control.AddTask(Process{Pid: 1234}); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range Subsystems() {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+	tasks, err := control.Tasks(Freezer, false)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if l := len(tasks); l != 1 {
+		t.Errorf("should have one task but received %d", l)
+		return
+	}
+	if tasks[0].Pid != 1234 {
+		t.Errorf("expected task pid %d but received %d", 1234, tasks[0].Pid)
+	}
+}
+
 func readValue(mock *mockCgroup, path string) (string, error) {
 	data, err := ioutil.ReadFile(filepath.Join(mock.root, path))
 	if err != nil {

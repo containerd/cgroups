@@ -321,6 +321,49 @@ func (c *cgroup) processes(subsystem Name, recursive bool) ([]Process, error) {
 	return processes, err
 }
 
+// Tasks returns the tasks running inside the cgroup along
+// with the subsystem used, pid, and path
+func (c *cgroup) Tasks(subsystem Name, recursive bool) ([]Task, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
+	return c.tasks(subsystem, recursive)
+}
+
+func (c *cgroup) tasks(subsystem Name, recursive bool) ([]Task, error) {
+	s := c.getSubsystem(subsystem)
+	sp, err := c.path(subsystem)
+	if err != nil {
+		return nil, err
+	}
+	path := s.(pather).Path(sp)
+	var tasks []Task
+	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !recursive && info.IsDir() {
+			if p == path {
+				return nil
+			}
+			return filepath.SkipDir
+		}
+		dir, name := filepath.Split(p)
+		if name != cgroupTasks {
+			return nil
+		}
+		procs, err := readTasksPids(dir, subsystem)
+		if err != nil {
+			return err
+		}
+		tasks = append(tasks, procs...)
+		return nil
+	})
+	return tasks, err
+}
+
 // Freeze freezes the entire cgroup and all the processes inside it
 func (c *cgroup) Freeze() error {
 	c.mu.Lock()
