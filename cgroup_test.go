@@ -283,6 +283,10 @@ func TestLoadWithMissingSubsystems(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	if control == nil {
+		t.Error("control is nil")
+		return
+	}
 	if control, err = Load(mock.hierarchy, StaticPath("test")); err != nil {
 		t.Error(err)
 		return
