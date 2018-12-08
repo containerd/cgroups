@@ -212,7 +212,7 @@ func checkPid(mock *mockCgroup, path string, expected int) error {
 		return err
 	}
 	if v != expected {
-		return fmt.Errorf("expectd pid %d but received %d", expected, v)
+		return fmt.Errorf("expected pid %d but received %d", expected, v)
 	}
 	return nil
 }
@@ -227,7 +227,7 @@ func checkTaskid(mock *mockCgroup, path string, expected int) error {
 		return err
 	}
 	if v != expected {
-		return fmt.Errorf("expectd task id %d but received %d", expected, v)
+		return fmt.Errorf("expected task id %d but received %d", expected, v)
 	}
 	return nil
 }
