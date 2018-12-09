@@ -291,7 +291,7 @@ func TestLoadWithMissingSubsystems(t *testing.T) {
 		t.Error("control is nil")
 		return
 	}
-	if len(control.Subsystems()) != len(subsystems) - 1 {
+	if len(control.Subsystems()) != len(subsystems)-1 {
 		t.Error("wrong number of active subsystems")
 		return
 	}
