@@ -35,14 +35,20 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources) (Cgrou
 	if err != nil {
 		return nil, err
 	}
+	var active []Subsystem
 	for _, s := range subsystems {
+		// check if subsystem exists
 		if err := initializeSubsystem(s, path, resources); err != nil {
+			if err == ErrControllerNotActive {
+				continue
+			}
 			return nil, err
 		}
+		active = append(active, s)
 	}
 	return &cgroup{
 		path:       path,
-		subsystems: subsystems,
+		subsystems: active,
 	}, nil
 }
 
@@ -59,6 +65,9 @@ func Load(hierarchy Hierarchy, path Path) (Cgroup, error) {
 		if err != nil {
 			if os.IsNotExist(errors.Cause(err)) {
 				return nil, ErrCgroupDeleted
+			}
+			if err == ErrControllerNotActive {
+				continue
 			}
 			return nil, err
 		}
