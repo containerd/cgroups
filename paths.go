@@ -57,7 +57,7 @@ func PidPath(pid int) Path {
 	return existingPath(paths, "")
 }
 
-// ErrControllerNotActive is returned when a controller is not supported or enalbed
+// ErrControllerNotActive is returned when a controller is not supported or enabled
 var ErrControllerNotActive = errors.New("controller is not supported")
 
 func existingPath(paths map[string]string, suffix string) Path {
