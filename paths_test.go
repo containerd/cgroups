@@ -112,3 +112,29 @@ func TestEmptySubsystem(t *testing.T) {
 		}
 	}
 }
+
+func TestSystemd240(t *testing.T) {
+	const data = `8:net_cls:/
+	7:memory:/system.slice/docker.service
+	6:freezer:/
+	5:blkio:/system.slice/docker.service
+	4:devices:/system.slice/docker.service
+	3:cpuset:/
+	2:cpu,cpuacct:/system.slice/docker.service
+	1:name=systemd:/system.slice/docker.service
+	0::/system.slice/docker.service`
+	r := strings.NewReader(data)
+	paths, err := parseCgroupFromReader(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	path := existingPath(paths, "")
+	_, err = path("net_prio")
+	if err == nil {
+		t.Fatal("error for net_prio shoulld not be nil")
+	}
+	if err != ErrControllerNotActive {
+		t.Fatalf("expected error %q but received %q", ErrControllerNotActive, err)
+	}
+}
