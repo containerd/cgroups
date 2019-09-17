@@ -27,9 +27,9 @@ import (
 	"strings"
 	"syscall"
 
-	"golang.org/x/sys/unix"
-
+	v1 "github.com/containerd/cgroups/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
 )
 
 func NewMemory(root string) *memoryController {
@@ -97,24 +97,24 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 	return m.set(path, settings)
 }
 
-func (m *memoryController) Stat(path string, stats *Metrics) error {
+func (m *memoryController) Stat(path string, stats *v1.Metrics) error {
 	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	stats.Memory = &MemoryStat{
-		Usage:     &MemoryEntry{},
-		Swap:      &MemoryEntry{},
-		Kernel:    &MemoryEntry{},
-		KernelTCP: &MemoryEntry{},
+	stats.Memory = &v1.MemoryStat{
+		Usage:     &v1.MemoryEntry{},
+		Swap:      &v1.MemoryEntry{},
+		Kernel:    &v1.MemoryEntry{},
+		KernelTCP: &v1.MemoryEntry{},
 	}
 	if err := m.parseStats(f, stats.Memory); err != nil {
 		return err
 	}
 	for _, t := range []struct {
 		module string
-		entry  *MemoryEntry
+		entry  *v1.MemoryEntry
 	}{
 		{
 			module: "",
@@ -197,7 +197,7 @@ func writeEventFD(root string, cfd, efd uintptr) error {
 	return err
 }
 
-func (m *memoryController) parseStats(r io.Reader, stat *MemoryStat) error {
+func (m *memoryController) parseStats(r io.Reader, stat *v1.MemoryStat) error {
 	var (
 		raw  = make(map[string]uint64)
 		sc   = bufio.NewScanner(r)
@@ -282,7 +282,7 @@ func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 			value: mem.Limit,
 		},
 		{
-			name: "soft_limit_in_bytes",
+			name:  "soft_limit_in_bytes",
 			value: mem.Reservation,
 		},
 		{

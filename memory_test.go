@@ -19,6 +19,8 @@ package cgroups
 import (
 	"strings"
 	"testing"
+
+	v1 "github.com/containerd/cgroups/stats/v1"
 )
 
 const memoryData = `cache 1
@@ -58,7 +60,7 @@ total_unevictable 32
 func TestParseMemoryStats(t *testing.T) {
 	var (
 		c = &memoryController{}
-		m = &MemoryStat{}
+		m = &v1.MemoryStat{}
 		r = strings.NewReader(memoryData)
 	)
 	if err := c.parseStats(r, m); err != nil {
