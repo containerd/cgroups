@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"testing"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -52,7 +53,7 @@ func TestPids(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +95,7 @@ func TestPidsMissingCurrent(t *testing.T) {
 	if pids == nil {
 		t.Fatal("pids is nil")
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")
@@ -123,7 +124,7 @@ func TestPidsMissingMax(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")
@@ -164,7 +165,7 @@ func TestPidsOverflowMax(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")

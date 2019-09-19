@@ -31,8 +31,8 @@ plugins = ["grpc"]
 
 # Aggregrate the API descriptors to lock down API changes.
 [[descriptors]]
-prefix = "github.com/containerd/cgroups"
-target = "metrics.pb.txt"
+prefix = "github.com/containerd/cgroups/stats/v1"
+target = "stats/v1/metrics.pb.txt"
 ignore_files = [
 	"google/protobuf/descriptor.proto",
 	"gogoproto/gogo.proto"

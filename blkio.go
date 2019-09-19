@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -72,8 +73,8 @@ func (b *blkioController) Update(path string, resources *specs.LinuxResources) e
 	return b.Create(path, resources)
 }
 
-func (b *blkioController) Stat(path string, stats *Metrics) error {
-	stats.Blkio = &BlkIOStat{}
+func (b *blkioController) Stat(path string, stats *v1.Metrics) error {
+	stats.Blkio = &v1.BlkIOStat{}
 	settings := []blkioStatSettings{
 		{
 			name:  "throttle.io_serviced",
@@ -141,7 +142,7 @@ func (b *blkioController) Stat(path string, stats *Metrics) error {
 	return nil
 }
 
-func (b *blkioController) readEntry(devices map[deviceKey]string, path, name string, entry *[]*BlkIOEntry) error {
+func (b *blkioController) readEntry(devices map[deviceKey]string, path, name string, entry *[]*v1.BlkIOEntry) error {
 	f, err := os.Open(filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", name)))
 	if err != nil {
 		return err
@@ -180,7 +181,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 		if err != nil {
 			return err
 		}
-		*entry = append(*entry, &BlkIOEntry{
+		*entry = append(*entry, &v1.BlkIOEntry{
 			Device: devices[deviceKey{major, minor}],
 			Major:  major,
 			Minor:  minor,
@@ -268,7 +269,7 @@ type blkioSettings struct {
 
 type blkioStatSettings struct {
 	name  string
-	entry *[]*BlkIOEntry
+	entry *[]*v1.BlkIOEntry
 }
 
 func uintf(v interface{}) []byte {
