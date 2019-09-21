@@ -49,3 +49,31 @@ func TestGetDevices(t *testing.T) {
 		t.Fatalf("expected device name %q but received %q", expected, name)
 	}
 }
+
+func TestNewBlkio(t *testing.T) {
+	const root = "/test/folder"
+	const expected = "/test/folder/blkio"
+	const expectedProc = "/proc"
+
+	ctrl := NewBlkio(root)
+	if ctrl.root != expected {
+		t.Fatalf("expected cgroups root %q but received %q", expected, ctrl.root)
+	}
+	if ctrl.procRoot != expectedProc {
+		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
+	}
+}
+
+func TestNewBlkio_Proc(t *testing.T) {
+	const root = "/test/folder"
+	const expected = "/test/folder/blkio"
+	const expectedProc = "/test/proc"
+
+	ctrl := NewBlkio(root, ProcRoot(expectedProc))
+	if ctrl.root != expected {
+		t.Fatalf("expected cgroups root %q but received %q", expected, ctrl.root)
+	}
+	if ctrl.procRoot != expectedProc {
+		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
+	}
+}
