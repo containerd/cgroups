@@ -17,6 +17,10 @@
 package cgroups
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -105,4 +109,113 @@ func TestParseMemoryStats(t *testing.T) {
 			t.Errorf("expected value at index %d to be %d but received %d", i, i+1, v)
 		}
 	}
+}
+
+func TestMemoryController_Stat(t *testing.T) {
+	modules := []string{"", "memsw", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// checks that all the the cgroups memory entries are read
+	mc := NewMemory(tmpRoot)
+	stats := v1.Metrics{}
+
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	index := []uint64{
+		stats.Memory.Usage.Usage,
+		stats.Memory.Usage.Max,
+		stats.Memory.Usage.Failcnt,
+		stats.Memory.Usage.Limit,
+		stats.Memory.Swap.Usage,
+		stats.Memory.Swap.Max,
+		stats.Memory.Swap.Failcnt,
+		stats.Memory.Swap.Limit,
+		stats.Memory.Kernel.Usage,
+		stats.Memory.Kernel.Max,
+		stats.Memory.Kernel.Failcnt,
+		stats.Memory.Kernel.Limit,
+		stats.Memory.KernelTCP.Usage,
+		stats.Memory.KernelTCP.Max,
+		stats.Memory.KernelTCP.Failcnt,
+		stats.Memory.KernelTCP.Limit,
+	}
+	for i, v := range index {
+		if v != uint64(i) {
+			t.Errorf("expected value at index %d to be %d but received %d", i, i, v)
+		}
+	}
+}
+
+func TestMemoryController_Stat_Ignore(t *testing.T) {
+	modules := []string{"", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// checks that the cgroups memory entry is parsed and the memsw is ignored
+	mc := NewMemory(tmpRoot, IgnoreModules("memsw"))
+	stats := v1.Metrics{}
+
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	mem := stats.Memory
+	if mem.Swap.Usage != 0 || mem.Swap.Limit != 0 ||
+		mem.Swap.Max != 0 || mem.Swap.Failcnt != 0 {
+		t.Errorf("swap memory should have been ignored. Got: %+v", mem.Swap)
+	}
+
+	index := []uint64{
+		stats.Memory.Usage.Usage,
+		stats.Memory.Usage.Max,
+		stats.Memory.Usage.Failcnt,
+		stats.Memory.Usage.Limit,
+		stats.Memory.Kernel.Usage,
+		stats.Memory.Kernel.Max,
+		stats.Memory.Kernel.Failcnt,
+		stats.Memory.Kernel.Limit,
+		stats.Memory.KernelTCP.Usage,
+		stats.Memory.KernelTCP.Max,
+		stats.Memory.KernelTCP.Failcnt,
+		stats.Memory.KernelTCP.Limit,
+	}
+	for i, v := range index {
+		if v != uint64(i) {
+			t.Errorf("expected value at index %d to be %d but received %d", i, i, v)
+		}
+	}
+}
+
+// buildMemoryMetrics creates fake cgroups memory entries in a temporary dir. Returns the fake cgroups root
+func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string {
+	tmpRoot, err := ioutil.TempDir("", "memtests")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpDir := path.Join(tmpRoot, string(Memory))
+	if err := os.MkdirAll(tmpDir, os.ModeDir); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), 0666); err != nil {
+		t.Fatal(err)
+	}
+	cnt := 0
+	for _, mod := range modules {
+		for _, metric := range metrics {
+			var fileName string
+			if mod == "" {
+				fileName = path.Join(tmpDir, strings.Join([]string{"memory", metric}, "."))
+			} else {
+				fileName = path.Join(tmpDir, strings.Join([]string{"memory", mod, metric}, "."))
+			}
+			if err := ioutil.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), 0666); err != nil {
+				t.Fatal(err)
+			}
+			cnt++
+		}
+	}
+	return tmpRoot
 }
