@@ -112,35 +112,91 @@ func TestParseMemoryStats(t *testing.T) {
 }
 
 func TestMemoryController_Stat(t *testing.T) {
+	// GIVEN a cgroups folder with all the memory metrics
 	modules := []string{"", "memsw", "kmem", "kmem.tcp"}
 	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
 	tmpRoot := buildMemoryMetrics(t, modules, metrics)
 
-	// checks that all the the cgroups memory entries are read
+	// WHEN the memory controller reads the metrics stats
 	mc := NewMemory(tmpRoot)
 	stats := v1.Metrics{}
-
 	if err := mc.Stat("", &stats); err != nil {
 		t.Errorf("can't get stats: %v", err)
 	}
 
+	// THEN all the memory stats have been completely loaded in memory
+	checkMemoryStatIsComplete(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_IgnoreModules(t *testing.T) {
+	// GIVEN a cgroups folder that accounts for all the metrics BUT swap memory
+	modules := []string{"", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN the memory controller explicitly ignores memsw module and reads the data
+	mc := NewMemory(tmpRoot, IgnoreModules("memsw"))
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN the swap memory stats are not loaded but all the other memory metrics are
+	checkMemoryStatHasNoSwap(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_OptionalSwap_HasSwap(t *testing.T) {
+	// GIVEN a cgroups folder with all the memory metrics
+	modules := []string{"", "memsw", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN a memory controller that ignores swap only if it is missing reads stats
+	mc := NewMemory(tmpRoot, OptionalSwap())
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN all the memory stats have been completely loaded in memory
+	checkMemoryStatIsComplete(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_OptionalSwap_NoSwap(t *testing.T) {
+	// GIVEN a cgroups folder that accounts for all the metrics BUT swap memory
+	modules := []string{"", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN a memory controller that ignores swap only if it is missing reads stats
+	mc := NewMemory(tmpRoot, OptionalSwap())
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN the swap memory stats are not loaded but all the other memory metrics are
+	checkMemoryStatHasNoSwap(t, stats.Memory)
+}
+
+func checkMemoryStatIsComplete(t *testing.T, mem *v1.MemoryStat) {
 	index := []uint64{
-		stats.Memory.Usage.Usage,
-		stats.Memory.Usage.Max,
-		stats.Memory.Usage.Failcnt,
-		stats.Memory.Usage.Limit,
-		stats.Memory.Swap.Usage,
-		stats.Memory.Swap.Max,
-		stats.Memory.Swap.Failcnt,
-		stats.Memory.Swap.Limit,
-		stats.Memory.Kernel.Usage,
-		stats.Memory.Kernel.Max,
-		stats.Memory.Kernel.Failcnt,
-		stats.Memory.Kernel.Limit,
-		stats.Memory.KernelTCP.Usage,
-		stats.Memory.KernelTCP.Max,
-		stats.Memory.KernelTCP.Failcnt,
-		stats.Memory.KernelTCP.Limit,
+		mem.Usage.Usage,
+		mem.Usage.Max,
+		mem.Usage.Failcnt,
+		mem.Usage.Limit,
+		mem.Swap.Usage,
+		mem.Swap.Max,
+		mem.Swap.Failcnt,
+		mem.Swap.Limit,
+		mem.Kernel.Usage,
+		mem.Kernel.Max,
+		mem.Kernel.Failcnt,
+		mem.Kernel.Limit,
+		mem.KernelTCP.Usage,
+		mem.KernelTCP.Max,
+		mem.KernelTCP.Failcnt,
+		mem.KernelTCP.Limit,
 	}
 	for i, v := range index {
 		if v != uint64(i) {
@@ -149,38 +205,24 @@ func TestMemoryController_Stat(t *testing.T) {
 	}
 }
 
-func TestMemoryController_Stat_Ignore(t *testing.T) {
-	modules := []string{"", "kmem", "kmem.tcp"}
-	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
-	tmpRoot := buildMemoryMetrics(t, modules, metrics)
-
-	// checks that the cgroups memory entry is parsed and the memsw is ignored
-	mc := NewMemory(tmpRoot, IgnoreModules("memsw"))
-	stats := v1.Metrics{}
-
-	if err := mc.Stat("", &stats); err != nil {
-		t.Errorf("can't get stats: %v", err)
-	}
-
-	mem := stats.Memory
+func checkMemoryStatHasNoSwap(t *testing.T, mem *v1.MemoryStat) {
 	if mem.Swap.Usage != 0 || mem.Swap.Limit != 0 ||
 		mem.Swap.Max != 0 || mem.Swap.Failcnt != 0 {
 		t.Errorf("swap memory should have been ignored. Got: %+v", mem.Swap)
 	}
-
 	index := []uint64{
-		stats.Memory.Usage.Usage,
-		stats.Memory.Usage.Max,
-		stats.Memory.Usage.Failcnt,
-		stats.Memory.Usage.Limit,
-		stats.Memory.Kernel.Usage,
-		stats.Memory.Kernel.Max,
-		stats.Memory.Kernel.Failcnt,
-		stats.Memory.Kernel.Limit,
-		stats.Memory.KernelTCP.Usage,
-		stats.Memory.KernelTCP.Max,
-		stats.Memory.KernelTCP.Failcnt,
-		stats.Memory.KernelTCP.Limit,
+		mem.Usage.Usage,
+		mem.Usage.Max,
+		mem.Usage.Failcnt,
+		mem.Usage.Limit,
+		mem.Kernel.Usage,
+		mem.Kernel.Max,
+		mem.Kernel.Failcnt,
+		mem.Kernel.Limit,
+		mem.KernelTCP.Usage,
+		mem.KernelTCP.Max,
+		mem.KernelTCP.Failcnt,
+		mem.KernelTCP.Limit,
 	}
 	for i, v := range index {
 		if v != uint64(i) {

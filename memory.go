@@ -55,6 +55,17 @@ func IgnoreModules(names ...string) func(*memoryController) {
 	}
 }
 
+// OptionalSwap allows the memory controller to not fail if cgroups is not accounting
+// Swap memory (there are no memory.memsw.* entries)
+func OptionalSwap() func(*memoryController) {
+	return func(mc *memoryController) {
+		_, err := os.Stat(filepath.Join(mc.root, "memory.memsw.usage_in_bytes"))
+		if os.IsNotExist(err) {
+			mc.ignored["memsw"] = struct{}{}
+		}
+	}
+}
+
 type memoryController struct {
 	root    string
 	ignored map[string]struct{}
