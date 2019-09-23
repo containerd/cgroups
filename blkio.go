@@ -30,14 +30,29 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewBlkio(root string) *blkioController {
-	return &blkioController{
-		root: filepath.Join(root, string(Blkio)),
+// NewBlkio returns a Blkio controller given the root folder of cgroups.
+// It may optionally accept other configuration options, such as ProcRoot(path)
+func NewBlkio(root string, options ...func(controller *blkioController)) *blkioController {
+	ctrl := &blkioController{
+		root:     filepath.Join(root, string(Blkio)),
+		procRoot: "/proc",
+	}
+	for _, opt := range options {
+		opt(ctrl)
+	}
+	return ctrl
+}
+
+// ProcRoot overrides the default location of the "/proc" filesystem
+func ProcRoot(path string) func(controller *blkioController) {
+	return func(c *blkioController) {
+		c.procRoot = path
 	}
 }
 
 type blkioController struct {
-	root string
+	root     string
+	procRoot string
 }
 
 func (b *blkioController) Name() Name {
@@ -123,7 +138,7 @@ func (b *blkioController) Stat(path string, stats *v1.Metrics) error {
 			},
 		)
 	}
-	f, err := os.Open("/proc/diskstats")
+	f, err := os.Open(filepath.Join(b.procRoot, "diskstats"))
 	if err != nil {
 		return err
 	}
