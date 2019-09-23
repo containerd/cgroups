@@ -17,6 +17,10 @@
 package cgroups
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 	"testing"
 
@@ -105,4 +109,155 @@ func TestParseMemoryStats(t *testing.T) {
 			t.Errorf("expected value at index %d to be %d but received %d", i, i+1, v)
 		}
 	}
+}
+
+func TestMemoryController_Stat(t *testing.T) {
+	// GIVEN a cgroups folder with all the memory metrics
+	modules := []string{"", "memsw", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN the memory controller reads the metrics stats
+	mc := NewMemory(tmpRoot)
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN all the memory stats have been completely loaded in memory
+	checkMemoryStatIsComplete(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_IgnoreModules(t *testing.T) {
+	// GIVEN a cgroups folder that accounts for all the metrics BUT swap memory
+	modules := []string{"", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN the memory controller explicitly ignores memsw module and reads the data
+	mc := NewMemory(tmpRoot, IgnoreModules("memsw"))
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN the swap memory stats are not loaded but all the other memory metrics are
+	checkMemoryStatHasNoSwap(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_OptionalSwap_HasSwap(t *testing.T) {
+	// GIVEN a cgroups folder with all the memory metrics
+	modules := []string{"", "memsw", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN a memory controller that ignores swap only if it is missing reads stats
+	mc := NewMemory(tmpRoot, OptionalSwap())
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN all the memory stats have been completely loaded in memory
+	checkMemoryStatIsComplete(t, stats.Memory)
+}
+
+func TestMemoryController_Stat_OptionalSwap_NoSwap(t *testing.T) {
+	// GIVEN a cgroups folder that accounts for all the metrics BUT swap memory
+	modules := []string{"", "kmem", "kmem.tcp"}
+	metrics := []string{"usage_in_bytes", "max_usage_in_bytes", "failcnt", "limit_in_bytes"}
+	tmpRoot := buildMemoryMetrics(t, modules, metrics)
+
+	// WHEN a memory controller that ignores swap only if it is missing reads stats
+	mc := NewMemory(tmpRoot, OptionalSwap())
+	stats := v1.Metrics{}
+	if err := mc.Stat("", &stats); err != nil {
+		t.Errorf("can't get stats: %v", err)
+	}
+
+	// THEN the swap memory stats are not loaded but all the other memory metrics are
+	checkMemoryStatHasNoSwap(t, stats.Memory)
+}
+
+func checkMemoryStatIsComplete(t *testing.T, mem *v1.MemoryStat) {
+	index := []uint64{
+		mem.Usage.Usage,
+		mem.Usage.Max,
+		mem.Usage.Failcnt,
+		mem.Usage.Limit,
+		mem.Swap.Usage,
+		mem.Swap.Max,
+		mem.Swap.Failcnt,
+		mem.Swap.Limit,
+		mem.Kernel.Usage,
+		mem.Kernel.Max,
+		mem.Kernel.Failcnt,
+		mem.Kernel.Limit,
+		mem.KernelTCP.Usage,
+		mem.KernelTCP.Max,
+		mem.KernelTCP.Failcnt,
+		mem.KernelTCP.Limit,
+	}
+	for i, v := range index {
+		if v != uint64(i) {
+			t.Errorf("expected value at index %d to be %d but received %d", i, i, v)
+		}
+	}
+}
+
+func checkMemoryStatHasNoSwap(t *testing.T, mem *v1.MemoryStat) {
+	if mem.Swap.Usage != 0 || mem.Swap.Limit != 0 ||
+		mem.Swap.Max != 0 || mem.Swap.Failcnt != 0 {
+		t.Errorf("swap memory should have been ignored. Got: %+v", mem.Swap)
+	}
+	index := []uint64{
+		mem.Usage.Usage,
+		mem.Usage.Max,
+		mem.Usage.Failcnt,
+		mem.Usage.Limit,
+		mem.Kernel.Usage,
+		mem.Kernel.Max,
+		mem.Kernel.Failcnt,
+		mem.Kernel.Limit,
+		mem.KernelTCP.Usage,
+		mem.KernelTCP.Max,
+		mem.KernelTCP.Failcnt,
+		mem.KernelTCP.Limit,
+	}
+	for i, v := range index {
+		if v != uint64(i) {
+			t.Errorf("expected value at index %d to be %d but received %d", i, i, v)
+		}
+	}
+}
+
+// buildMemoryMetrics creates fake cgroups memory entries in a temporary dir. Returns the fake cgroups root
+func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string {
+	tmpRoot, err := ioutil.TempDir("", "memtests")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpDir := path.Join(tmpRoot, string(Memory))
+	if err := os.MkdirAll(tmpDir, defaultDirPerm); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), defaultFilePerm); err != nil {
+		t.Fatal(err)
+	}
+	cnt := 0
+	for _, mod := range modules {
+		for _, metric := range metrics {
+			var fileName string
+			if mod == "" {
+				fileName = path.Join(tmpDir, strings.Join([]string{"memory", metric}, "."))
+			} else {
+				fileName = path.Join(tmpDir, strings.Join([]string{"memory", mod, metric}, "."))
+			}
+			if err := ioutil.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), defaultFilePerm); err != nil {
+				t.Fatal(err)
+			}
+			cnt++
+		}
+	}
+	return tmpRoot
 }

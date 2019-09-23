@@ -32,14 +32,43 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func NewMemory(root string) *memoryController {
-	return &memoryController{
-		root: filepath.Join(root, string(Memory)),
+// NewMemory returns a Memory controller given the root folder of cgroups.
+// It may optionally accept other configuration options, such as IgnoreModules(...)
+func NewMemory(root string, options ...func(*memoryController)) *memoryController {
+	mc := &memoryController{
+		root:    filepath.Join(root, string(Memory)),
+		ignored: map[string]struct{}{},
+	}
+	for _, opt := range options {
+		opt(mc)
+	}
+	return mc
+}
+
+// IgnoreModules configure the memory controller to not read memory metrics for some
+// module names (e.g. passing "memsw" would avoid all the memory.memsw.* entries)
+func IgnoreModules(names ...string) func(*memoryController) {
+	return func(mc *memoryController) {
+		for _, name := range names {
+			mc.ignored[name] = struct{}{}
+		}
+	}
+}
+
+// OptionalSwap allows the memory controller to not fail if cgroups is not accounting
+// Swap memory (there are no memory.memsw.* entries)
+func OptionalSwap() func(*memoryController) {
+	return func(mc *memoryController) {
+		_, err := os.Stat(filepath.Join(mc.root, "memory.memsw.usage_in_bytes"))
+		if os.IsNotExist(err) {
+			mc.ignored["memsw"] = struct{}{}
+		}
 	}
 }
 
 type memoryController struct {
-	root string
+	root    string
+	ignored map[string]struct{}
 }
 
 func (m *memoryController) Name() Name {
@@ -133,6 +162,9 @@ func (m *memoryController) Stat(path string, stats *v1.Metrics) error {
 			entry:  stats.Memory.KernelTCP,
 		},
 	} {
+		if _, ok := m.ignored[t.module]; ok {
+			continue
+		}
 		for _, tt := range []struct {
 			name  string
 			value *uint64
