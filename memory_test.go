@@ -196,10 +196,10 @@ func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string
 		t.Fatal(err)
 	}
 	tmpDir := path.Join(tmpRoot, string(Memory))
-	if err := os.MkdirAll(tmpDir, os.ModeDir); err != nil {
+	if err := os.MkdirAll(tmpDir, defaultDirPerm); err != nil {
 		t.Fatal(err)
 	}
-	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), 0666); err != nil {
+	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), defaultFilePerm); err != nil {
 		t.Fatal(err)
 	}
 	cnt := 0
@@ -211,7 +211,7 @@ func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string
 			} else {
 				fileName = path.Join(tmpDir, strings.Join([]string{"memory", mod, metric}, "."))
 			}
-			if err := ioutil.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), 0666); err != nil {
+			if err := ioutil.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), defaultFilePerm); err != nil {
 				t.Fatal(err)
 			}
 			cnt++
