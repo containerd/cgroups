@@ -14,7 +14,4 @@
    limitations under the License.
 */
 
-package cgroups
-
-// Hierarchy enableds both unified and split hierarchy for cgroups
-type Hierarchy func() (subsystems []Subsystem, unifiedMode bool, err error)
+package v2

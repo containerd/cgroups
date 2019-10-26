@@ -16,5 +16,16 @@
 
 package cgroups
 
-// Hierarchy enableds both unified and split hierarchy for cgroups
-type Hierarchy func() (subsystems []Subsystem, unifiedMode bool, err error)
+// V2 returns all the groups in the default cgroups mountpoint in a single hierarchy
+func V2() ([]Subsystem, bool, error) {
+	if !isUnifiedMode {
+		return nil, false, ErrV2NotSupported
+	}
+	subsystems, err := defaults(unifiedMountpoint, isUnifiedMode)
+	if err != nil {
+		return nil, isUnifiedMode, err
+	}
+	enabled := subsystems
+	// TODO: check and remove the default groups that do not exist
+	return enabled, isUnifiedMode, nil
+}

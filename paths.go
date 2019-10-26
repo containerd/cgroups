@@ -39,6 +39,13 @@ func StaticPath(path string) Path {
 // NestedPath will nest the cgroups based on the calling processes cgroup
 // placing its child processes inside its own path
 func NestedPath(suffix string) Path {
+	if isUnifiedMode {
+		up, err := parseCgroupFileV2("/proc/self/cgroup")
+		if err != nil {
+			return errorPath(err)
+		}
+		return StaticPath(up)
+	}
 	paths, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		return errorPath(err)
@@ -50,6 +57,13 @@ func NestedPath(suffix string) Path {
 // This is commonly used for the Load function to restore an existing container
 func PidPath(pid int) Path {
 	p := fmt.Sprintf("/proc/%d/cgroup", pid)
+	if isUnifiedMode {
+		up, err := parseCgroupFileV2(p)
+		if err != nil {
+			return errorPath(err)
+		}
+		return StaticPath(up)
+	}
 	paths, err := parseCgroupFile(p)
 	if err != nil {
 		return errorPath(errors.Wrapf(err, "parse cgroup file %s", p))
@@ -60,6 +74,7 @@ func PidPath(pid int) Path {
 // ErrControllerNotActive is returned when a controller is not supported or enabled
 var ErrControllerNotActive = errors.New("controller is not supported")
 
+// existingPath is only for v1
 func existingPath(paths map[string]string, suffix string) Path {
 	// localize the paths based on the root mount dest for nested cgroups
 	for n, p := range paths {

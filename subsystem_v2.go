@@ -16,5 +16,11 @@
 
 package cgroups
 
-// Hierarchy enableds both unified and split hierarchy for cgroups
-type Hierarchy func() (subsystems []Subsystem, unifiedMode bool, err error)
+// SubsystemsV2 shall return a complete list of the default cgroups
+// available on most linux systems configured with unified mode (WIP).
+func SubsystemsV2() []Name {
+	n := []Name{
+		Pids,
+	}
+	return n
+}

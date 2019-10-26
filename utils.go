@@ -25,13 +25,23 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	units "github.com/docker/go-units"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"golang.org/x/sys/unix"
 )
 
-var isUserNS = runningInUserNS()
+const (
+	unifiedMountpoint = "/sys/fs/cgroup"
+)
+
+// for ease of mocking, functions should avoid using these variables whenever possible.
+var (
+	isUserNS      = runningInUserNS()
+	isUnifiedMode = RunningWithUnifiedMode()
+)
 
 // runningInUserNS detects whether we are currently running in a user namespace.
 // Copied from github.com/lxc/lxd/shared/util.go
@@ -62,8 +72,24 @@ func runningInUserNS() bool {
 	return true
 }
 
+// RunningWithUnifiedMode detects whether we are currently running with unified mode.
+// Copied from https://github.com/opencontainers/runc/blob/c4d8e1688c816a8cef632a3b44a38611511b7140/libcontainer/cgroups/utils.go#L41
+func RunningWithUnifiedMode() bool {
+	var st syscall.Statfs_t
+	if err := syscall.Statfs(unifiedMountpoint, &st); err != nil {
+		panic("cannot statfs cgroup root")
+	}
+	return st.Type == unix.CGROUP2_SUPER_MAGIC
+}
+
 // defaults returns all known groups
-func defaults(root string) ([]Subsystem, error) {
+func defaults(root string, unifiedMode bool) ([]Subsystem, error) {
+	if unifiedMode {
+		s := []Subsystem{
+			NewPidsV2(root),
+		}
+		return s, nil
+	}
 	h, err := NewHugetlb(root)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
@@ -112,6 +138,7 @@ func remove(path string) error {
 }
 
 // readPids will read all the pids of processes in a cgroup by the provided path
+// Supports both v1 and v2.
 func readPids(path string, subsystem Name) ([]Process, error) {
 	f, err := os.Open(filepath.Join(path, cgroupProcs))
 	if err != nil {
@@ -138,8 +165,12 @@ func readPids(path string, subsystem Name) ([]Process, error) {
 	return out, nil
 }
 
-// readTasksPids will read all the pids of tasks in a cgroup by the provided path
+// readTasksPids will read all the pids of tasks in a cgroup by the provided path.
+// Only for v1.
 func readTasksPids(path string, subsystem Name) ([]Task, error) {
+	if isUnifiedMode {
+		return nil, ErrV1NotSupported
+	}
 	f, err := os.Open(filepath.Join(path, cgroupTasks))
 	if err != nil {
 		return nil, err
@@ -225,6 +256,8 @@ func parseKV(raw string) (string, uint64, error) {
 	}
 }
 
+// parseCgroupFile parses cgroup file.
+// Only for v1.
 func parseCgroupFile(path string) (map[string]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -234,6 +267,8 @@ func parseCgroupFile(path string) (map[string]string, error) {
 	return parseCgroupFromReader(f)
 }
 
+// parseCgroupFileFromReader parses cgroup file.
+// Only for v1.
 func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 	var (
 		cgroups = make(map[string]string)
@@ -259,7 +294,48 @@ func parseCgroupFromReader(r io.Reader) (map[string]string, error) {
 	return cgroups, nil
 }
 
+// parseCgroupFileV2 parses cgroup file.
+// Only for v2.
+func parseCgroupFileV2(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	return parseCgroupFromReaderV2(f)
+}
+
+// parseCgroupFileFromReaderV2 parses cgroup file.
+// Only for v2.
+func parseCgroupFromReaderV2(r io.Reader) (string, error) {
+	var (
+		s = bufio.NewScanner(r)
+	)
+	for s.Scan() {
+		if err := s.Err(); err != nil {
+			return "", err
+		}
+		var (
+			text  = s.Text()
+			parts = strings.SplitN(text, ":", 3)
+		)
+		if len(parts) < 3 {
+			return "", fmt.Errorf("invalid cgroup entry: %q", text)
+		}
+		for _, subs := range strings.Split(parts[1], ",") {
+			if subs == "" {
+				return parts[2], nil
+			}
+		}
+	}
+	return "", fmt.Errorf("cgroup path not found")
+}
+
+// getCgroupDestination is only for v1
 func getCgroupDestination(subsystem string) (string, error) {
+	if isUnifiedMode {
+		return "", ErrV1NotSupported
+	}
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
 		return "", err

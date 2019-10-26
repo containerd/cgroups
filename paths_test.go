@@ -35,6 +35,9 @@ func TestStaticPath(t *testing.T) {
 }
 
 func TestSelfPath(t *testing.T) {
+	if isUnifiedMode {
+		t.Skip(ErrV1NotSupported)
+	}
 	_, err := v1MountPoint()
 	if err == ErrMountPointNotExist {
 		t.Skip("skipping test that requires cgroup hierarchy")
@@ -57,6 +60,9 @@ func TestSelfPath(t *testing.T) {
 }
 
 func TestPidPath(t *testing.T) {
+	if isUnifiedMode {
+		t.Skip(ErrV1NotSupported)
+	}
 	_, err := v1MountPoint()
 	if err == ErrMountPointNotExist {
 		t.Skip("skipping test that requires cgroup hierarchy")
@@ -114,6 +120,9 @@ func TestEmptySubsystem(t *testing.T) {
 }
 
 func TestSystemd240(t *testing.T) {
+	if isUnifiedMode {
+		t.Skip(ErrV1NotSupported)
+	}
 	const data = `8:net_cls:/
 	7:memory:/system.slice/docker.service
 	6:freezer:/

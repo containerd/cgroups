@@ -31,7 +31,8 @@ func newMock() (*mockCgroup, error) {
 	if err != nil {
 		return nil, err
 	}
-	subsystems, err := defaults(root)
+	unifiedMode := false
+	subsystems, err := defaults(root, unifiedMode)
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +74,6 @@ func (m *mockCgroup) delete() error {
 	return os.RemoveAll(m.root)
 }
 
-func (m *mockCgroup) hierarchy() ([]Subsystem, error) {
-	return m.subsystems, nil
+func (m *mockCgroup) hierarchy() ([]Subsystem, bool, error) {
+	return m.subsystems, false, nil
 }

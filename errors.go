@@ -27,6 +27,8 @@ var (
 	ErrInvalidFormat            = errors.New("cgroups: parsing file with invalid format failed")
 	ErrFreezerNotSupported      = errors.New("cgroups: freezer cgroup not supported on this system")
 	ErrMemoryNotSupported       = errors.New("cgroups: memory cgroup not supported on this system")
+	ErrV1NotSupported           = errors.New("cgroups: v1 cgroup not supported on this system")
+	ErrV2NotSupported           = errors.New("cgroups: v2 cgroup not supported on this system")
 	ErrCgroupDeleted            = errors.New("cgroups: cgroup deleted")
 	ErrNoCgroupMountDestination = errors.New("cgroups: cannot find cgroup mount destination")
 )

@@ -25,14 +25,17 @@ import (
 )
 
 // V1 returns all the groups in the default cgroups mountpoint in a single hierarchy
-func V1() ([]Subsystem, error) {
+func V1() ([]Subsystem, bool, error) {
+	if isUnifiedMode {
+		return nil, false, ErrV1NotSupported
+	}
 	root, err := v1MountPoint()
 	if err != nil {
-		return nil, err
+		return nil, isUnifiedMode, err
 	}
-	subsystems, err := defaults(root)
+	subsystems, err := defaults(root, false)
 	if err != nil {
-		return nil, err
+		return nil, isUnifiedMode, err
 	}
 	var enabled []Subsystem
 	for _, s := range pathers(subsystems) {
@@ -41,12 +44,15 @@ func V1() ([]Subsystem, error) {
 			enabled = append(enabled, s)
 		}
 	}
-	return enabled, nil
+	return enabled, isUnifiedMode, nil
 }
 
 // v1MountPoint returns the mount point where the cgroup
 // mountpoints are mounted in a single hiearchy
 func v1MountPoint() (string, error) {
+	if isUnifiedMode {
+		return "", ErrV1NotSupported
+	}
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
 		return "", err

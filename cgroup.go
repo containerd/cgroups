@@ -26,11 +26,13 @@ import (
 	"sync"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/stats/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
 
-// New returns a new control via the cgroup cgroups interface
+// New returns a new control via the cgroup cgroups interface.
+// Supports both v1 and v2.
 func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources, opts ...InitOpts) (Cgroup, error) {
 	config := newInitConfig()
 	for _, o := range opts {
@@ -38,7 +40,7 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources, opts .
 			return nil, err
 		}
 	}
-	subsystems, err := hierarchy()
+	subsystems, unifiedMode, err := hierarchy()
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +62,24 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources, opts .
 		}
 		active = append(active, s)
 	}
-	return &cgroup{
-		path:       path,
-		subsystems: active,
+	if unifiedMode {
+		return &cgroupV2{
+			cgroup: cgroup{
+				path:       path,
+				subsystems: active,
+			},
+		}, nil
+	}
+	return &cgroupV1{
+		cgroup: cgroup{
+			path:       path,
+			subsystems: active,
+		},
 	}, nil
 }
 
 // Load will load an existing cgroup and allow it to be controlled
+// Supports both v1 and v2.
 func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
 	config := newInitConfig()
 	for _, o := range opts {
@@ -75,7 +88,7 @@ func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
 		}
 	}
 	var activeSubsystems []Subsystem
-	subsystems, err := hierarchy()
+	subsystems, unifiedMode, err := hierarchy()
 	if err != nil {
 		return nil, err
 	}
@@ -98,21 +111,33 @@ func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
 			}
 			return nil, err
 		}
-		if _, err := os.Lstat(s.Path(p)); err != nil {
-			if os.IsNotExist(err) {
-				continue
+		if !unifiedMode {
+			if _, err := os.Lstat(s.Path(p)); err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return nil, err
 			}
-			return nil, err
 		}
 		activeSubsystems = append(activeSubsystems, s)
+	}
+	if unifiedMode {
+		return &cgroupV2{
+			cgroup: cgroup{
+				path:       path,
+				subsystems: activeSubsystems,
+			},
+		}, nil
 	}
 	// if we do not have any active systems then the cgroup is deleted
 	if len(activeSubsystems) == 0 {
 		return nil, ErrCgroupDeleted
 	}
-	return &cgroup{
-		path:       path,
-		subsystems: activeSubsystems,
+	return &cgroupV1{
+		cgroup: cgroup{
+			path:       path,
+			subsystems: activeSubsystems,
+		},
 	}, nil
 }
 
@@ -124,8 +149,16 @@ type cgroup struct {
 	err        error
 }
 
+type cgroupV1 struct {
+	cgroup
+}
+
+type cgroupV2 struct {
+	cgroup
+}
+
 // New returns a new sub cgroup
-func (c *cgroup) New(name string, resources *specs.LinuxResources) (Cgroup, error) {
+func (c *cgroupV1) New(name string, resources *specs.LinuxResources) (Cgroup, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -137,9 +170,32 @@ func (c *cgroup) New(name string, resources *specs.LinuxResources) (Cgroup, erro
 			return nil, err
 		}
 	}
-	return &cgroup{
-		path:       path,
-		subsystems: c.subsystems,
+	return &cgroupV1{
+		cgroup: cgroup{
+			path:       path,
+			subsystems: c.subsystems,
+		},
+	}, nil
+}
+
+// New returns a new sub cgroup
+func (c *cgroupV2) New(name string, resources *specs.LinuxResources) (Cgroup, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
+	path := subPath(c.path, name)
+	for _, s := range c.subsystems {
+		if err := initializeSubsystem(s, path, resources); err != nil {
+			return nil, err
+		}
+	}
+	return &cgroupV2{
+		cgroup: cgroup{
+			path:       path,
+			subsystems: c.subsystems,
+		},
 	}, nil
 }
 
@@ -180,7 +236,7 @@ func (c *cgroup) add(process Process) error {
 }
 
 // AddTask moves the provided tasks (threads) into the new cgroup
-func (c *cgroup) AddTask(process Process) error {
+func (c *cgroupV1) AddTask(process Process) error {
 	if process.Pid <= 0 {
 		return ErrInvalidPid
 	}
@@ -247,7 +303,7 @@ func (c *cgroup) Delete() error {
 }
 
 // Stat returns the current metrics for the cgroup
-func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
+func (c *cgroupV1) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -267,7 +323,49 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
 		errs = make(chan error, len(c.subsystems))
 	)
 	for _, s := range c.subsystems {
-		if ss, ok := s.(stater); ok {
+		if ss, ok := s.(staterV1); ok {
+			sp, err := c.path(s.Name())
+			if err != nil {
+				return nil, err
+			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := ss.Stat(sp, stats); err != nil {
+					for _, eh := range handlers {
+						if herr := eh(err); herr != nil {
+							errs <- herr
+						}
+					}
+				}
+			}()
+		}
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		return nil, err
+	}
+	return stats, nil
+}
+
+// Stat returns the current metrics for the cgroup
+func (c *cgroupV2) Stat(handlers ...ErrorHandler) (*v2.Metrics, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return nil, c.err
+	}
+	if len(handlers) == 0 {
+		handlers = append(handlers, errPassthrough)
+	}
+	var (
+		stats = &v2.Metrics{}
+		wg    = &sync.WaitGroup{}
+		errs  = make(chan error, len(c.subsystems))
+	)
+	for _, s := range c.subsystems {
+		if ss, ok := s.(staterV2); ok {
 			sp, err := c.path(s.Name())
 			if err != nil {
 				return nil, err
@@ -320,7 +418,7 @@ func (c *cgroup) Update(resources *specs.LinuxResources) error {
 
 // Processes returns the processes running inside the cgroup along
 // with the subsystem used, pid, and path
-func (c *cgroup) Processes(subsystem Name, recursive bool) ([]Process, error) {
+func (c *cgroupV1) Processes(subsystem Name, recursive bool) ([]Process, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -329,7 +427,7 @@ func (c *cgroup) Processes(subsystem Name, recursive bool) ([]Process, error) {
 	return c.processes(subsystem, recursive)
 }
 
-func (c *cgroup) processes(subsystem Name, recursive bool) ([]Process, error) {
+func (c *cgroupV1) processes(subsystem Name, recursive bool) ([]Process, error) {
 	s := c.getSubsystem(subsystem)
 	sp, err := c.path(subsystem)
 	if err != nil {
@@ -361,9 +459,14 @@ func (c *cgroup) processes(subsystem Name, recursive bool) ([]Process, error) {
 	return processes, err
 }
 
+// Processes returns the processes running inside the cgroup
+func (c *cgroupV2) Processes(recursive bool) ([]Process, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 // Tasks returns the tasks running inside the cgroup along
 // with the subsystem used, pid, and path
-func (c *cgroup) Tasks(subsystem Name, recursive bool) ([]Task, error) {
+func (c *cgroupV1) Tasks(subsystem Name, recursive bool) ([]Task, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -443,7 +546,7 @@ func (c *cgroup) Thaw() error {
 // OOMEventFD returns the memory cgroup's out of memory event fd that triggers
 // when processes inside the cgroup receive an oom event. Returns
 // ErrMemoryNotSupported if memory cgroups is not supported.
-func (c *cgroup) OOMEventFD() (uintptr, error) {
+func (c *cgroupV1) OOMEventFD() (uintptr, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -485,7 +588,7 @@ func (c *cgroup) State() State {
 
 // MoveTo does a recursive move subsystem by subsystem of all the processes
 // inside the group
-func (c *cgroup) MoveTo(destination Cgroup) error {
+func (c *cgroupV1) MoveTo(destination Cgroup) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -506,6 +609,12 @@ func (c *cgroup) MoveTo(destination Cgroup) error {
 		}
 	}
 	return nil
+}
+
+// MoveTo does a recursive move subsystem by subsystem of all the processes
+// inside the group
+func (c *cgroupV2) MoveTo(destination Cgroup) error {
+	return fmt.Errorf("not implemented yet")
 }
 
 func (c *cgroup) getSubsystem(n Name) Subsystem {

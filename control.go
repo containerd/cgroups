@@ -20,6 +20,7 @@ import (
 	"os"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/stats/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -61,29 +62,42 @@ type Cgroup interface {
 	New(string, *specs.LinuxResources) (Cgroup, error)
 	// Add adds a process to the cgroup (cgroup.procs)
 	Add(Process) error
-	// AddTask adds a process to the cgroup (tasks)
-	AddTask(Process) error
 	// Delete removes the cgroup as a whole
 	Delete() error
 	// MoveTo moves all the processes under the calling cgroup to the provided one
 	// subsystems are moved one at a time
 	MoveTo(Cgroup) error
-	// Stat returns the stats for all subsystems in the cgroup
-	Stat(...ErrorHandler) (*v1.Metrics, error)
 	// Update updates all the subsystems with the provided resource changes
 	Update(resources *specs.LinuxResources) error
-	// Processes returns all the processes in a select subsystem for the cgroup
-	Processes(Name, bool) ([]Process, error)
-	// Tasks returns all the tasks in a select subsystem for the cgroup
-	Tasks(Name, bool) ([]Task, error)
 	// Freeze freezes or pauses all processes inside the cgroup
 	Freeze() error
 	// Thaw thaw or resumes all processes inside the cgroup
 	Thaw() error
-	// OOMEventFD returns the memory subsystem's event fd for OOM events
-	OOMEventFD() (uintptr, error)
 	// State returns the cgroups current state
 	State() State
 	// Subsystems returns all the subsystems in the cgroup
 	Subsystems() []Subsystem
+}
+
+type CgroupV1 interface {
+	Cgroup
+	// AddTask adds a process to the cgroup (tasks)
+	AddTask(Process) error
+	// Stat returns the stats for all subsystems in the cgroup
+	Stat(...ErrorHandler) (*v1.Metrics, error)
+	// Processes returns all the processes in a select subsystem for the cgroup
+	Processes(Name, bool) ([]Process, error)
+	// Tasks returns all the tasks in a select subsystem for the cgroup
+	Tasks(Name, bool) ([]Task, error)
+	// OOMEventFD returns the memory subsystem's event fd for OOM events
+	OOMEventFD() (uintptr, error)
+}
+
+type CgroupV2 interface {
+	Cgroup
+	// Stat returns the stats for all subsystems in the cgroup
+	Stat(...ErrorHandler) (*v2.Metrics, error)
+	// Processes returns all the processes in the cgroup
+	Processes(bool) ([]Process, error)
+	// TODO: support memory.events
 }

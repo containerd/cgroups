@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
+	v2 "github.com/containerd/cgroups/stats/v2"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -84,9 +85,14 @@ type deleter interface {
 	Delete(path string) error
 }
 
-type stater interface {
+type staterV1 interface {
 	Subsystem
 	Stat(path string, stats *v1.Metrics) error
+}
+
+type staterV2 interface {
+	Subsystem
+	Stat(path string, stats *v2.Metrics) error
 }
 
 type updater interface {
@@ -96,18 +102,18 @@ type updater interface {
 
 // SingleSubsystem returns a single cgroup subsystem within the base Hierarchy
 func SingleSubsystem(baseHierarchy Hierarchy, subsystem Name) Hierarchy {
-	return func() ([]Subsystem, error) {
-		subsystems, err := baseHierarchy()
+	return func() ([]Subsystem, bool, error) {
+		subsystems, unifiedMode, err := baseHierarchy()
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		for _, s := range subsystems {
 			if s.Name() == subsystem {
 				return []Subsystem{
 					s,
-				}, nil
+				}, unifiedMode, nil
 			}
 		}
-		return nil, fmt.Errorf("unable to find subsystem %s", subsystem)
+		return nil, unifiedMode, fmt.Errorf("unable to find subsystem %s", subsystem)
 	}
 }

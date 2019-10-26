@@ -38,11 +38,15 @@ var (
 )
 
 func Systemd() ([]Subsystem, error) {
+	if isUnifiedMode {
+		return nil, ErrV1NotSupported
+	}
 	root, err := v1MountPoint()
 	if err != nil {
 		return nil, err
 	}
-	defaultSubsystems, err := defaults(root)
+	unifiedMode := false
+	defaultSubsystems, err := defaults(root, unifiedMode)
 	if err != nil {
 		return nil, err
 	}
