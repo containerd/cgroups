@@ -37,3 +37,10 @@ ignore_files = [
 	"google/protobuf/descriptor.proto",
 	"gogoproto/gogo.proto"
 ]
+[[descriptors]]
+prefix = "github.com/containerd/cgroups/v2/stats"
+target = "v2/stats/metrics.pb.txt"
+ignore_files = [
+	"google/protobuf/descriptor.proto",
+	"gogoproto/gogo.proto"
+]
