@@ -1,0 +1,33 @@
+file {
+  name: "github.com/containerd/cgroups/v2/stats/metrics.proto"
+  package: "io.containerd.cgroups.v2"
+  message_type {
+    name: "Metrics"
+    field {
+      name: "pids"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.PidsStat"
+      json_name: "pids"
+    }
+  }
+  message_type {
+    name: "PidsStat"
+    field {
+      name: "current"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "current"
+    }
+    field {
+      name: "limit"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "limit"
+    }
+  }
+  syntax: "proto3"
+}
