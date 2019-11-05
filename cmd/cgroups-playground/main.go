@@ -17,11 +17,10 @@
 package main
 
 import (
-	"github.com/containerd/cgroups/v2"
-	stats2 "github.com/containerd/cgroups/v2/stats"
-	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/sirupsen/logrus"
 	"os"
+
+	v2 "github.com/containerd/cgroups/v2"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -38,80 +37,18 @@ func xmain() error {
 	}
 	unifiedMountpoint := "/sys/fs/cgroup"
 	logrus.Infof("Loading V2 for %q (PID %d), mountpoint=%q", g, pid, unifiedMountpoint)
-	cg, err := v2.Load(unifiedMountpoint, g)
+	cg, err := v2.LoadManager(unifiedMountpoint, g)
 	if err != nil {
 		return err
 	}
-	processes, err := cg.Processes(true)
+	processes, err := cg.Procs(true)
 	if err != nil {
 		return err
 	}
 	logrus.Infof("Has %d processes (recursively)", len(processes))
 	for i, s := range processes {
-		logrus.Infof("Process %d: %d", i, s.Pid)
+		logrus.Infof("Process %d: %d", i, s)
 	}
-	subsystems := cg.Subsystems()
-	logrus.Infof("Has %d subsystems", len(subsystems))
-	for i, s := range subsystems {
-		logrus.Infof("Subsystem %d: %q", i, s.Name())
-	}
-
-	cpuCgroup, err := v2.NewCpu(unifiedMountpoint)
-	if err != nil {
-		return err
-	}
-	var period, shares uint64 = 1000, 5000
-	resources := specs.LinuxResources{
-		CPU: &specs.LinuxCPU{Period: &period, Shares: &shares},
-	}
-	err = cpuCgroup.Create(g, &resources)
-	if err != nil {
-		return err
-	}
-	stats := stats2.Metrics{
-		CPU: &stats2.CPUStat{
-			Usage: &stats2.CPUUsage{},
-		},
-	}
-	err = cpuCgroup.Stat(g, &stats)
-	if err != nil {
-		return err
-	}
-	logrus.Infof("CPU usage stats: usage in kernel mode - %d", stats.CPU.Usage.Kernel)
-
-	err = memoryTest(unifiedMountpoint, g)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func memoryTest(unifiedMountpoint string, g v2.GroupPath) error {
-	memoryCgroup, err := v2.NewMemory(unifiedMountpoint)
-	if err != nil {
-		return err
-	}
-	var limit int64 = 10000
-	resources := specs.LinuxResources{
-		Memory: &specs.LinuxMemory{Limit: &limit},
-	}
-	err = memoryCgroup.Create(g, &resources)
-	if err != nil {
-		return err
-	}
-	stats := stats2.Metrics{
-		Memory: &stats2.MemoryStat{
-			Usage: &stats2.MemoryEntry{},
-		},
-	}
-	err = memoryCgroup.Stat(g, &stats)
-	if err != nil {
-		return err
-	}
-	logrus.Infof("Memory usage stats: usage limit - %d", stats.Memory.Usage.Limit)
-	logrus.Infof("Memory usage stats: usage - %d", stats.Memory.Usage.Usage)
-	logrus.Infof("Memory usage stats: cache - %d", stats.Memory.Cache)
 
 	return nil
 }

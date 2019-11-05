@@ -30,7 +30,7 @@ func TestVerifyGroupPath(t *testing.T) {
 		"/sys/fs/cgroup/unified/foo": false,
 	}
 	for s, valid := range valids {
-		err := VerifyGroupPath(GroupPath(s))
+		err := VerifyGroupPath(s)
 		if valid {
 			if err != nil {
 				t.Error(err)

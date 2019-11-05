@@ -16,83 +16,22 @@
 
 package v2
 
-import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strconv"
-	"strings"
+import "strconv"
 
-	statsv2 "github.com/containerd/cgroups/v2/stats"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
-)
-
-func NewPids(unifiedMountpoint string) (*pidsController, error) {
-	p := &pidsController{
-		unifiedMountpoint: unifiedMountpoint,
-	}
-	ok, err := p.Available("/")
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
-		return nil, ErrPidsNotSupported
-	}
-	return p, nil
+type Pids struct {
+	Max int64
 }
 
-type pidsController struct {
-	unifiedMountpoint string
-}
-
-func (p *pidsController) Name() Name {
-	return Pids
-}
-
-func (p *pidsController) path(g GroupPath) string {
-	return filepath.Join(p.unifiedMountpoint, string(g))
-}
-
-func (p *pidsController) Available(g GroupPath) (bool, error) {
-	return available(p.unifiedMountpoint, g, Pids)
-}
-
-func (p *pidsController) Create(g GroupPath, resources *specs.LinuxResources) error {
-	if err := os.MkdirAll(p.path(g), defaultDirPerm); err != nil {
-		return err
-	}
-	if resources.Pids != nil && resources.Pids.Limit > 0 {
-		return ioutil.WriteFile(
-			filepath.Join(p.path(g), "pids.max"),
-			[]byte(strconv.FormatInt(resources.Pids.Limit, 10)),
-			defaultFilePerm,
-		)
-	}
-	return nil
-}
-
-func (p *pidsController) Update(g GroupPath, resources *specs.LinuxResources) error {
-	return p.Create(g, resources)
-}
-
-func (p *pidsController) Stat(g GroupPath, stats *statsv2.Metrics) error {
-	current, err := readUint(filepath.Join(p.path(g), "pids.current"))
-	if err != nil {
-		return err
-	}
-	var max uint64
-	maxData, err := ioutil.ReadFile(filepath.Join(p.path(g), "pids.max"))
-	if err != nil {
-		return err
-	}
-	if maxS := strings.TrimSpace(string(maxData)); maxS != "max" {
-		if max, err = parseUint(maxS, 10, 64); err != nil {
-			return err
+func (r *Pids) Values() (o []Value) {
+	if r.Max != 0 {
+		limit := "max"
+		if r.Max > 0 {
+			limit = strconv.FormatInt(r.Max, 10)
 		}
+		o = append(o, Value{
+			filename: "pids.max",
+			value:    limit,
+		})
 	}
-	stats.Pids = &statsv2.PidsStat{
-		Current: current,
-		Limit:   max,
-	}
-	return nil
+	return o
 }
