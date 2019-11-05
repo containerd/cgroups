@@ -79,5 +79,39 @@ func xmain() error {
 	}
 	logrus.Infof("CPU usage stats: usage in kernel mode - %d", stats.CPU.Usage.Kernel)
 
+	err = memoryTest(unifiedMountpoint, g)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func memoryTest(unifiedMountpoint string, g v2.GroupPath) error {
+	memoryCgroup, err := v2.NewMemory(unifiedMountpoint)
+	if err != nil {
+		return err
+	}
+	var limit int64 = 10000
+	resources := specs.LinuxResources{
+		Memory: &specs.LinuxMemory{Limit: &limit},
+	}
+	err = memoryCgroup.Create(g, &resources)
+	if err != nil {
+		return err
+	}
+	stats := stats2.Metrics{
+		Memory: &stats2.MemoryStat{
+			Usage: &stats2.MemoryEntry{},
+		},
+	}
+	err = memoryCgroup.Stat(g, &stats)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("Memory usage stats: usage limit - %d", stats.Memory.Usage.Limit)
+	logrus.Infof("Memory usage stats: usage - %d", stats.Memory.Usage.Usage)
+	logrus.Infof("Memory usage stats: cache - %d", stats.Memory.Cache)
+
 	return nil
 }

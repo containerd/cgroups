@@ -49,6 +49,12 @@ func defaults(unifiedMountpoint string) ([]Subsystem, map[Name]error) {
 	} else {
 		subsystems = append(subsystems, x)
 	}
+
+	if x, err := NewMemory(unifiedMountpoint); err != nil {
+		unavailables[Memory] = err
+	} else {
+		subsystems = append(subsystems, x)
+	}
 	return subsystems, unavailables
 }
 
