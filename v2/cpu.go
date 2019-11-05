@@ -119,5 +119,5 @@ func (c *cpuController) Stat(g GroupPath, stats *statsv2.Metrics) error {
 }
 
 func (c *cpuController) Available(g GroupPath) (bool, error) {
-	return available(c.unifiedMountpoint, g, Pids)
+	return available(c.unifiedMountpoint, g, Cpu)
 }

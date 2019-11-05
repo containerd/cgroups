@@ -23,6 +23,14 @@ file {
       }
       json_name: "cpu"
     }
+    field {
+      name: "memory"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.MemoryStat"
+      json_name: "memory"
+    }
   }
   message_type {
     name: "PidsStat"
@@ -84,6 +92,82 @@ file {
         65004: "PerCPU"
       }
       json_name: "perCpu"
+    }
+  }
+  message_type {
+    name: "MemoryStat"
+    field {
+      name: "cache"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "cache"
+    }
+    field {
+      name: "usage"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      json_name: "usage"
+    }
+    field {
+      name: "swap"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      json_name: "swap"
+    }
+    field {
+      name: "kernel"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      json_name: "kernel"
+    }
+    field {
+      name: "kernel_tcp"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      options {
+        65004: "KernelTCP"
+      }
+      json_name: "kernelTcp"
+    }
+  }
+  message_type {
+    name: "MemoryEntry"
+    field {
+      name: "limit"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "limit"
+    }
+    field {
+      name: "usage"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "usage"
+    }
+    field {
+      name: "max"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "max"
+    }
+    field {
+      name: "failcnt"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "failcnt"
     }
   }
   syntax: "proto3"

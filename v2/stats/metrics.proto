@@ -7,6 +7,7 @@ package io.containerd.cgroups.v2;
 message Metrics {
 	PidsStat pids = 1;
 	CPUStat cpu = 2 [(gogoproto.customname) = "CPU"];
+	MemoryStat memory = 4;
 }
 
 message PidsStat {
@@ -25,4 +26,20 @@ message CPUUsage {
 	uint64 user = 3;
 	repeated uint64 per_cpu = 4 [(gogoproto.customname) = "PerCPU"];
 
+}
+
+message MemoryStat {
+	uint64 cache = 1;
+	MemoryEntry usage = 2;
+	MemoryEntry swap = 3;
+	MemoryEntry kernel = 4;
+	MemoryEntry kernel_tcp = 5 [(gogoproto.customname) = "KernelTCP"];
+
+}
+
+message MemoryEntry {
+	uint64 limit = 1;
+	uint64 usage = 2;
+	uint64 max = 3;
+	uint64 failcnt = 4;
 }
