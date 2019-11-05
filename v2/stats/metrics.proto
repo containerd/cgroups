@@ -2,13 +2,27 @@ syntax = "proto3";
 
 package io.containerd.cgroups.v2;
 
-// import "gogoproto/gogo.proto";
+ import "gogoproto/gogo.proto";
 
 message Metrics {
 	PidsStat pids = 1;
+	CPUStat cpu = 2 [(gogoproto.customname) = "CPU"];
 }
 
 message PidsStat {
 	uint64 current = 1;
 	uint64 limit = 2;
+}
+
+message CPUStat {
+	CPUUsage usage = 1;
+}
+
+message CPUUsage {
+	// values in nanoseconds
+	uint64 total = 1;
+	uint64 kernel = 2;
+	uint64 user = 3;
+	repeated uint64 per_cpu = 4 [(gogoproto.customname) = "PerCPU"];
+
 }

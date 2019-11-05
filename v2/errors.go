@@ -28,6 +28,7 @@ var (
 	ErrFreezerNotSupported      = errors.New("cgroups: freezer cgroup (v2) not supported on this system")
 	ErrMemoryNotSupported       = errors.New("cgroups: memory cgroup (v2) not supported on this system")
 	ErrPidsNotSupported         = errors.New("cgroups: pids cgroup (v2) not supported on this system")
+	ErrCPUNotSupported          = errors.New("cgroups: cpu cgroup (v2) not supported on this system")
 	ErrCgroupDeleted            = errors.New("cgroups: cgroup deleted")
 	ErrNoCgroupMountDestination = errors.New("cgroups: cannot find cgroup mount destination")
 

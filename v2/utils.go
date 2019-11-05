@@ -43,6 +43,12 @@ func defaults(unifiedMountpoint string) ([]Subsystem, map[Name]error) {
 	} else {
 		subsystems = append(subsystems, x)
 	}
+
+	if x, err := NewCpu(unifiedMountpoint); err != nil {
+		unavailables[Cpu] = err
+	} else {
+		subsystems = append(subsystems, x)
+	}
 	return subsystems, unavailables
 }
 
@@ -86,6 +92,20 @@ func parseCgroupProcsFile(path string) ([]Process, error) {
 		}
 	}
 	return out, nil
+}
+
+func parseKV(raw string) (string, uint64, error) {
+	parts := strings.Fields(raw)
+	switch len(parts) {
+	case 2:
+		v, err := parseUint(parts[1], 10, 64)
+		if err != nil {
+			return "", 0, err
+		}
+		return parts[0], v, nil
+	default:
+		return "", 0, ErrInvalidFormat
+	}
 }
 
 func readUint(path string) (uint64, error) {

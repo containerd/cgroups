@@ -17,10 +17,11 @@
 package main
 
 import (
-	"os"
-
 	"github.com/containerd/cgroups/v2"
+	stats2 "github.com/containerd/cgroups/v2/stats"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	"os"
 )
 
 func main() {
@@ -54,5 +55,29 @@ func xmain() error {
 	for i, s := range subsystems {
 		logrus.Infof("Subsystem %d: %q", i, s.Name())
 	}
+
+	cpuCgroup, err := v2.NewCpu(unifiedMountpoint)
+	if err != nil {
+		return err
+	}
+	var period, shares uint64 = 1000, 5000
+	resources := specs.LinuxResources{
+		CPU: &specs.LinuxCPU{Period: &period, Shares: &shares},
+	}
+	err = cpuCgroup.Create(g, &resources)
+	if err != nil {
+		return err
+	}
+	stats := stats2.Metrics{
+		CPU: &stats2.CPUStat{
+			Usage: &stats2.CPUUsage{},
+		},
+	}
+	err = cpuCgroup.Stat(g, &stats)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("CPU usage stats: usage in kernel mode - %d", stats.CPU.Usage.Kernel)
+
 	return nil
 }

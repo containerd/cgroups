@@ -1,6 +1,7 @@
 file {
   name: "github.com/containerd/cgroups/v2/stats/metrics.proto"
   package: "io.containerd.cgroups.v2"
+  dependency: "gogoproto/gogo.proto"
   message_type {
     name: "Metrics"
     field {
@@ -10,6 +11,17 @@ file {
       type: TYPE_MESSAGE
       type_name: ".io.containerd.cgroups.v2.PidsStat"
       json_name: "pids"
+    }
+    field {
+      name: "cpu"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.CPUStat"
+      options {
+        65004: "CPU"
+      }
+      json_name: "cpu"
     }
   }
   message_type {
@@ -27,6 +39,51 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "limit"
+    }
+  }
+  message_type {
+    name: "CPUStat"
+    field {
+      name: "usage"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.CPUUsage"
+      json_name: "usage"
+    }
+  }
+  message_type {
+    name: "CPUUsage"
+    field {
+      name: "total"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "total"
+    }
+    field {
+      name: "kernel"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "kernel"
+    }
+    field {
+      name: "user"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "user"
+    }
+    field {
+      name: "per_cpu"
+      number: 4
+      label: LABEL_REPEATED
+      type: TYPE_UINT64
+      options {
+        65004: "PerCPU"
+      }
+      json_name: "perCpu"
     }
   }
   syntax: "proto3"
