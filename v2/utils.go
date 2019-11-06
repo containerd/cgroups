@@ -29,34 +29,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-func defaults(unifiedMountpoint string) ([]Subsystem, map[Name]error) {
-	var subsystems []Subsystem
-	unavailables := make(map[Name]error, 0)
-	if x, err := NewPids(unifiedMountpoint); err != nil {
-		unavailables[Pids] = err
-	} else {
-		subsystems = append(subsystems, x)
-	}
+const (
+	cgroupProcs    = "cgroup.procs"
+	defaultDirPerm = 0755
+)
 
-	if x, err := NewFreezer(unifiedMountpoint); err != nil {
-		unavailables[Freezer] = err
-	} else {
-		subsystems = append(subsystems, x)
-	}
-
-	if x, err := NewCpu(unifiedMountpoint); err != nil {
-		unavailables[Cpu] = err
-	} else {
-		subsystems = append(subsystems, x)
-	}
-
-	if x, err := NewMemory(unifiedMountpoint); err != nil {
-		unavailables[Memory] = err
-	} else {
-		subsystems = append(subsystems, x)
-	}
-	return subsystems, unavailables
-}
+// defaultFilePerm is a var so that the test framework can change the filemode
+// of all files created when the tests are running.  The difference between the
+// tests and real world use is that files like "cgroup.procs" will exist when writing
+// to a read cgroup filesystem and do not exist prior when running in the tests.
+// this is set to a non 0 value in the test code
+var defaultFilePerm = os.FileMode(0)
 
 // remove will remove a cgroup path handling EAGAIN and EBUSY errors and
 // retrying the remove after a exp timeout
@@ -76,25 +59,23 @@ func remove(path string) error {
 }
 
 // parseCgroupProcsFile parses /sys/fs/cgroup/$GROUPPATH/cgroup.procs
-func parseCgroupProcsFile(path string) ([]Process, error) {
+func parseCgroupProcsFile(path string) ([]uint64, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 	var (
-		out []Process
+		out []uint64
 		s   = bufio.NewScanner(f)
 	)
 	for s.Scan() {
 		if t := s.Text(); t != "" {
-			pid, err := strconv.Atoi(t)
+			pid, err := strconv.ParseUint(t, 10, 0)
 			if err != nil {
 				return nil, err
 			}
-			out = append(out, Process{
-				Pid: pid,
-			})
+			out = append(out, pid)
 		}
 	}
 	return out, nil
@@ -140,8 +121,8 @@ func parseUint(s string, base, bitSize int) (uint64, error) {
 	return v, nil
 }
 
-// parseCgroupFile parses /proc/PID/cgroup file and return GroupPath
-func parseCgroupFile(path string) (GroupPath, error) {
+// parseCgroupFile parses /proc/PID/cgroup file and return string
+func parseCgroupFile(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -150,7 +131,7 @@ func parseCgroupFile(path string) (GroupPath, error) {
 	return parseCgroupFromReader(f)
 }
 
-func parseCgroupFromReader(r io.Reader) (GroupPath, error) {
+func parseCgroupFromReader(r io.Reader) (string, error) {
 	var (
 		s = bufio.NewScanner(r)
 	)
@@ -160,15 +141,13 @@ func parseCgroupFromReader(r io.Reader) (GroupPath, error) {
 		}
 		var (
 			text  = s.Text()
-			parts = strings.SplitN(text, ":", 3)
+			parts = strings.SplitN(text, "::", 2)
 		)
-		if len(parts) < 3 {
+		if len(parts) < 2 {
 			return "", fmt.Errorf("invalid cgroup entry: %q", text)
 		}
 		// text is like "0::/user.slice/user-1001.slice/session-1.scope"
-		if parts[0] == "0" && parts[1] == "" {
-			return GroupPath(parts[2]), nil
-		}
+		return parts[1], nil
 	}
 	return "", fmt.Errorf("cgroup path not found")
 }

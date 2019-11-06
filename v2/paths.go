@@ -19,42 +19,21 @@ package v2
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 )
-
-// GroupPath is a string that appears as the third field in /proc/PID/cgroup.
-// e.g. "/user.slice/user-1001.slice/session-1.scope"
-//
-// GroupPath must not contain "/sys/fs/cgroup" prefix.
-// GroupPath must be a absolute path starts with "/".
-type GroupPath string
 
 // NestedGroupPath will nest the cgroups based on the calling processes cgroup
 // placing its child processes inside its own path
-func NestedGroupPath(suffix string) (GroupPath, error) {
+func NestedGroupPath(suffix string) (string, error) {
 	path, err := parseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		return "", err
 	}
-	return GroupPath(filepath.Join(string(path), suffix)), nil
+	return filepath.Join(string(path), suffix), nil
 }
 
 // PidGroupPath will return the correct cgroup paths for an existing process running inside a cgroup
 // This is commonly used for the Load function to restore an existing container
-func PidGroupPath(pid int) (GroupPath, error) {
+func PidGroupPath(pid int) (string, error) {
 	p := fmt.Sprintf("/proc/%d/cgroup", pid)
 	return parseCgroupFile(p)
-}
-
-// VerifyGroupPath verifies the format of g.
-// VerifyGroupPath doesn't verify whether g actually exists on the system.
-func VerifyGroupPath(g GroupPath) error {
-	s := string(g)
-	if !strings.HasPrefix(s, "/") {
-		return ErrInvalidGroupPath
-	}
-	if strings.HasPrefix(s, "/sys/fs/cgroup") {
-		return ErrInvalidGroupPath
-	}
-	return nil
 }
