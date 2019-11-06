@@ -45,6 +45,7 @@ func main() {
 		newCommand,
 		delCommand,
 		listCommand,
+		statCommand,
 	}
 	app.Before = func(clix *cli.Context) error {
 		if clix.GlobalBool("debug") {
@@ -114,6 +115,26 @@ var listCommand = cli.Command{
 		}
 		for _, p := range procs {
 			fmt.Println(p)
+		}
+		return nil
+	},
+}
+
+var statCommand = cli.Command{
+	Name:  "stat",
+	Usage: "stat a cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		if err != nil {
+			return err
+		}
+		stats, err := c.Stat()
+		if err != nil {
+			return err
+		}
+		for k, v := range stats {
+			fmt.Printf("%s->%d\n", k, v)
 		}
 		return nil
 	},

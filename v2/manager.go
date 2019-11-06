@@ -18,6 +18,7 @@ package v2
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,7 +30,8 @@ import (
 )
 
 const (
-	subtreeControl = "cgroup.subtree_control"
+	subtreeControl  = "cgroup.subtree_control"
+	controllersFile = "cgroup.controllers"
 )
 
 type cgValuer interface {
@@ -135,7 +137,7 @@ type Manager struct {
 }
 
 func (c *Manager) ListControllers() ([]string, error) {
-	f, err := os.Open(filepath.Join(c.path, subtreeControl))
+	f, err := os.Open(filepath.Join(c.path, controllersFile))
 	if err != nil {
 		return nil, err
 	}
@@ -241,6 +243,45 @@ func (c *Manager) Procs(recursive bool) ([]uint64, error) {
 		return nil
 	})
 	return processes, err
+}
+
+func (c *Manager) Stat() (map[string]uint64, error) {
+	controllers, err := c.ListControllers()
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]uint64)
+	for _, controller := range controllers {
+		filename := fmt.Sprintf("%s.stat", controller)
+		if err := readStatsFile(c.path, filename, out); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
+func readStatsFile(path string, file string, out map[string]uint64) error {
+	f, err := os.Open(filepath.Join(path, file))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+	for s.Scan() {
+		if err := s.Err(); err != nil {
+			return err
+		}
+		name, value, err := parseKV(s.Text())
+		if err != nil {
+			return err
+		}
+		out[name] = value
+	}
+	return nil
 }
 
 func (c *Manager) Freeze() error {
