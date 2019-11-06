@@ -17,6 +17,7 @@
 package v2
 
 import (
+	"bufio"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,6 +26,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+)
+
+const (
+	subtreeControl = "cgroup.subtree_control"
 )
 
 type cgValuer interface {
@@ -93,18 +98,19 @@ func writeValues(path string, values []Value) error {
 }
 
 func NewManager(mountpoint string, group string, resources *Resources) (*Manager, error) {
-	if err := VerifyGroupPath(group); err != nil {
-		return nil, err
+	if group == "" {
+		return nil, ErrInvalidGroupPath
 	}
-
 	path := filepath.Join(mountpoint, group)
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
-	if err := writeValues(path, resources.Values()); err != nil {
-		// clean up cgroup dir on failure
-		os.Remove(path)
-		return nil, err
+	if resources != nil {
+		if err := writeValues(path, resources.Values()); err != nil {
+			// clean up cgroup dir on failure
+			os.Remove(path)
+			return nil, err
+		}
 	}
 	return &Manager{
 		unifiedMountpoint: mountpoint,
@@ -113,8 +119,8 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 }
 
 func LoadManager(mountpoint string, group string) (*Manager, error) {
-	if err := VerifyGroupPath(group); err != nil {
-		return nil, err
+	if group == "" {
+		return nil, ErrInvalidGroupPath
 	}
 	path := filepath.Join(mountpoint, group)
 	return &Manager{
@@ -126,6 +132,58 @@ func LoadManager(mountpoint string, group string) (*Manager, error) {
 type Manager struct {
 	unifiedMountpoint string
 	path              string
+}
+
+func (c *Manager) ListControllers() ([]string, error) {
+	f, err := os.Open(filepath.Join(c.path, subtreeControl))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var (
+		out []string
+		s   = bufio.NewScanner(f)
+	)
+	s.Split(bufio.ScanWords)
+	for s.Scan() {
+		if err := s.Err(); err != nil {
+			return nil, err
+		}
+		out = append(out, s.Text())
+	}
+	return out, nil
+}
+
+type ControllerToggle int
+
+const (
+	Enable ControllerToggle = iota + 1
+	Disable
+)
+
+func toggleFunc(controllers []string, prefix string) []string {
+	out := make([]string, len(controllers))
+	for i, c := range controllers {
+		out[i] = prefix + c
+	}
+	return out
+}
+
+func (c *Manager) ToggleControllers(controllers []string, t ControllerToggle) error {
+	f, err := os.OpenFile(filepath.Join(c.path, subtreeControl), os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	switch t {
+	case Enable:
+		controllers = toggleFunc(controllers, "+")
+	case Disable:
+		controllers = toggleFunc(controllers, "-")
+	}
+	_, err = f.WriteString(strings.Join(controllers, " "))
+	return err
 }
 
 func (c *Manager) NewChild(name string, resources *Resources) (*Manager, error) {

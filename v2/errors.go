@@ -31,8 +31,7 @@ var (
 	ErrCPUNotSupported          = errors.New("cgroups: cpu cgroup (v2) not supported on this system")
 	ErrCgroupDeleted            = errors.New("cgroups: cgroup deleted")
 	ErrNoCgroupMountDestination = errors.New("cgroups: cannot find cgroup mount destination")
-
-	ErrInvalidGroupPath = errors.New("cgroups: group path format must be compatible with /proc/PID/cgroup")
+	ErrInvalidGroupPath         = errors.New("cgroups: invalid group path")
 )
 
 // ErrorHandler is a function that handles and acts on errors

@@ -19,7 +19,6 @@ package v2
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 )
 
 // NestedGroupPath will nest the cgroups based on the calling processes cgroup
@@ -37,17 +36,4 @@ func NestedGroupPath(suffix string) (string, error) {
 func PidGroupPath(pid int) (string, error) {
 	p := fmt.Sprintf("/proc/%d/cgroup", pid)
 	return parseCgroupFile(p)
-}
-
-// VerifyGroupPath verifies the format of g.
-// VerifyGroupPath doesn't verify whether g actually exists on the system.
-func VerifyGroupPath(g string) error {
-	s := string(g)
-	if !strings.HasPrefix(s, "/") {
-		return ErrInvalidGroupPath
-	}
-	if strings.HasPrefix(s, "/sys/fs/cgroup") {
-		return ErrInvalidGroupPath
-	}
-	return nil
 }
