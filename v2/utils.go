@@ -192,5 +192,26 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			Max: pids.Limit,
 		}
 	}
+	if i := spec.BlockIO; i != nil {
+		resources.IO = &IO{}
+		if i.Weight != nil {
+			resources.IO.BFQ.Weight = *i.Weight
+		}
+		for t, devices := range map[IOType][]specs.LinuxThrottleDevice{
+			ReadBPS:   i.ThrottleReadBpsDevice,
+			WriteBPS:  i.ThrottleWriteBpsDevice,
+			ReadIOPS:  i.ThrottleReadIOPSDevice,
+			WriteIOPS: i.ThrottleWriteIOPSDevice,
+		} {
+			for _, d := range devices {
+				resources.IO.Max = append(resources.IO.Max, Entry{
+					Type:  t,
+					Major: d.Major,
+					Minor: d.Minor,
+					Rate:  d.Rate,
+				})
+			}
+		}
+	}
 	return &resources
 }

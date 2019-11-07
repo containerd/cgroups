@@ -43,6 +43,7 @@ type Resources struct {
 	CPU    *CPU
 	Memory *Memory
 	Pids   *Pids
+	IO     *IO
 }
 
 // Values returns the raw filenames and values that
@@ -52,6 +53,7 @@ func (r *Resources) Values() (o []Value) {
 		r.CPU,
 		r.Memory,
 		r.Pids,
+		r.IO,
 	}
 	for _, v := range values {
 		if v == nil {
@@ -74,6 +76,8 @@ func (c *Value) write(path string, perm os.FileMode) error {
 	switch t := c.value.(type) {
 	case uint64:
 		data = []byte(strconv.FormatUint(t, 10))
+	case uint16:
+		data = []byte(strconv.FormatUint(uint64(t), 10))
 	case int64:
 		data = []byte(strconv.FormatInt(t, 10))
 	case []byte:
