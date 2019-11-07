@@ -17,6 +17,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -133,9 +134,6 @@ var statCommand = cli.Command{
 		if err != nil {
 			return err
 		}
-		for k, v := range stats {
-			fmt.Printf("%s->%d\n", k, v)
-		}
-		return nil
+		return json.NewEncoder(os.Stdout).Encode(stats)
 	},
 }

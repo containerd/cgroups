@@ -20,12 +20,14 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/containerd/cgroups/v2/stats"
 	"github.com/pkg/errors"
 )
 
@@ -249,12 +251,17 @@ func (c *Manager) Procs(recursive bool) ([]uint64, error) {
 	return processes, err
 }
 
-func (c *Manager) Stat() (map[string]uint64, error) {
+var singleValueFiles = []string{
+	"pids.current",
+	"pids.max",
+}
+
+func (c *Manager) Stat() (*stats.Metrics, error) {
 	controllers, err := c.ListControllers()
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[string]uint64)
+	out := make(map[string]interface{})
 	for _, controller := range controllers {
 		filename := fmt.Sprintf("%s.stat", controller)
 		if err := readStatsFile(c.path, filename, out); err != nil {
@@ -264,10 +271,102 @@ func (c *Manager) Stat() (map[string]uint64, error) {
 			return nil, err
 		}
 	}
-	return out, nil
+	for _, name := range singleValueFiles {
+		if err := readSingleFile(c.path, name, out); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return nil, err
+		}
+	}
+	var metrics stats.Metrics
+
+	metrics.Pids = &stats.PidsStat{
+		Current: getPidValue("pids.current", out),
+		Limit:   getPidValue("pids.max", out),
+	}
+	metrics.CPU = &stats.CPUStat{
+		UsageUsec:     out["usage_usec"].(uint64),
+		UserUsec:      out["user_usec"].(uint64),
+		SystemUsec:    out["system_usec"].(uint64),
+		NrPeriods:     out["nr_periods"].(uint64),
+		NrThrottled:   out["nr_throttled"].(uint64),
+		ThrottledUsec: out["throttled_usec"].(uint64),
+	}
+	metrics.Memory = &stats.MemoryStat{
+		Anon:                  out["anon"].(uint64),
+		File:                  out["file"].(uint64),
+		KernelStack:           out["kernel_stack"].(uint64),
+		Slab:                  out["slab"].(uint64),
+		Sock:                  out["sock"].(uint64),
+		Shmem:                 out["shmem"].(uint64),
+		FileMapped:            out["file_mapped"].(uint64),
+		FileDirty:             out["file_dirty"].(uint64),
+		FileWriteback:         out["file_writeback"].(uint64),
+		AnonThp:               out["anon_thp"].(uint64),
+		InactiveAnon:          out["inactive_anon"].(uint64),
+		ActiveAnon:            out["active_anon"].(uint64),
+		InactiveFile:          out["inactive_file"].(uint64),
+		ActiveFile:            out["active_file"].(uint64),
+		Unevictable:           out["unevictable"].(uint64),
+		SlabReclaimable:       out["slab_reclaimable"].(uint64),
+		SlabUnreclaimable:     out["slab_unreclaimable"].(uint64),
+		Pgfault:               out["pgfault"].(uint64),
+		Pgmajfault:            out["pgmajfault"].(uint64),
+		WorkingsetRefault:     out["workingset_refault"].(uint64),
+		WorkingsetActivate:    out["workingset_activate"].(uint64),
+		WorkingsetNodereclaim: out["workingset_nodereclaim"].(uint64),
+		Pgrefill:              out["pgrefill"].(uint64),
+		Pgscan:                out["pgscan"].(uint64),
+		Pgsteal:               out["pgsteal"].(uint64),
+		Pgactivate:            out["pgactivate"].(uint64),
+		Pgdeactivate:          out["pgdeactivate"].(uint64),
+		Pglazyfree:            out["pglazyfree"].(uint64),
+		Pglazyfreed:           out["pglazyfreed"].(uint64),
+		ThpFaultAlloc:         out["thp_fault_alloc"].(uint64),
+		ThpCollapseAlloc:      out["thp_collapse_alloc"].(uint64),
+	}
+	return &metrics, nil
 }
 
-func readStatsFile(path string, file string, out map[string]uint64) error {
+func getPidValue(key string, out map[string]interface{}) uint64 {
+	v, ok := out[key]
+	if !ok {
+		return 0
+	}
+	switch t := v.(type) {
+	case uint64:
+		return t
+	case string:
+		if t == "max" {
+			return math.MaxUint64
+		}
+	}
+	return 0
+}
+
+func readSingleFile(path string, file string, out map[string]interface{}) error {
+	f, err := os.Open(filepath.Join(path, file))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	s := string(data)
+	v, err := parseUint(s, 10, 64)
+	if err != nil {
+		// if we cannot parse as a uint, parse as a string
+		out[file] = s
+		return nil
+	}
+	out[file] = v
+	return nil
+}
+
+func readStatsFile(path string, file string, out map[string]interface{}) error {
 	f, err := os.Open(filepath.Join(path, file))
 	if err != nil {
 		return err
