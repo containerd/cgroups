@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
 
@@ -152,4 +153,44 @@ func parseCgroupFromReader(r io.Reader) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("cgroup path not found")
+}
+
+// ToResources converts the oci LinuxResources struct into a
+// v2 Resources type for use with this package.
+//
+// converting cgroups configuration from v1 to v2
+// ref: https://github.com/containers/crun/blob/master/crun.1.md#cgroup-v2
+func ToResources(spec *specs.LinuxResources) *Resources {
+	var resources Resources
+	if cpu := spec.CPU; cpu != nil {
+		resources.CPU = &CPU{
+			Cpus: cpu.Cpus,
+			Mems: cpu.Mems,
+		}
+		if shares := cpu.Shares; shares != nil {
+			convertedWeight := (1 + ((*shares-2)*9999)/262142)
+			resources.CPU.Weight = &convertedWeight
+		}
+		if period := cpu.Period; period != nil {
+			resources.CPU.Max = period
+		}
+	}
+	if mem := spec.Memory; mem != nil {
+		resources.Memory = &Memory{}
+		if swap := mem.Swap; swap != nil {
+			resources.Memory.Swap = swap
+		}
+		if l := mem.Limit; l != nil {
+			resources.Memory.Max = l
+		}
+		if h := mem.Reservation; h != nil {
+			resources.Memory.High = h
+		}
+	}
+	if pids := spec.Pids; pids != nil {
+		resources.Pids = &Pids{
+			Max: pids.Limit,
+		}
+	}
+	return &resources
 }
