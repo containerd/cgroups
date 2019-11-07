@@ -22,7 +22,7 @@ before_script:
 script:
     - DCO_VERBOSITY=-q ../project/script/validate/dco
     - ../project/script/validate/fileheader ../project/
-    - go test -race -coverprofile=coverage.txt -covermode=atomic
+    - go test -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)

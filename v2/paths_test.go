@@ -28,6 +28,8 @@ func TestVerifyGroupPath(t *testing.T) {
 		"/foo/bar":                   true,
 		"/sys/fs/cgroup/foo":         false,
 		"/sys/fs/cgroup/unified/foo": false,
+		"foo":                        false,
+		"/foo/../bar":                false,
 	}
 	for s, valid := range valids {
 		err := VerifyGroupPath(s)

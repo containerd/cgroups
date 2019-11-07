@@ -100,8 +100,8 @@ func writeValues(path string, values []Value) error {
 }
 
 func NewManager(mountpoint string, group string, resources *Resources) (*Manager, error) {
-	if group == "" {
-		return nil, ErrInvalidGroupPath
+	if err := VerifyGroupPath(group); err != nil {
+		return nil, err
 	}
 	path := filepath.Join(mountpoint, group)
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
@@ -121,8 +121,8 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 }
 
 func LoadManager(mountpoint string, group string) (*Manager, error) {
-	if group == "" {
-		return nil, ErrInvalidGroupPath
+	if err := VerifyGroupPath(group); err != nil {
+		return nil, err
 	}
 	path := filepath.Join(mountpoint, group)
 	return &Manager{
