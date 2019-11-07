@@ -10,5 +10,6 @@ require (
 	github.com/opencontainers/runtime-spec v0.1.2-0.20190507144316-5b71a03e2700
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
+	github.com/urfave/cli v1.22.1
 	golang.org/x/sys v0.0.0-20190514135907-3a4b5fb9f71f
 )
