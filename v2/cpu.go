@@ -25,9 +25,12 @@ type CPU struct {
 
 func (r *CPU) Values() (o []Value) {
 	if r.Weight != nil {
+		// Converting cgroups configuration from v1 to v2
+		// more here https://github.com/containers/crun/blob/master/crun.1.md#cgroup-v2
+		convertedWeight := (1 + ((*r.Weight-2)*9999)/262142)
 		o = append(o, Value{
 			filename: "cpu.weight",
-			value:    *r.Weight,
+			value:    convertedWeight,
 		})
 	}
 	if r.Max != nil {

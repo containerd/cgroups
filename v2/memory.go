@@ -17,12 +17,25 @@
 package v2
 
 type Memory struct {
-	Swap *int64
-	Max  *int64
-	High *int64
+	KernelMemory *int64
+	Swap         *int64
+	Max          *int64
+	High         *int64
 }
 
 func (r *Memory) Values() (o []Value) {
+	if r.KernelMemory != nil {
+		// Check if kernel memory is enabled
+		// We have to limit the kernel memory here as it won't be accounted at all
+		// until a limit is set on the cgroup and limit cannot be set once the
+		// cgroup has children, or if there are already tasks in the cgroup.
+		for _, i := range []int64{1, -1} {
+			o = append(o, Value{
+				filename: "memory.kmem.limit_in_bytes",
+				value:    i,
+			})
+		}
+	}
 	if r.Swap != nil {
 		o = append(o, Value{
 			filename: "memory.swap_max",
