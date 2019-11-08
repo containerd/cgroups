@@ -52,122 +52,266 @@ file {
   message_type {
     name: "CPUStat"
     field {
-      name: "usage"
-      number: 1
-      label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.CPUUsage"
-      json_name: "usage"
-    }
-  }
-  message_type {
-    name: "CPUUsage"
-    field {
-      name: "total"
+      name: "usage_usec"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "total"
+      json_name: "usageUsec"
     }
     field {
-      name: "kernel"
+      name: "user_usec"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "kernel"
+      json_name: "userUsec"
     }
     field {
-      name: "user"
+      name: "system_usec"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "user"
+      json_name: "systemUsec"
     }
     field {
-      name: "per_cpu"
+      name: "nr_periods"
       number: 4
-      label: LABEL_REPEATED
+      label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      options {
-        65004: "PerCPU"
-      }
-      json_name: "perCpu"
+      json_name: "nrPeriods"
+    }
+    field {
+      name: "nr_throttled"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "nrThrottled"
+    }
+    field {
+      name: "throttled_usec"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "throttledUsec"
     }
   }
   message_type {
     name: "MemoryStat"
     field {
-      name: "cache"
+      name: "anon"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "cache"
+      json_name: "anon"
     }
     field {
-      name: "usage"
+      name: "file"
       number: 2
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
-      json_name: "usage"
+      type: TYPE_UINT64
+      json_name: "file"
     }
     field {
-      name: "swap"
+      name: "kernel_stack"
       number: 3
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
-      json_name: "swap"
+      type: TYPE_UINT64
+      json_name: "kernelStack"
     }
     field {
-      name: "kernel"
+      name: "slab"
       number: 4
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
-      json_name: "kernel"
+      type: TYPE_UINT64
+      json_name: "slab"
     }
     field {
-      name: "kernel_tcp"
+      name: "sock"
       number: 5
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
-      options {
-        65004: "KernelTCP"
-      }
-      json_name: "kernelTcp"
-    }
-  }
-  message_type {
-    name: "MemoryEntry"
-    field {
-      name: "limit"
-      number: 1
-      label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "limit"
+      json_name: "sock"
     }
     field {
-      name: "usage"
-      number: 2
+      name: "shmem"
+      number: 6
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "usage"
+      json_name: "shmem"
     }
     field {
-      name: "max"
-      number: 3
+      name: "file_mapped"
+      number: 7
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "max"
+      json_name: "fileMapped"
     }
     field {
-      name: "failcnt"
-      number: 4
+      name: "file_dirty"
+      number: 8
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "failcnt"
+      json_name: "fileDirty"
+    }
+    field {
+      name: "file_writeback"
+      number: 9
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "fileWriteback"
+    }
+    field {
+      name: "anon_thp"
+      number: 10
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "anonThp"
+    }
+    field {
+      name: "inactive_anon"
+      number: 11
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "inactiveAnon"
+    }
+    field {
+      name: "active_anon"
+      number: 12
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "activeAnon"
+    }
+    field {
+      name: "inactive_file"
+      number: 13
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "inactiveFile"
+    }
+    field {
+      name: "active_file"
+      number: 14
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "activeFile"
+    }
+    field {
+      name: "unevictable"
+      number: 15
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "unevictable"
+    }
+    field {
+      name: "slab_reclaimable"
+      number: 16
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "slabReclaimable"
+    }
+    field {
+      name: "slab_unreclaimable"
+      number: 17
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "slabUnreclaimable"
+    }
+    field {
+      name: "pgfault"
+      number: 18
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgfault"
+    }
+    field {
+      name: "pgmajfault"
+      number: 19
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgmajfault"
+    }
+    field {
+      name: "workingset_refault"
+      number: 20
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetRefault"
+    }
+    field {
+      name: "workingset_activate"
+      number: 21
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetActivate"
+    }
+    field {
+      name: "workingset_nodereclaim"
+      number: 22
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetNodereclaim"
+    }
+    field {
+      name: "pgrefill"
+      number: 23
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgrefill"
+    }
+    field {
+      name: "pgscan"
+      number: 24
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgscan"
+    }
+    field {
+      name: "pgsteal"
+      number: 25
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgsteal"
+    }
+    field {
+      name: "pgactivate"
+      number: 26
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgactivate"
+    }
+    field {
+      name: "pgdeactivate"
+      number: 27
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pgdeactivate"
+    }
+    field {
+      name: "pglazyfree"
+      number: 28
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pglazyfree"
+    }
+    field {
+      name: "pglazyfreed"
+      number: 29
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "pglazyfreed"
+    }
+    field {
+      name: "thp_fault_alloc"
+      number: 30
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "thpFaultAlloc"
+    }
+    field {
+      name: "thp_collapse_alloc"
+      number: 31
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "thpCollapseAlloc"
     }
   }
   syntax: "proto3"

@@ -82,13 +82,14 @@ func parseCgroupProcsFile(path string) ([]uint64, error) {
 	return out, nil
 }
 
-func parseKV(raw string) (string, uint64, error) {
+func parseKV(raw string) (string, interface{}, error) {
 	parts := strings.Fields(raw)
 	switch len(parts) {
 	case 2:
 		v, err := parseUint(parts[1], 10, 64)
 		if err != nil {
-			return "", 0, err
+			// if we cannot parse as a uint, parse as a string
+			return parts[0], parts[1], nil
 		}
 		return parts[0], v, nil
 	default:
@@ -190,6 +191,27 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 	if pids := spec.Pids; pids != nil {
 		resources.Pids = &Pids{
 			Max: pids.Limit,
+		}
+	}
+	if i := spec.BlockIO; i != nil {
+		resources.IO = &IO{}
+		if i.Weight != nil {
+			resources.IO.BFQ.Weight = *i.Weight
+		}
+		for t, devices := range map[IOType][]specs.LinuxThrottleDevice{
+			ReadBPS:   i.ThrottleReadBpsDevice,
+			WriteBPS:  i.ThrottleWriteBpsDevice,
+			ReadIOPS:  i.ThrottleReadIOPSDevice,
+			WriteIOPS: i.ThrottleWriteIOPSDevice,
+		} {
+			for _, d := range devices {
+				resources.IO.Max = append(resources.IO.Max, Entry{
+					Type:  t,
+					Major: d.Major,
+					Minor: d.Minor,
+					Rate:  d.Rate,
+				})
+			}
 		}
 	}
 	return &resources
