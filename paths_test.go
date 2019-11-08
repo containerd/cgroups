@@ -114,6 +114,9 @@ func TestEmptySubsystem(t *testing.T) {
 }
 
 func TestSystemd240(t *testing.T) {
+	if isUnified {
+		t.Skipf("requires the system to be running in legacy mode")
+	}
 	const data = `8:net_cls:/
 	7:memory:/system.slice/docker.service
 	6:freezer:/
