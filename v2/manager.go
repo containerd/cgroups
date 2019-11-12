@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -39,9 +40,13 @@ const (
 	controllersFile = "cgroup.controllers"
 )
 
+var oomEventCount = 0
+
 type cgValuer interface {
 	Values() []Value
 }
+
+type Event struct{}
 
 // Resources for a cgroups v2 unified hierarchy
 type Resources struct {
@@ -415,8 +420,8 @@ func (c *Manager) freeze(path string, state State) error {
 	}
 }
 
-func (c *Manager) OOMEventFD(rootPath string) (uintptr, error) {
-	fpath := filepath.Join(rootPath, "memory.events")
+func (c *Manager) OOMEventFD() (uintptr, error) {
+	fpath := filepath.Join(c.path, "memory.events")
 	fd, err := syscall.InotifyInit()
 	if err != nil {
 		return 0, fmt.Errorf("Failed to create inotify fd")
@@ -429,4 +434,35 @@ func (c *Manager) OOMEventFD(rootPath string) (uintptr, error) {
 	defer syscall.InotifyRmWatch(fd, uint32(wd))
 
 	return uintptr(fd), nil
+}
+
+func (c *Manager) EventChan() (<-chan Event, error) {
+	fd, err := c.OOMEventFD()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create oom event fd")
+	}
+	ec := make(chan Event)
+	go c.waitForOOMEvents(int(fd), ec)
+
+	return ec, nil
+}
+
+func (c *Manager) waitForOOMEvents(fd int, ec chan<- Event) {
+	for {
+		buffer := make([]byte, syscall.SizeofInotifyEvent*10)
+		bytesRead, err := syscall.Read(fd, buffer)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var out map[string]interface{}
+		if bytesRead >= syscall.SizeofInotifyEvent {
+			if err := readStatsFile(c.path, "memory.events", out); err != nil {
+				val, ok := out["oom"]
+				if ok && val.(int) > oomEventCount {
+					oomEventCount = val.(int)
+					ec <- Event{}
+				}
+			}
+		}
+	}
 }
