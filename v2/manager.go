@@ -25,7 +25,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/containerd/cgroups/v2/stats"
 	"github.com/pkg/errors"
@@ -410,4 +413,20 @@ func (c *Manager) freeze(path string, state State) error {
 		}
 		time.Sleep(1 * time.Millisecond)
 	}
+}
+
+func (c *Manager) OOMEventFD(rootPath string) (uintptr, error) {
+	fpath := filepath.Join(rootPath, "memory.events")
+	fd, err := syscall.InotifyInit()
+	if err != nil {
+		return 0, fmt.Errorf("Failed to create inotify fd")
+	}
+	defer syscall.Close(fd)
+	wd, err := syscall.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
+	if wd < 0 {
+		return 0, fmt.Errorf("Failed to add inotify watch for %q", fpath)
+	}
+	defer syscall.InotifyRmWatch(fd, uint32(wd))
+
+	return uintptr(fd), nil
 }
