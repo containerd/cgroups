@@ -20,7 +20,6 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -46,7 +45,13 @@ type cgValuer interface {
 	Values() []Value
 }
 
-type Event struct{}
+type Event struct {
+	Low     uint64
+	High    uint64
+	Max     uint64
+	OOM     uint64
+	OOMKill uint64
+}
 
 // Resources for a cgroups v2 unified hierarchy
 type Resources struct {
@@ -420,48 +425,52 @@ func (c *Manager) freeze(path string, state State) error {
 	}
 }
 
-func (c *Manager) OOMEventFD() (uintptr, error) {
+func (c *Manager) MemoryEventFD() (uintptr, error) {
 	fpath := filepath.Join(c.path, "memory.events")
 	fd, err := syscall.InotifyInit()
 	if err != nil {
-		return 0, fmt.Errorf("Failed to create inotify fd")
+		return 0, errors.Errorf("Failed to create inotify fd")
 	}
 	defer syscall.Close(fd)
 	wd, err := syscall.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
 	if wd < 0 {
-		return 0, fmt.Errorf("Failed to add inotify watch for %q", fpath)
+		return 0, errors.Errorf("Failed to add inotify watch for %q", fpath)
 	}
 	defer syscall.InotifyRmWatch(fd, uint32(wd))
 
 	return uintptr(fd), nil
 }
 
-func (c *Manager) EventChan() (<-chan Event, error) {
-	fd, err := c.OOMEventFD()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create oom event fd")
-	}
+func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 	ec := make(chan Event)
-	go c.waitForOOMEvents(int(fd), ec)
+	errCh := make(chan error)
+	go c.waitForEvents(ec, errCh)
 
 	return ec, nil
 }
 
-func (c *Manager) waitForOOMEvents(fd int, ec chan<- Event) {
+func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
+	fd, err := c.MemoryEventFD()
+	if err != nil {
+		errCh <- errors.Errorf("Failed to create memory event fd")
+	}
 	for {
 		buffer := make([]byte, syscall.SizeofInotifyEvent*10)
-		bytesRead, err := syscall.Read(fd, buffer)
+		bytesRead, err := syscall.Read(int(fd), buffer)
 		if err != nil {
-			log.Fatal(err)
+			errCh <- err
 		}
 		var out map[string]interface{}
 		if bytesRead >= syscall.SizeofInotifyEvent {
 			if err := readStatsFile(c.path, "memory.events", out); err != nil {
-				val, ok := out["oom"]
-				if ok && val.(int) > oomEventCount {
-					oomEventCount = val.(int)
-					ec <- Event{}
+				e := Event{
+					High:    out["high"].(uint64),
+					Low:     out["low"].(uint64),
+					Max:     out["max"].(uint64),
+					OOM:     out["oom"].(uint64),
+					OOMKill: out["oom_kill"].(uint64),
 				}
+				ec <- e
 			}
 		}
 	}
