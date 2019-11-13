@@ -39,8 +39,6 @@ const (
 	controllersFile = "cgroup.controllers"
 )
 
-var oomEventCount = 0
-
 type cgValuer interface {
 	Values() []Value
 }
