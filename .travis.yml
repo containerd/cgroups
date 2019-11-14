@@ -12,7 +12,7 @@ install:
     - cd $GOPATH/src/github.com/coreos && git clone https://github.com/coreos/go-systemd && cd go-systemd && git checkout 48702e0da86bd25e76cfef347e2adeb434a0d0a6
     - cd $GOPATH/src/github.com/godbus && git clone https://github.com/godbus/dbus && cd dbus && git checkout c7fdd8b5cd55e87b4e1f4e372cdb1db61dd6c66f
     - cd $GOPATH/src/github.com/containerd/cgroups
-    - go get -d -t ./...
+    - GO111MODULE="on" go mod vendor
     - go get -u github.com/vbatts/git-validation
     - go get -u github.com/kunalkushwaha/ltag
 
