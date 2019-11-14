@@ -480,14 +480,15 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 	}
 }
 
-func (c *Manager) SetDevice(res *specs.LinuxResources) error {
+
+func (r *Resources) SetDevice(path string, res *specs.LinuxResources) error {
 	insts, license, err := DeviceFilter(res.Devices)
 	if err != nil {
 		return err
 	}
-	dirFD, err := unix.Open(c.path, unix.O_DIRECTORY|unix.O_RDONLY, 0600)
+	dirFD, err := unix.Open(path, unix.O_DIRECTORY|unix.O_RDONLY, 0600)
 	if err != nil {
-		return errors.Errorf("cannot get dir FD for %s", c.path)
+		return errors.Errorf("cannot get dir FD for %s", path)
 	}
 	defer unix.Close(dirFD)
 	if _, err := LoadAttachCgroupDeviceFilter(insts, license, dirFD); err != nil {
