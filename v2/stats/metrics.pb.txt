@@ -346,20 +346,6 @@ file {
       type: TYPE_UINT64
       json_name: "usage"
     }
-    field {
-      name: "max"
-      number: 3
-      label: LABEL_OPTIONAL
-      type: TYPE_UINT64
-      json_name: "max"
-    }
-    field {
-      name: "failcnt"
-      number: 4
-      label: LABEL_OPTIONAL
-      type: TYPE_UINT64
-      json_name: "failcnt"
-    }
   }
   syntax: "proto3"
 }

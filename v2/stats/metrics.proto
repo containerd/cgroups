@@ -63,8 +63,6 @@ message MemoryStat {
 message MemoryEntry {
 	uint64 limit = 1;
 	uint64 usage = 2;
-	uint64 max = 3;
-	uint64 failcnt = 4;
 }
 
 // iostat
