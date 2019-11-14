@@ -87,7 +87,7 @@ func TestDeviceFilter_PrivilegedExceptSingleDevice(t *testing.T) {
 		},
 		{
 			Type:   "b",
-			Major:  pointerInt64(0),
+			Major:  pointerInt64(8),
 			Minor:  pointerInt64(0),
 			Access: "rwm",
 			Allow:  false,
