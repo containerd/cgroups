@@ -19,6 +19,9 @@
 
 	Although ebpf.c is originally licensed under LGPL-3.0-or-later, the author (Giuseppe Scrivano)
 	agreed to relicense the file in Apache License 2.0: https://github.com/opencontainers/runc/issues/2144#issuecomment-543116397
+
+	This particular Go implementation based on runc version
+	https://github.com/opencontainers/runc/blob/master/libcontainer/cgroups/ebpf/devicefilter/devicefilter.go
 */
 
 package v2
