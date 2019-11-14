@@ -325,22 +325,11 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		Pglazyfreed:           out["pglazyfreed"].(uint64),
 		ThpFaultAlloc:         out["thp_fault_alloc"].(uint64),
 		ThpCollapseAlloc:      out["thp_collapse_alloc"].(uint64),
+		Usage:                 getStatFileContent(filepath.Join(c.path, "memory.current")),
+		UsageLimit:            getStatFileContent(filepath.Join(c.path, "memory.max")),
+		SwapUsage:             getStatFileContent(filepath.Join(c.path, "memory.swap.current")),
+		SwapLimit:             getStatFileContent(filepath.Join(c.path, "memory.swap.max")),
 	}
-	cur_mem := getStatFileContent(filepath.Join(c.path, "memory.current"))
-	max_mem := getStatFileContent(filepath.Join(c.path, "memory.max"))
-	cur_swap := getStatFileContent(filepath.Join(c.path, "memory.swap.current"))
-	max_swap := getStatFileContent(filepath.Join(c.path, "memory.swap.max"))
-
-	usage := stats.MemoryEntry{
-		Usage: cur_mem,
-		Limit: max_mem,
-	}
-	swwap := stats.MemoryEntry{
-		Usage: cur_swap,
-		Limit: max_swap,
-	}
-	metrics.Memory.Usage = &usage
-	metrics.Memory.SwapUsage = &swwap
 
 	return &metrics, nil
 }

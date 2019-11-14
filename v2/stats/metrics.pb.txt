@@ -317,34 +317,29 @@ file {
       name: "usage"
       number: 32
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      type: TYPE_UINT64
       json_name: "usage"
+    }
+    field {
+      name: "usage_limit"
+      number: 33
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "usageLimit"
     }
     field {
       name: "swap_usage"
-      number: 33
+      number: 34
       label: LABEL_OPTIONAL
-      type: TYPE_MESSAGE
-      type_name: ".io.containerd.cgroups.v2.MemoryEntry"
+      type: TYPE_UINT64
       json_name: "swapUsage"
     }
-  }
-  message_type {
-    name: "MemoryEntry"
     field {
-      name: "limit"
-      number: 1
+      name: "swap_limit"
+      number: 35
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
-      json_name: "limit"
-    }
-    field {
-      name: "usage"
-      number: 2
-      label: LABEL_OPTIONAL
-      type: TYPE_UINT64
-      json_name: "usage"
+      json_name: "swapLimit"
     }
   }
   syntax: "proto3"
