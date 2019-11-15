@@ -200,7 +200,31 @@ func toggleFunc(controllers []string, prefix string) []string {
 }
 
 func (c *Manager) ToggleControllers(controllers []string, t ControllerToggle) error {
-	f, err := os.OpenFile(filepath.Join(c.path, subtreeControl), os.O_WRONLY, 0)
+	// when c.path is like /foo/bar/baz, the following files need to be written:
+	// * /sys/fs/cgroup/cgroup.subtree_control
+	// * /sys/fs/cgroup/foo/cgroup.subtree_control
+	// * /sys/fs/cgroup/foo/bar/cgroup.subtree_control
+	// Note that /sys/fs/cgroup/foo/bar/baz/cgroup.subtree_control does not need to be written.
+	split := strings.Split(c.path, "/")
+	var lastErr error
+	for i, _ := range split {
+		f := strings.Join(split[:i], "/")
+		if !strings.HasPrefix(f, c.unifiedMountpoint) || f == c.path {
+			continue
+		}
+		filePath := filepath.Join(f, subtreeControl)
+		if err := c.writeSubtreeControl(filePath, controllers, t); err != nil {
+			// When running as rootless, the user may face EPERM on parent groups, but it is neglible when the
+			// controller is already written.
+			// So we only return the last error.
+			lastErr = errors.Wrapf(err, "failed to write subtree controllers %+v to %q", controllers, filePath)
+		}
+	}
+	return lastErr
+}
+
+func (c *Manager) writeSubtreeControl(filePath string, controllers []string, t ControllerToggle) error {
+	f, err := os.OpenFile(filePath, os.O_WRONLY, 0)
 	if err != nil {
 		return err
 	}
