@@ -297,45 +297,45 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		Limit:   getPidValue("pids.max", out),
 	}
 	metrics.CPU = &stats.CPUStat{
-		UsageUsec:     out["usage_usec"].(uint64),
-		UserUsec:      out["user_usec"].(uint64),
-		SystemUsec:    out["system_usec"].(uint64),
-		NrPeriods:     out["nr_periods"].(uint64),
-		NrThrottled:   out["nr_throttled"].(uint64),
-		ThrottledUsec: out["throttled_usec"].(uint64),
+		UsageUsec:     getUint64Value("usage_usec", out),
+		UserUsec:      getUint64Value("user_usec", out),
+		SystemUsec:    getUint64Value("system_usec", out),
+		NrPeriods:     getUint64Value("nr_periods", out),
+		NrThrottled:   getUint64Value("nr_throttled", out),
+		ThrottledUsec: getUint64Value("throttled_usec", out),
 	}
 	metrics.Memory = &stats.MemoryStat{
-		Anon:                  out["anon"].(uint64),
-		File:                  out["file"].(uint64),
-		KernelStack:           out["kernel_stack"].(uint64),
-		Slab:                  out["slab"].(uint64),
-		Sock:                  out["sock"].(uint64),
-		Shmem:                 out["shmem"].(uint64),
-		FileMapped:            out["file_mapped"].(uint64),
-		FileDirty:             out["file_dirty"].(uint64),
-		FileWriteback:         out["file_writeback"].(uint64),
-		AnonThp:               out["anon_thp"].(uint64),
-		InactiveAnon:          out["inactive_anon"].(uint64),
-		ActiveAnon:            out["active_anon"].(uint64),
-		InactiveFile:          out["inactive_file"].(uint64),
-		ActiveFile:            out["active_file"].(uint64),
-		Unevictable:           out["unevictable"].(uint64),
-		SlabReclaimable:       out["slab_reclaimable"].(uint64),
-		SlabUnreclaimable:     out["slab_unreclaimable"].(uint64),
-		Pgfault:               out["pgfault"].(uint64),
-		Pgmajfault:            out["pgmajfault"].(uint64),
-		WorkingsetRefault:     out["workingset_refault"].(uint64),
-		WorkingsetActivate:    out["workingset_activate"].(uint64),
-		WorkingsetNodereclaim: out["workingset_nodereclaim"].(uint64),
-		Pgrefill:              out["pgrefill"].(uint64),
-		Pgscan:                out["pgscan"].(uint64),
-		Pgsteal:               out["pgsteal"].(uint64),
-		Pgactivate:            out["pgactivate"].(uint64),
-		Pgdeactivate:          out["pgdeactivate"].(uint64),
-		Pglazyfree:            out["pglazyfree"].(uint64),
-		Pglazyfreed:           out["pglazyfreed"].(uint64),
-		ThpFaultAlloc:         out["thp_fault_alloc"].(uint64),
-		ThpCollapseAlloc:      out["thp_collapse_alloc"].(uint64),
+		Anon:                  getUint64Value("anon", out),
+		File:                  getUint64Value("file", out),
+		KernelStack:           getUint64Value("kernel_stack", out),
+		Slab:                  getUint64Value("slab", out),
+		Sock:                  getUint64Value("sock", out),
+		Shmem:                 getUint64Value("shmem", out),
+		FileMapped:            getUint64Value("file_mapped", out),
+		FileDirty:             getUint64Value("file_dirty", out),
+		FileWriteback:         getUint64Value("file_writeback", out),
+		AnonThp:               getUint64Value("anon_thp", out),
+		InactiveAnon:          getUint64Value("inactive_anon", out),
+		ActiveAnon:            getUint64Value("active_anon", out),
+		InactiveFile:          getUint64Value("inactive_file", out),
+		ActiveFile:            getUint64Value("active_file", out),
+		Unevictable:           getUint64Value("unevictable", out),
+		SlabReclaimable:       getUint64Value("slab_reclaimable", out),
+		SlabUnreclaimable:     getUint64Value("slab_unreclaimable", out),
+		Pgfault:               getUint64Value("pgfault", out),
+		Pgmajfault:            getUint64Value("pgmajfault", out),
+		WorkingsetRefault:     getUint64Value("workingset_refault", out),
+		WorkingsetActivate:    getUint64Value("workingset_activate", out),
+		WorkingsetNodereclaim: getUint64Value("workingset_nodereclaim", out),
+		Pgrefill:              getUint64Value("pgrefill", out),
+		Pgscan:                getUint64Value("pgscan", out),
+		Pgsteal:               getUint64Value("pgsteal", out),
+		Pgactivate:            getUint64Value("pgactivate", out),
+		Pgdeactivate:          getUint64Value("pgdeactivate", out),
+		Pglazyfree:            getUint64Value("pglazyfree", out),
+		Pglazyfreed:           getUint64Value("pglazyfreed", out),
+		ThpFaultAlloc:         getUint64Value("thp_fault_alloc", out),
+		ThpCollapseAlloc:      getUint64Value("thp_collapse_alloc", out),
 		Usage:                 getStatFileContentUint64(filepath.Join(c.path, "memory.current")),
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
@@ -343,6 +343,18 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	}
 
 	return &metrics, nil
+}
+
+func getUint64Value(key string, out map[string]interface{}) uint64 {
+	v, ok := out[key]
+	if !ok {
+		return 0
+	}
+	switch t := v.(type) {
+	case uint64:
+		return t
+	}
+	return 0
 }
 
 func getPidValue(key string, out map[string]interface{}) uint64 {
@@ -371,7 +383,7 @@ func readSingleFile(path string, file string, out map[string]interface{}) error 
 	if err != nil {
 		return err
 	}
-	s := string(data)
+	s := strings.TrimSpace(string(data))
 	v, err := parseUint(s, 10, 64)
 	if err != nil {
 		// if we cannot parse as a uint, parse as a string
