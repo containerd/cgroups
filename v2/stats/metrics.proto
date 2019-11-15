@@ -56,6 +56,10 @@ message MemoryStat {
 	uint64 pglazyfreed = 29;
 	uint64 thp_fault_alloc = 30;
 	uint64 thp_collapse_alloc = 31;
+	uint64 usage = 32;
+	uint64 usage_limit = 33;
+	uint64 swap_usage = 34;
+	uint64 swap_limit = 35;
 }
 
 // iostat

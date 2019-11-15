@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -215,4 +217,25 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 		}
 	}
 	return &resources
+}
+
+// Gets uint64 parsed content of single value cgroup stat file
+func getStatFileContentUint64(filePath string) uint64 {
+	contents, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		logrus.Error(err)
+		return 0
+	}
+	trimmed := strings.TrimSpace(string(contents))
+	if trimmed == "max" {
+		return math.MaxUint64
+	}
+
+	res, err := parseUint(trimmed, 10, 64)
+	if err != nil {
+		logrus.Errorf("unable to parse %q as a uint from Cgroup file %q", string(contents), filePath)
+		return res
+	}
+
+	return res
 }
