@@ -19,7 +19,6 @@ package v2
 import (
 	"bufio"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"math"
@@ -30,6 +29,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -220,7 +220,7 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 }
 
 // Gets uint64 parsed content of single value cgroup stat file
-func getStatFileContent(filePath string) uint64 {
+func getStatFileContentUint64(filePath string) uint64 {
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		logrus.Error(err)
