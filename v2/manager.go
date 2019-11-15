@@ -168,25 +168,20 @@ func setResources(path string, resources *Resources) error {
 	return nil
 }
 
-func (c *Manager) ListControllers() ([]string, error) {
-	f, err := os.Open(filepath.Join(c.path, controllersFile))
+func (c *Manager) RootControllers() ([]string, error) {
+	b, err := ioutil.ReadFile(filepath.Join(c.unifiedMountpoint, controllersFile))
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	return strings.Fields(string(b)), nil
+}
 
-	var (
-		out []string
-		s   = bufio.NewScanner(f)
-	)
-	s.Split(bufio.ScanWords)
-	for s.Scan() {
-		if err := s.Err(); err != nil {
-			return nil, err
-		}
-		out = append(out, s.Text())
+func (c *Manager) Controllers() ([]string, error) {
+	b, err := ioutil.ReadFile(filepath.Join(c.path, controllersFile))
+	if err != nil {
+		return nil, err
 	}
-	return out, nil
+	return strings.Fields(string(b)), nil
 }
 
 type ControllerToggle int
@@ -283,7 +278,7 @@ var singleValueFiles = []string{
 }
 
 func (c *Manager) Stat() (*stats.Metrics, error) {
-	controllers, err := c.ListControllers()
+	controllers, err := c.Controllers()
 	if err != nil {
 		return nil, err
 	}

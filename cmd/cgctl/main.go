@@ -46,6 +46,7 @@ func main() {
 		newCommand,
 		delCommand,
 		listCommand,
+		listControllersCommand,
 		statCommand,
 	}
 	app.Before = func(clix *cli.Context) error {
@@ -76,7 +77,7 @@ var newCommand = cli.Command{
 			return err
 		}
 		if clix.Bool("enable") {
-			controllers, err := c.ListControllers()
+			controllers, err := c.RootControllers()
 			if err != nil {
 				return err
 			}
@@ -116,6 +117,26 @@ var listCommand = cli.Command{
 		}
 		for _, p := range procs {
 			fmt.Println(p)
+		}
+		return nil
+	},
+}
+
+var listControllersCommand = cli.Command{
+	Name:  "list-controllers",
+	Usage: "list controllers in a cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		if err != nil {
+			return err
+		}
+		controllers, err := c.Controllers()
+		if err != nil {
+			return err
+		}
+		for _, c := range controllers {
+			fmt.Println(c)
 		}
 		return nil
 	},
