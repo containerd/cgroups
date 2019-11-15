@@ -371,7 +371,7 @@ func readSingleFile(path string, file string, out map[string]interface{}) error 
 	if err != nil {
 		return err
 	}
-	s := string(data)
+	s := strings.TrimSpace(string(data))
 	v, err := parseUint(s, 10, 64)
 	if err != nil {
 		// if we cannot parse as a uint, parse as a string
