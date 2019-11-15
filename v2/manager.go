@@ -25,7 +25,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/containerd/cgroups/v2/stats"
 	"github.com/pkg/errors"
@@ -38,6 +41,14 @@ const (
 
 type cgValuer interface {
 	Values() []Value
+}
+
+type Event struct {
+	Low     uint64
+	High    uint64
+	Max     uint64
+	OOM     uint64
+	OOMKill uint64
 }
 
 // Resources for a cgroups v2 unified hierarchy
@@ -414,5 +425,56 @@ func (c *Manager) freeze(path string, state State) error {
 			return nil
 		}
 		time.Sleep(1 * time.Millisecond)
+	}
+}
+
+func (c *Manager) MemoryEventFD() (uintptr, error) {
+	fpath := filepath.Join(c.path, "memory.events")
+	fd, err := syscall.InotifyInit()
+	if err != nil {
+		return 0, errors.Errorf("Failed to create inotify fd")
+	}
+	defer syscall.Close(fd)
+	wd, err := syscall.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
+	if wd < 0 {
+		return 0, errors.Errorf("Failed to add inotify watch for %q", fpath)
+	}
+	defer syscall.InotifyRmWatch(fd, uint32(wd))
+
+	return uintptr(fd), nil
+}
+
+func (c *Manager) EventChan() (<-chan Event, <-chan error) {
+	ec := make(chan Event)
+	errCh := make(chan error)
+	go c.waitForEvents(ec, errCh)
+
+	return ec, nil
+}
+
+func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
+	fd, err := c.MemoryEventFD()
+	if err != nil {
+		errCh <- errors.Errorf("Failed to create memory event fd")
+	}
+	for {
+		buffer := make([]byte, syscall.SizeofInotifyEvent*10)
+		bytesRead, err := syscall.Read(int(fd), buffer)
+		if err != nil {
+			errCh <- err
+		}
+		var out map[string]interface{}
+		if bytesRead >= syscall.SizeofInotifyEvent {
+			if err := readStatsFile(c.path, "memory.events", out); err != nil {
+				e := Event{
+					High:    out["high"].(uint64),
+					Low:     out["low"].(uint64),
+					Max:     out["max"].(uint64),
+					OOM:     out["oom"].(uint64),
+					OOMKill: out["oom_kill"].(uint64),
+				}
+				ec <- e
+			}
+		}
 	}
 }
