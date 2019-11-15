@@ -19,6 +19,7 @@ package v2
 import (
 	"bufio"
 	"fmt"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"io/ioutil"
 	"math"
 	"os"
@@ -494,4 +495,23 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 			}
 		}
 	}
+}
+
+
+func (r *Resources) SetDevice(path string, res *specs.LinuxResources) error {
+	insts, license, err := DeviceFilter(res.Devices)
+	if err != nil {
+		return err
+	}
+	dirFD, err := unix.Open(path, unix.O_DIRECTORY|unix.O_RDONLY, 0600)
+	if err != nil {
+		return errors.Errorf("cannot get dir FD for %s", path)
+	}
+	defer unix.Close(dirFD)
+	if _, err := LoadAttachCgroupDeviceFilter(insts, license, dirFD); err != nil {
+		if !canSkipEBPFError(res) {
+			return err
+		}
+	}
+	return nil
 }
