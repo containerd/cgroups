@@ -8,6 +8,7 @@ message Metrics {
 	PidsStat pids = 1;
 	CPUStat cpu = 2 [(gogoproto.customname) = "CPU"];
 	MemoryStat memory = 4;
+	RdmaStat rdma = 5;
 }
 
 message PidsStat {
@@ -60,6 +61,17 @@ message MemoryStat {
 	uint64 usage_limit = 33;
 	uint64 swap_usage = 34;
 	uint64 swap_limit = 35;
+}
+
+message RdmaStat {
+	repeated RdmaEntry current = 1;
+	repeated RdmaEntry limit = 2;
+}
+
+message RdmaEntry {
+	string device = 1;
+	uint32 hca_handles = 2;
+	uint32 hca_objects = 3;
 }
 
 // iostat

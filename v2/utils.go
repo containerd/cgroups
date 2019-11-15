@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/cgroups/v2/stats"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -216,6 +217,19 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			}
 		}
 	}
+	if i := spec.Rdma; i != nil {
+		resources.RDMA = &RDMA{}
+		for device, value := range spec.Rdma {
+			if device != "" && (value.HcaHandles != nil || value.HcaObjects != nil) {
+				resources.RDMA.Limit = append(resources.RDMA.Limit, RDMAEntry{
+					Device:     device,
+					HcaHandles: *value.HcaHandles,
+					HcaObjects: *value.HcaObjects,
+				})
+			}
+		}
+	}
+
 	return &resources
 }
 
@@ -238,4 +252,53 @@ func getStatFileContentUint64(filePath string) uint64 {
 	}
 
 	return res
+}
+func rdmaStats(filepath string) []*stats.RdmaEntry {
+	currentData, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return []*stats.RdmaEntry{}
+	}
+	return toRdmaEntry(strings.Split(string(currentData), "\n"))
+}
+
+func parseRdmaKV(raw string, entry *stats.RdmaEntry) {
+	var value uint64
+	var err error
+
+	parts := strings.Split(raw, "=")
+	switch len(parts) {
+	case 2:
+		if parts[1] == "max" {
+			value = math.MaxUint32
+		} else {
+			value, err = parseUint(parts[1], 10, 32)
+			if err != nil {
+				return
+			}
+		}
+		if parts[0] == "hca_handle" {
+			entry.HcaHandles = uint32(value)
+		} else if parts[0] == "hca_object" {
+			entry.HcaObjects = uint32(value)
+		}
+	}
+}
+
+func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
+	var rdmaEntries []*stats.RdmaEntry
+	for i := range strEntries {
+		parts := strings.Fields(strEntries[i])
+		switch len(parts) {
+		case 3:
+			entry := new(stats.RdmaEntry)
+			entry.Device = parts[0]
+			parseRdmaKV(parts[1], entry)
+			parseRdmaKV(parts[2], entry)
+
+			rdmaEntries = append(rdmaEntries, entry)
+		default:
+			continue
+		}
+	}
+	return rdmaEntries
 }

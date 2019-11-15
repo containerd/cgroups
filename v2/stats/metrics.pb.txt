@@ -31,6 +31,14 @@ file {
       type_name: ".io.containerd.cgroups.v2.MemoryStat"
       json_name: "memory"
     }
+    field {
+      name: "rdma"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.RdmaStat"
+      json_name: "rdma"
+    }
   }
   message_type {
     name: "PidsStat"
@@ -340,6 +348,49 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "swapLimit"
+    }
+  }
+  message_type {
+    name: "RdmaStat"
+    field {
+      name: "current"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.RdmaEntry"
+      json_name: "current"
+    }
+    field {
+      name: "limit"
+      number: 2
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.RdmaEntry"
+      json_name: "limit"
+    }
+  }
+  message_type {
+    name: "RdmaEntry"
+    field {
+      name: "device"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "device"
+    }
+    field {
+      name: "hca_handles"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT32
+      json_name: "hcaHandles"
+    }
+    field {
+      name: "hca_objects"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT32
+      json_name: "hcaObjects"
     }
   }
   syntax: "proto3"

@@ -57,6 +57,7 @@ type Resources struct {
 	Memory *Memory
 	Pids   *Pids
 	IO     *IO
+	RDMA   *RDMA
 }
 
 // Values returns the raw filenames and values that
@@ -67,6 +68,7 @@ func (r *Resources) Values() (o []Value) {
 		r.Memory,
 		r.Pids,
 		r.IO,
+		r.RDMA,
 	}
 	for _, v := range values {
 		if v == nil {
@@ -341,6 +343,9 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
 	}
+
+	metrics.Rdma.Current = rdmaStats(filepath.Join(c.path, "rdma.current"))
+	metrics.Rdma.Limit = rdmaStats(filepath.Join(c.path, "rdma.max"))
 
 	return &metrics, nil
 }
