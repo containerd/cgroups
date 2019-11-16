@@ -345,8 +345,10 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
 	}
 
-	metrics.Rdma.Current = rdmaStats(filepath.Join(c.path, "rdma.current"))
-	metrics.Rdma.Limit = rdmaStats(filepath.Join(c.path, "rdma.max"))
+	metrics.Rdma = &stats.RdmaStat{
+		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
+		Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),
+	}
 
 	return &metrics, nil
 }
@@ -496,7 +498,6 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 		}
 	}
 }
-
 
 func (r *Resources) SetDevice(path string, res *specs.LinuxResources) error {
 	insts, license, err := DeviceFilter(res.Devices)
