@@ -73,8 +73,8 @@ func isRWM(cgroupPermissions string) bool {
 
 // the logic is from runc
 // https://github.com/opencontainers/runc/blob/master/libcontainer/cgroups/fs/devices_v2.go#L44
-func canSkipEBPFError(res *specs.LinuxResources) bool {
-	for _, dev := range res.Devices {
+func canSkipEBPFError(devices []specs.LinuxDeviceCgroup) bool {
+	for _, dev := range devices {
 		if dev.Allow || !isRWM(dev.Access) {
 			return false
 		}

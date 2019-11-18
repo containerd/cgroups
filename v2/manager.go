@@ -59,6 +59,8 @@ type Resources struct {
 	Pids   *Pids
 	IO     *IO
 	RDMA   *RDMA
+	// When len(Devices) is zero, devices are not controlled
+	Devices []specs.LinuxDeviceCgroup
 }
 
 // Values returns the raw filenames and values that
@@ -127,12 +129,10 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
-	if resources != nil {
-		if err := writeValues(path, resources.Values()); err != nil {
-			// clean up cgroup dir on failure
-			os.Remove(path)
-			return nil, err
-		}
+	if err := setResources(path, resources); err != nil {
+		// clean up cgroup dir on failure
+		os.Remove(path)
+		return nil, err
 	}
 	return &Manager{
 		unifiedMountpoint: mountpoint,
@@ -154,6 +154,18 @@ func LoadManager(mountpoint string, group string) (*Manager, error) {
 type Manager struct {
 	unifiedMountpoint string
 	path              string
+}
+
+func setResources(path string, resources *Resources) error {
+	if resources != nil {
+		if err := writeValues(path, resources.Values()); err != nil {
+			return err
+		}
+		if err := setDevices(path, resources.Devices); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Manager) ListControllers() ([]string, error) {
@@ -216,7 +228,7 @@ func (c *Manager) NewChild(name string, resources *Resources) (*Manager, error) 
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
-	if err := writeValues(path, resources.Values()); err != nil {
+	if err := setResources(path, resources); err != nil {
 		// clean up cgroup dir on failure
 		os.Remove(path)
 		return nil, err
@@ -499,8 +511,11 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 	}
 }
 
-func (r *Resources) SetDevice(path string, res *specs.LinuxResources) error {
-	insts, license, err := DeviceFilter(res.Devices)
+func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
+	if len(devices) == 0 {
+		return nil
+	}
+	insts, license, err := DeviceFilter(devices)
 	if err != nil {
 		return err
 	}
@@ -510,7 +525,7 @@ func (r *Resources) SetDevice(path string, res *specs.LinuxResources) error {
 	}
 	defer unix.Close(dirFD)
 	if _, err := LoadAttachCgroupDeviceFilter(insts, license, dirFD); err != nil {
-		if !canSkipEBPFError(res) {
+		if !canSkipEBPFError(devices) {
 			return err
 		}
 	}
