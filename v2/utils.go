@@ -19,6 +19,7 @@ package v2
 import (
 	"bufio"
 	"fmt"
+	"github.com/godbus/dbus"
 	"io"
 	"io/ioutil"
 	"math"
@@ -360,4 +361,26 @@ func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
 		}
 	}
 	return rdmaEntries
+}
+
+func splitName(path string) (slice string, unit string) {
+	slice, unit = filepath.Split(path)
+	return strings.TrimSuffix(slice, "/"), unit
+}
+
+func Slice(slice, name string) string {
+	if slice == "" {
+		slice = defaultSlice
+	}
+	return filepath.Join(slice, name)
+}
+
+// isUnitExists returns true if the error is that a systemd unit already exists.
+func isUnitExists(err error) bool {
+	if err != nil {
+		if dbusError, ok := err.(dbus.Error); ok {
+			return strings.Contains(dbusError.Name, "org.freedesktop.systemd1.UnitExists")
+		}
+	}
+	return false
 }
