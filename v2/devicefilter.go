@@ -14,29 +14,27 @@
    limitations under the License.
 */
 
+// Devicefilter containes eBPF device filter program
+//
+// The implementation is based on https://github.com/containers/crun/blob/0.10.2/src/libcrun/ebpf.c
+//
+// Although ebpf.c is originally licensed under LGPL-3.0-or-later, the author (Giuseppe Scrivano)
+// agreed to relicense the file in Apache License 2.0: https://github.com/opencontainers/runc/issues/2144#issuecomment-543116397
+//
+// This particular Go implementation based on runc version
+// https://github.com/opencontainers/runc/blob/master/libcontainer/cgroups/ebpf/devicefilter/devicefilter.go
 package v2
 
 import (
 	"fmt"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"math"
 
 	"github.com/cilium/ebpf/asm"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
 
-/*
-Devicefilter containes eBPF device filter program
-
-The implementation is based on https://github.com/containers/crun/blob/0.10.2/src/libcrun/ebpf.c
-
-Although ebpf.c is originally licensed under LGPL-3.0-or-later, the author (Giuseppe Scrivano)
-agreed to relicense the file in Apache License 2.0: https://github.com/opencontainers/runc/issues/2144#issuecomment-543116397
-
-This particular Go implementation based on runc version
-https://github.com/opencontainers/runc/blob/master/libcontainer/cgroups/ebpf/devicefilter/devicefilter.go
-*/
 const (
 	// license string format is same as kernel MODULE_LICENSE macro
 	license = "Apache"

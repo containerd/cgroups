@@ -17,9 +17,10 @@
 package v2
 
 import (
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"strings"
 	"testing"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func hash(s, comm string) string {
