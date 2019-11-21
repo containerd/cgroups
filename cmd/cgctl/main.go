@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -43,6 +44,7 @@ func main() {
 		},
 	}
 	app.Commands = []cli.Command{
+		modeCommand,
 		newCommand,
 		delCommand,
 		listCommand,
@@ -156,5 +158,24 @@ var statCommand = cli.Command{
 			return err
 		}
 		return json.NewEncoder(os.Stdout).Encode(stats)
+	},
+}
+
+var modeCommand = cli.Command{
+	Name:  "mode",
+	Usage: "return the cgroup mode that is mounted on the system",
+	Action: func(clix *cli.Context) error {
+		mode := cgroups.Mode()
+		switch mode {
+		case cgroups.Legacy:
+			fmt.Println("legacy")
+		case cgroups.Hybrid:
+			fmt.Println("hybrid")
+		case cgroups.Unified:
+			fmt.Println("unified")
+		case cgroups.Unavailable:
+			fmt.Println("cgroups unavailable")
+		}
+		return nil
 	},
 }
