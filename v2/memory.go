@@ -25,7 +25,7 @@ type Memory struct {
 func (r *Memory) Values() (o []Value) {
 	if r.Swap != nil {
 		o = append(o, Value{
-			filename: "memory.swap_max",
+			filename: "memory.swap.max",
 			value:    *r.Swap,
 		})
 	}
