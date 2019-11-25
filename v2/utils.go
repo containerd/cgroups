@@ -187,8 +187,8 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 		if l := mem.Limit; l != nil {
 			resources.Memory.Max = l
 		}
-		if h := mem.Reservation; h != nil {
-			resources.Memory.High = h
+		if l := mem.Reservation; l != nil {
+			resources.Memory.Low = l
 		}
 	}
 	if pids := spec.Pids; pids != nil {
