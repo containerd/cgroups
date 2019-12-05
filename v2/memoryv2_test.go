@@ -26,7 +26,7 @@ import (
 )
 
 func TestCgroupv2MemoryStats(t *testing.T) {
-	cg := NewCgroupDir("memory-test-cg", t)
+	cg := NewCgroupDir("/memory-test-cg", t)
 	defer clear(cg.groupPath)
 	res := Resources{
 		CPU:  &CPU{},
