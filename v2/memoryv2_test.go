@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,13 +60,13 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to read memory.max file: ", err)
 	}
-	assert.Equal(t, "314572800", string(swapMax))
+	assert.Equal(t, "314572800", strings.TrimSpace(string(swapMax)))
 
 	memMax, err := ioutil.ReadFile(filepath.Join(c.path, "memory.max"))
 	if err != nil {
 		t.Fatal("failed to read memory.max file: ", err)
 	}
-	assert.Equal(t, "629145600", string(memMax))
+	assert.Equal(t, "629145600", strings.TrimSpace(string(memMax)))
 }
 
 func clear(path string) {
