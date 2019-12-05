@@ -43,13 +43,13 @@ func NewCgroupDir(group string, t *testing.T) *testCgroup {
 	if !isUnified {
 		t.Skip("System running in hybrid or cgroupv1 mode")
 	}
-	testCgroupPath := filepath.Join(defaultCgroup2Path, fmt.Sprintf("%s-%d", group, os.Getpid()))
-	err := os.Mkdir(testCgroupPath, 0755)
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	err := os.Mkdir(filepath.Join(defaultCgroup2Path, groupPath), 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return &testCgroup{cgv2Root: defaultCgroup2Path, groupPath: testCgroupPath}
+	return &testCgroup{cgv2Root: defaultCgroup2Path, groupPath: groupPath}
 }
 
 func (c *testCgroup) writeFileContents(fileContents map[string]string, t *testing.T) {
