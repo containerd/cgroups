@@ -16,37 +16,22 @@
 
 package v2
 
-type Memory struct {
-	Swap *int64
-	Max  *int64
-	Low  *int64
-	High *int64
-}
+import (
+	"syscall"
+	"testing"
 
-func (r *Memory) Values() (o []Value) {
-	if r.Swap != nil {
-		o = append(o, Value{
-			filename: "memory.swap.max",
-			value:    *r.Swap,
-		})
+	"golang.org/x/sys/unix"
+)
+
+const defaultCgroup2Path = "/sys/fs/cgroup"
+
+func checkCgroupMode(t *testing.T) {
+	var st syscall.Statfs_t
+	if err := syscall.Statfs(defaultCgroup2Path, &st); err != nil {
+		t.Fatal("cannot statfs cgroup root")
 	}
-	if r.Max != nil {
-		o = append(o, Value{
-			filename: "memory.max",
-			value:    *r.Max,
-		})
+	isUnified := st.Type == unix.CGROUP2_SUPER_MAGIC
+	if !isUnified {
+		t.Skip("System running in hybrid or cgroupv1 mode")
 	}
-	if r.Low != nil {
-		o = append(o, Value{
-			filename: "memory.low",
-			value:    *r.Low,
-		})
-	}
-	if r.High != nil {
-		o = append(o, Value{
-			filename: "memory.high",
-			value:    *r.High,
-		})
-	}
-	return o
 }
