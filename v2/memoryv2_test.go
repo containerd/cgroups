@@ -35,7 +35,7 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer clear(groupPath)
+	defer os.RemoveAll(groupPath)
 	res := Resources{
 		CPU:  &CPU{},
 		Pids: &Pids{},
@@ -65,7 +65,7 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
 	swapMax, err := ioutil.ReadFile(filepath.Join(c.path, "memory.swap.max"))
 	if err != nil {
-		t.Fatal("failed to read memory.max file: ", err)
+		t.Fatal("failed to read memory.swap.max file: ", err)
 	}
 	assert.Equal(t, "314572800", strings.TrimSpace(string(swapMax)))
 
@@ -74,8 +74,4 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 		t.Fatal("failed to read memory.max file: ", err)
 	}
 	assert.Equal(t, "629145600", strings.TrimSpace(string(memMax)))
-}
-
-func clear(path string) {
-	os.RemoveAll(path)
 }
