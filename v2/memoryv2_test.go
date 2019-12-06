@@ -17,6 +17,7 @@
 package v2
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,8 +28,14 @@ import (
 )
 
 func TestCgroupv2MemoryStats(t *testing.T) {
-	cg := NewCgroupDir("/memory-test-cg", t)
-	defer clear(cg.groupPath)
+	checkCgroupMode(t)
+	group := "/memory-test-cg"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	err := os.Mkdir(filepath.Join(defaultCgroup2Path, groupPath), 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clear(groupPath)
 	res := Resources{
 		CPU:  &CPU{},
 		Pids: &Pids{},
@@ -40,7 +47,7 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 			High: pointerInt64(524288000),
 		},
 	}
-	c, err := NewManager(cg.cgv2Root, cg.groupPath, &res)
+	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}

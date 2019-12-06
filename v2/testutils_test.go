@@ -17,10 +17,6 @@
 package v2
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"syscall"
 	"testing"
 
@@ -29,12 +25,7 @@ import (
 
 const defaultCgroup2Path = "/sys/fs/cgroup"
 
-type testCgroup struct {
-	cgv2Root  string
-	groupPath string
-}
-
-func NewCgroupDir(group string, t *testing.T) *testCgroup {
+func checkCgroupMode(t *testing.T) {
 	var st syscall.Statfs_t
 	if err := syscall.Statfs(defaultCgroup2Path, &st); err != nil {
 		t.Fatal("cannot statfs cgroup root")
@@ -43,32 +34,4 @@ func NewCgroupDir(group string, t *testing.T) *testCgroup {
 	if !isUnified {
 		t.Skip("System running in hybrid or cgroupv1 mode")
 	}
-	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
-	err := os.Mkdir(filepath.Join(defaultCgroup2Path, groupPath), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return &testCgroup{cgv2Root: defaultCgroup2Path, groupPath: groupPath}
-}
-
-func (c *testCgroup) writeFileContents(fileContents map[string]string, t *testing.T) {
-	for file, contents := range fileContents {
-		err := writeFile(c.groupPath, file, contents)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
-func writeFile(dir, file, data string) error {
-	// Normally dir should not be empty, one case is that cgroup subsystem
-	// is not mounted, we will get empty dir, and we want it fail here.
-	if dir == "" {
-		return fmt.Errorf("no such directory for %s", file)
-	}
-	if err := ioutil.WriteFile(filepath.Join(dir, file), []byte(data), 0700); err != nil {
-		return fmt.Errorf("failed to write %v to %v: %v", data, file, err)
-	}
-	return nil
 }
