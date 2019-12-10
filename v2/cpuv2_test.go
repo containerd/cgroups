@@ -21,46 +21,43 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestCgroupv2MemoryStats(t *testing.T) {
+func TestCgroupv2CpuStats(t *testing.T) {
 	checkCgroupMode(t)
-	group := "/memory-test-cg"
+	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	err := os.Mkdir(filepath.Join(defaultCgroup2Path, groupPath), defaultDirPerm)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(groupPath)
+	var weight uint64 = 5000
+	var max uint64 = 8000
 	res := Resources{
-		CPU:  &CPU{},
-		Pids: &Pids{},
-		IO:   &IO{},
-		RDMA: &RDMA{},
-		Memory: &Memory{
-			Max:  pointerInt64(629145600),
-			Swap: pointerInt64(314572800),
-			High: pointerInt64(524288000),
+		CPU: &CPU{
+			Weight: &weight,
+			Max:    &max,
+			Cpus:   "1-3",
+			Mems:   "8",
 		},
+		Pids:   &Pids{},
+		IO:     &IO{},
+		RDMA:   &RDMA{},
+		Memory: &Memory{},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
-	controllers := []string{"memory"}
+	controllers := []string{"cpu"}
 	err = c.ToggleControllers(controllers, Enable)
 	if err != nil {
 		t.Fatal("failed to toggle controllers: ", err)
 	}
-	stats, err := c.Stat()
-	if err != nil {
-		t.Fatal("failed to get cgroups stats: ", err)
-	}
 
-	assert.Equal(t, uint64(314572800), stats.Memory.SwapLimit)
-	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
-	checkFileContent(t, c.path, "memory.swap.max", "314572800")
-	checkFileContent(t, c.path, "memory.max", "629145600")
+	checkFileContent(t, c.path, "cpu.weight", string(weight))
+	checkFileContent(t, c.path, "cpu.max", string(max))
+	checkFileContent(t, c.path, "cpuset.cpus", "1-3")
+	checkFileContent(t, c.path, "cpuset.mems", "8")
 }
