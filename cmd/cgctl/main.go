@@ -23,6 +23,7 @@ import (
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -50,6 +51,8 @@ func main() {
 		listCommand,
 		listControllersCommand,
 		statCommand,
+		newSystemdCommand,
+		deleteSystemdCommand,
 	}
 	app.Before = func(clix *cli.Context) error {
 		if clix.GlobalBool("debug") {
@@ -158,6 +161,36 @@ var statCommand = cli.Command{
 			return err
 		}
 		return json.NewEncoder(os.Stdout).Encode(stats)
+	},
+}
+
+var newSystemdCommand = cli.Command{
+	Name:  "systemd",
+	Usage: "create a new systemd managed cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		_, err := v2.NewSystemd(path, os.Getpid(), &specs.LinuxResources{})
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+}
+
+var deleteSystemdCommand = cli.Command{
+	Name:  "del-systemd",
+	Usage: "delete a systemd managed cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		m, err := v2.LoadSystemd(path)
+		if err != nil {
+			return err
+		}
+		err = m.DeleteSystemd()
+		if err != nil {
+			return err
+		}
+		return nil
 	},
 }
 

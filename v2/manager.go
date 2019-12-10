@@ -43,9 +43,9 @@ import (
 )
 
 const (
-	subtreeControl  = "cgroup.subtree_control"
-	controllersFile = "cgroup.controllers"
-	defaultSlice    = "system.slice"
+	subtreeControl     = "cgroup.subtree_control"
+	controllersFile    = "cgroup.controllers"
+	defaultCgroup2Path = "/sys/fs/cgroup"
 )
 
 var (
@@ -596,13 +596,17 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 	return nil
 }
 
-func NewSystemd(path string, resources *specs.LinuxResources) (*Manager, error) {
+func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manager, error) {
+	if err := VerifyGroupPath(group); err != nil {
+		return nil, err
+	}
+	path := filepath.Join(defaultCgroup2Path, group)
 	conn, err := systemdDbus.New()
 	if err != nil {
 		return &Manager{}, err
 	}
 	defer conn.Close()
-	slice, name := splitName(path)
+	slice, name := splitName(group)
 
 	// We need to see if systemd can handle the delegate property
 	// Systemd will return an error if it cannot handle delegate regardless
@@ -630,11 +634,26 @@ func NewSystemd(path string, resources *specs.LinuxResources) (*Manager, error) 
 		newSystemdProperty("DefaultDependencies", false),
 		newSystemdProperty("MemoryAccounting", true),
 		newSystemdProperty("CPUAccounting", true),
-		newSystemdProperty("BlockIOAccounting", true),
+		newSystemdProperty("IOAccounting", true),
+	}
+
+	// only add pid if its valid, -1 is used w/ general slice creation.
+	if pid != -1 {
+		properties = append(properties, newSystemdProperty("PIDs", []uint32{uint32(pid)}))
+	}
+
+	if resources.Memory != nil && *resources.Memory.Limit != 0 {
+		properties = append(properties,
+			newSystemdProperty("MemoryMax", uint64(*resources.Memory.Limit)))
+	}
+
+	if resources.CPU != nil && *resources.CPU.Shares != 0 {
+		properties = append(properties,
+			newSystemdProperty("CPUWeight", *resources.CPU.Shares))
 	}
 
 	// cpu.cfs_quota_us and cpu.cfs_period_us are controlled by systemd.
-	if *resources.CPU.Quota != 0 && *resources.CPU.Period != 0 {
+	if resources.CPU != nil && *resources.CPU.Quota != 0 && *resources.CPU.Period != 0 {
 		// corresponds to USEC_INFINITY in systemd
 		// if USEC_INFINITY is provided, CPUQuota is left unbound by systemd
 		// always setting a property value ensures we can apply a quota and remove it later
@@ -658,7 +677,7 @@ func NewSystemd(path string, resources *specs.LinuxResources) (*Manager, error) 
 		properties = append(properties, newSystemdProperty("Delegate", true))
 	}
 
-	if resources.Pids.Limit > 0 {
+	if resources.Pids != nil && resources.Pids.Limit > 0 {
 		properties = append(properties,
 			newSystemdProperty("TasksAccounting", true),
 			newSystemdProperty("TasksMax", uint64(resources.Pids.Limit)))
@@ -675,12 +694,21 @@ func NewSystemd(path string, resources *specs.LinuxResources) (*Manager, error) 
 		return &Manager{}, err
 	}
 
+	err = createCgroupsv2Path(path)
+	if err != nil {
+		return &Manager{}, err
+	}
+
 	return &Manager{
 		path: path,
 	}, nil
 }
 
-func LoadSystemd(path string) (*Manager, error) {
+func LoadSystemd(group string) (*Manager, error) {
+	if err := VerifyGroupPath(group); err != nil {
+		return nil, err
+	}
+	path := filepath.Join(defaultCgroup2Path, group)
 	return &Manager{
 		path: path,
 	}, nil

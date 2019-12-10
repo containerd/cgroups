@@ -19,7 +19,6 @@ package v2
 import (
 	"bufio"
 	"fmt"
-	"github.com/godbus/dbus"
 	"io"
 	"io/ioutil"
 	"math"
@@ -28,6 +27,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/godbus/dbus"
 
 	"github.com/containerd/cgroups/v2/stats"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -365,14 +366,7 @@ func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
 
 func splitName(path string) (slice string, unit string) {
 	slice, unit = filepath.Split(path)
-	return strings.TrimSuffix(slice, "/"), unit
-}
-
-func Slice(slice, name string) string {
-	if slice == "" {
-		slice = defaultSlice
-	}
-	return filepath.Join(slice, name)
+	return strings.TrimPrefix(strings.TrimSuffix(slice, "/"), "/"), unit
 }
 
 // isUnitExists returns true if the error is that a systemd unit already exists.
@@ -383,4 +377,50 @@ func isUnitExists(err error) bool {
 		}
 	}
 	return false
+}
+
+func createCgroupsv2Path(path string) (Err error) {
+	content, err := ioutil.ReadFile("/sys/fs/cgroup/cgroup.controllers")
+	if err != nil {
+		return err
+	}
+	if !filepath.HasPrefix(path, "/sys/fs/cgroup") {
+		return fmt.Errorf("invalid cgroup path %s", path)
+	}
+
+	res := ""
+	for i, c := range strings.Split(strings.TrimSpace(string(content)), " ") {
+		if i == 0 {
+			res = fmt.Sprintf("+%s", c)
+		} else {
+			res = res + fmt.Sprintf(" +%s", c)
+		}
+	}
+	resByte := []byte(res)
+
+	current := "/sys/fs"
+	elements := strings.Split(path, "/")
+	for i, e := range elements[3:] {
+		current = filepath.Join(current, e)
+		if i > 0 {
+			if err := os.Mkdir(current, defaultDirPerm); err != nil {
+				if !os.IsExist(err) {
+					return err
+				}
+			} else {
+				// If the directory was created, be sure it is not left around on errors.
+				defer func() {
+					if Err != nil {
+						os.Remove(current)
+					}
+				}()
+			}
+		}
+		if i < len(elements[3:])-1 {
+			if err := ioutil.WriteFile(filepath.Join(current, "cgroup.subtree_control"), resByte, defaultDirPerm); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
