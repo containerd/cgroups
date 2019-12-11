@@ -648,8 +648,9 @@ func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manage
 	}
 
 	if resources.CPU != nil && *resources.CPU.Shares != 0 {
+		convertedWeight := (1 + ((*resources.CPU.Shares-2)*9999)/262142)
 		properties = append(properties,
-			newSystemdProperty("CPUWeight", *resources.CPU.Shares))
+			newSystemdProperty("CPUWeight", &convertedWeight))
 	}
 
 	// cpu.cfs_quota_us and cpu.cfs_period_us are controlled by systemd.
@@ -691,11 +692,6 @@ func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manage
 			logrus.Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", name)
 		}
 	} else if !isUnitExists(err) {
-		return &Manager{}, err
-	}
-
-	err = createCgroupsv2Path(path)
-	if err != nil {
 		return &Manager{}, err
 	}
 

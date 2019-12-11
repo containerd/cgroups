@@ -169,8 +169,15 @@ var newSystemdCommand = cli.Command{
 	Usage: "create a new systemd managed cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		_, err := v2.NewSystemd(path, os.Getpid(), &specs.LinuxResources{})
+		c, err := v2.NewSystemd(path, os.Getpid(), &specs.LinuxResources{})
 		if err != nil {
+			return err
+		}
+		controllers, err := c.RootControllers()
+		if err != nil {
+			return err
+		}
+		if err := c.ToggleControllers(controllers, v2.Enable); err != nil {
 			return err
 		}
 		return nil
