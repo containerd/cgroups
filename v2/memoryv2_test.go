@@ -19,7 +19,6 @@ package v2
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,11 +28,6 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	checkCgroupMode(t)
 	group := "/memory-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
-	err := os.Mkdir(filepath.Join(defaultCgroup2Path, groupPath), defaultDirPerm)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(groupPath)
 	res := Resources{
 		CPU:  &CPU{},
 		Pids: &Pids{},
