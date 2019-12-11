@@ -26,7 +26,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	checkCgroupMode(t)
 	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
-	var weight uint64 = 5000
+	var weight uint64 = 100
 	var max uint64 = 8000
 	res := Resources{
 		CPU: &CPU{
