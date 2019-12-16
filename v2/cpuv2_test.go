@@ -19,6 +19,7 @@ package v2
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -38,9 +39,8 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
+	defer os.Remove(c.path)
 
-	checkFileContent(t, c.path, "cpu.weight", string(weight))
-	checkFileContent(t, c.path, "cpu.max", string(max))
-	checkFileContent(t, c.path, "cpuset.cpus", "1-3")
-	checkFileContent(t, c.path, "cpuset.mems", "8")
+	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
+	checkFileContent(t, c.path, "cpu.max", strconv.FormatUint(max, 10)+" 100000")
 }

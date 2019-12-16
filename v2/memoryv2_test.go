@@ -39,6 +39,7 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
+	defer os.Remove(c.path)
 	stats, err := c.Stat()
 	if err != nil {
 		t.Fatal("failed to get cgroups stats: ", err)
