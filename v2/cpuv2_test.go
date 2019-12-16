@@ -32,19 +32,12 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		CPU: &CPU{
 			Weight: &weight,
 			Max:    &max,
-			Cpus:   "1-3",
-			Mems:   "8",
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
-	//controllers := []string{"cpu"}
-	//err = c.ToggleControllers(controllers, Enable)
-	//if err != nil {
-	//	t.Fatal("failed to toggle controllers: ", err)
-	//}
 
 	checkFileContent(t, c.path, "cpu.weight", string(weight))
 	checkFileContent(t, c.path, "cpu.max", string(max))

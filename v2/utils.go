@@ -167,10 +167,6 @@ func parseCgroupFromReader(r io.Reader) (string, error) {
 func ToResources(spec *specs.LinuxResources) *Resources {
 	var resources Resources
 	if cpu := spec.CPU; cpu != nil {
-		resources.CPU = &CPU{
-			Cpus: cpu.Cpus,
-			Mems: cpu.Mems,
-		}
 		if shares := cpu.Shares; shares != nil {
 			convertedWeight := (1 + ((*shares-2)*9999)/262142)
 			resources.CPU.Weight = &convertedWeight

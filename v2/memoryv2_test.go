@@ -39,11 +39,6 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
-	controllers := []string{"memory"}
-	err = c.ToggleControllers(controllers, Enable)
-	if err != nil {
-		t.Fatal("failed to toggle controllers: ", err)
-	}
 	stats, err := c.Stat()
 	if err != nil {
 		t.Fatal("failed to get cgroups stats: ", err)
