@@ -35,10 +35,6 @@ func TestCgroupv2CpuStats(t *testing.T) {
 			Cpus:   "1-3",
 			Mems:   "8",
 		},
-		Pids:   &Pids{},
-		IO:     &IO{},
-		RDMA:   &RDMA{},
-		Memory: &Memory{},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {

@@ -67,18 +67,20 @@ type Resources struct {
 // Values returns the raw filenames and values that
 // can be written to the unified hierarchy
 func (r *Resources) Values() (o []Value) {
-	values := []cgValuer{
-		r.CPU,
-		r.Memory,
-		r.Pids,
-		r.IO,
-		r.RDMA,
+	if r.CPU != nil {
+		o = append(o, r.CPU.Values()...)
 	}
-	for _, v := range values {
-		if v == nil {
-			continue
-		}
-		o = append(o, v.Values()...)
+	if r.Memory != nil {
+		o = append(o, r.Memory.Values()...)
+	}
+	if r.Pids != nil {
+		o = append(o, r.Pids.Values()...)
+	}
+	if r.IO != nil {
+		o = append(o, r.IO.Values()...)
+	}
+	if r.RDMA != nil {
+		o = append(o, r.RDMA.Values()...)
 	}
 	return o
 }
@@ -91,13 +93,13 @@ func (r *Resources) EnabledControllers() (c []string) {
 	if r.Memory != nil {
 		c = append(c, "memory")
 	}
-	if r.CPU != nil {
+	if r.Pids != nil {
 		c = append(c, "pids")
 	}
-	if r.CPU != nil {
+	if r.IO != nil {
 		c = append(c, "io")
 	}
-	if r.CPU != nil {
+	if r.RDMA != nil {
 		c = append(c, "rdma")
 	}
 	return

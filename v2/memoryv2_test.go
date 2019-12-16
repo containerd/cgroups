@@ -29,10 +29,6 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	group := "/memory-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	res := Resources{
-		CPU:  &CPU{},
-		Pids: &Pids{},
-		IO:   &IO{},
-		RDMA: &RDMA{},
 		Memory: &Memory{
 			Max:  pointerInt64(629145600),
 			Swap: pointerInt64(314572800),
