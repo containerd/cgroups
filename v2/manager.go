@@ -19,7 +19,6 @@ package v2
 import (
 	"bufio"
 	"fmt"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"io/ioutil"
 	"math"
 	"os"
@@ -28,6 +27,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"golang.org/x/sys/unix"
 
@@ -82,6 +83,26 @@ func (r *Resources) Values() (o []Value) {
 	return o
 }
 
+// EnabledControllers returns the list of all not nil resource controllers
+func (r *Resources) EnabledControllers() (c []string) {
+	if r.CPU != nil {
+		c = append(c, "cpu")
+	}
+	if r.Memory != nil {
+		c = append(c, "memory")
+	}
+	if r.CPU != nil {
+		c = append(c, "pids")
+	}
+	if r.CPU != nil {
+		c = append(c, "io")
+	}
+	if r.CPU != nil {
+		c = append(c, "rdma")
+	}
+	return
+}
+
 // Value of a cgroup setting
 type Value struct {
 	filename string
@@ -129,15 +150,20 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
-	if err := setResources(path, resources); err != nil {
+	m := Manager{
+		unifiedMountpoint: mountpoint,
+		path:              path,
+	}
+	if err := m.ToggleControllers(resources.EnabledControllers(), Enable); err != nil {
 		// clean up cgroup dir on failure
 		os.Remove(path)
 		return nil, err
 	}
-	return &Manager{
-		unifiedMountpoint: mountpoint,
-		path:              path,
-	}, nil
+	if err := setResources(path, resources); err != nil {
+		os.Remove(path)
+		return nil, err
+	}
+	return &m, nil
 }
 
 func LoadManager(mountpoint string, group string) (*Manager, error) {
