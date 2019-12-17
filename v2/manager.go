@@ -89,6 +89,7 @@ func (r *Resources) Values() (o []Value) {
 func (r *Resources) EnabledControllers() (c []string) {
 	if r.CPU != nil {
 		c = append(c, "cpu")
+		c = append(c, "cpuset")
 	}
 	if r.Memory != nil {
 		c = append(c, "memory")

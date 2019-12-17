@@ -33,6 +33,8 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		CPU: &CPU{
 			Weight: &weight,
 			Max:    &max,
+			Cpus:   "1-3",
+			Mems:   "0",
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
@@ -43,4 +45,6 @@ func TestCgroupv2CpuStats(t *testing.T) {
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 	checkFileContent(t, c.path, "cpu.max", strconv.FormatUint(max, 10)+" 100000")
+	checkFileContent(t, c.path, "cpuset.cpus", "1-3")
+	checkFileContent(t, c.path, "cpuset.mems", "0")
 }
