@@ -33,7 +33,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		CPU: &CPU{
 			Weight: &weight,
 			Max:    &max,
-			Cpus:   "0-1",
+			Cpus:   "0",
 			Mems:   "0",
 		},
 	}
@@ -45,6 +45,6 @@ func TestCgroupv2CpuStats(t *testing.T) {
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 	checkFileContent(t, c.path, "cpu.max", strconv.FormatUint(max, 10)+" 100000")
-	checkFileContent(t, c.path, "cpuset.cpus", "0-1")
+	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
 }
