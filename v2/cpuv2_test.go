@@ -19,20 +19,22 @@ package v2
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestCgroupv2MemoryStats(t *testing.T) {
+func TestCgroupv2CpuStats(t *testing.T) {
 	checkCgroupMode(t)
-	group := "/memory-test-cg"
+	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	var weight uint64 = 100
+	var max uint64 = 8000
 	res := Resources{
-		Memory: &Memory{
-			Max:  pointerInt64(629145600),
-			Swap: pointerInt64(314572800),
-			High: pointerInt64(524288000),
+		CPU: &CPU{
+			Weight: &weight,
+			Max:    &max,
+			Cpus:   "0",
+			Mems:   "0",
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
@@ -40,13 +42,9 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
 	defer os.Remove(c.path)
-	stats, err := c.Stat()
-	if err != nil {
-		t.Fatal("failed to get cgroups stats: ", err)
-	}
 
-	assert.Equal(t, uint64(314572800), stats.Memory.SwapLimit)
-	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
-	checkFileContent(t, c.path, "memory.swap.max", "314572800")
-	checkFileContent(t, c.path, "memory.max", "629145600")
+	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
+	checkFileContent(t, c.path, "cpu.max", strconv.FormatUint(max, 10)+" 100000")
+	checkFileContent(t, c.path, "cpuset.cpus", "0")
+	checkFileContent(t, c.path, "cpuset.mems", "0")
 }

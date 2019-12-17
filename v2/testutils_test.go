@@ -17,8 +17,13 @@
 package v2
 
 import (
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"golang.org/x/sys/unix"
 )
@@ -34,4 +39,12 @@ func checkCgroupMode(t *testing.T) {
 	if !isUnified {
 		t.Skip("System running in hybrid or cgroupv1 mode")
 	}
+}
+
+func checkFileContent(t *testing.T, path, filename, value string) {
+	out, err := ioutil.ReadFile(filepath.Join(path, filename))
+	if err != nil {
+		t.Fatalf("failed to read %s file", filename)
+	}
+	assert.Equal(t, value, strings.TrimSpace(string(out)))
 }

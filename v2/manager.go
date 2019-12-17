@@ -19,7 +19,6 @@ package v2
 import (
 	"bufio"
 	"fmt"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"io/ioutil"
 	"math"
 	"os"
@@ -28,6 +27,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"golang.org/x/sys/unix"
 
@@ -66,20 +67,43 @@ type Resources struct {
 // Values returns the raw filenames and values that
 // can be written to the unified hierarchy
 func (r *Resources) Values() (o []Value) {
-	values := []cgValuer{
-		r.CPU,
-		r.Memory,
-		r.Pids,
-		r.IO,
-		r.RDMA,
+	if r.CPU != nil {
+		o = append(o, r.CPU.Values()...)
 	}
-	for _, v := range values {
-		if v == nil {
-			continue
-		}
-		o = append(o, v.Values()...)
+	if r.Memory != nil {
+		o = append(o, r.Memory.Values()...)
+	}
+	if r.Pids != nil {
+		o = append(o, r.Pids.Values()...)
+	}
+	if r.IO != nil {
+		o = append(o, r.IO.Values()...)
+	}
+	if r.RDMA != nil {
+		o = append(o, r.RDMA.Values()...)
 	}
 	return o
+}
+
+// EnabledControllers returns the list of all not nil resource controllers
+func (r *Resources) EnabledControllers() (c []string) {
+	if r.CPU != nil {
+		c = append(c, "cpu")
+		c = append(c, "cpuset")
+	}
+	if r.Memory != nil {
+		c = append(c, "memory")
+	}
+	if r.Pids != nil {
+		c = append(c, "pids")
+	}
+	if r.IO != nil {
+		c = append(c, "io")
+	}
+	if r.RDMA != nil {
+		c = append(c, "rdma")
+	}
+	return
 }
 
 // Value of a cgroup setting
@@ -129,15 +153,20 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
-	if err := setResources(path, resources); err != nil {
+	m := Manager{
+		unifiedMountpoint: mountpoint,
+		path:              path,
+	}
+	if err := m.ToggleControllers(resources.EnabledControllers(), Enable); err != nil {
 		// clean up cgroup dir on failure
 		os.Remove(path)
 		return nil, err
 	}
-	return &Manager{
-		unifiedMountpoint: mountpoint,
-		path:              path,
-	}, nil
+	if err := setResources(path, resources); err != nil {
+		os.Remove(path)
+		return nil, err
+	}
+	return &m, nil
 }
 
 func LoadManager(mountpoint string, group string) (*Manager, error) {
