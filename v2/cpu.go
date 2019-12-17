@@ -18,7 +18,7 @@ package v2
 
 type CPU struct {
 	Weight *uint64
-	Max    *uint64
+	Max    string
 	Cpus   string
 	Mems   string
 }
@@ -30,10 +30,10 @@ func (r *CPU) Values() (o []Value) {
 			value:    *r.Weight,
 		})
 	}
-	if r.Max != nil {
+	if r.Max != "" {
 		o = append(o, Value{
 			filename: "cpu.max",
-			value:    *r.Max,
+			value:    r.Max,
 		})
 	}
 	if r.Cpus != "" {

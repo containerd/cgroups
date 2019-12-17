@@ -28,11 +28,11 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	var weight uint64 = 100
-	var max uint64 = 8000
+	max := "10000 8000"
 	res := Resources{
 		CPU: &CPU{
 			Weight: &weight,
-			Max:    &max,
+			Max:    max,
 			Cpus:   "0",
 			Mems:   "0",
 		},
@@ -44,7 +44,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	defer os.Remove(c.path)
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
-	checkFileContent(t, c.path, "cpu.max", strconv.FormatUint(max, 10)+" 100000")
+	checkFileContent(t, c.path, "cpu.max", max)
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
 }
