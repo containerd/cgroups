@@ -16,9 +16,24 @@
 
 package v2
 
+import (
+	"strconv"
+	"strings"
+)
+
+type CPUMax string
+
+func NewCPUMax(quota *int64, period *uint64) CPUMax {
+	max := "max"
+	if quota != nil {
+		max = strconv.FormatInt(*quota, 10)
+	}
+	return CPUMax(strings.Join([]string{max, strconv.FormatUint(*period, 10)}, " "))
+}
+
 type CPU struct {
 	Weight *uint64
-	Max    string
+	Max    CPUMax
 	Cpus   string
 	Mems   string
 }

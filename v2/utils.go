@@ -176,11 +176,7 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			resources.CPU.Weight = &convertedWeight
 		}
 		if period := cpu.Period; period != nil {
-			quota := "max"
-			if cpu.Quota != nil {
-				quota = strconv.FormatInt(*cpu.Quota, 10)
-			}
-			resources.CPU.Max = strings.Join([]string{quota, strconv.FormatUint(*period, 10)}, " ")
+			resources.CPU.Max = NewCPUMax(cpu.Quota, period)
 		}
 	}
 	if mem := spec.Memory; mem != nil {

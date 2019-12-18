@@ -58,9 +58,9 @@ func TestToResources(t *testing.T) {
 	v2resources := ToResources(&res)
 
 	assert.Equal(t, weight, *v2resources.CPU.Weight)
-	assert.Equal(t, "8000 10000", v2resources.CPU.Max)
+	assert.Equal(t, CPUMax("8000 10000"), v2resources.CPU.Max)
 
 	res2 := specs.LinuxResources{CPU: &specs.LinuxCPU{Period: &period}}
 	v2resources2 := ToResources(&res2)
-	assert.Equal(t, "max 10000", v2resources2.CPU.Max)
+	assert.Equal(t, CPUMax("max 10000"), v2resources2.CPU.Max)
 }
