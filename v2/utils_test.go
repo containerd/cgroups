@@ -19,6 +19,9 @@ package v2
 import (
 	"strings"
 	"testing"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseCgroupFromReader(t *testing.T) {
@@ -42,4 +45,22 @@ func TestParseCgroupFromReader(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestToResources(t *testing.T) {
+	var (
+		quota  int64  = 8000
+		period uint64 = 10000
+		shares uint64 = 5000
+	)
+	weight := (1 + ((shares-2)*9999)/262142)
+	res := specs.LinuxResources{CPU: &specs.LinuxCPU{Quota: &quota, Period: &period, Shares: &shares}}
+	v2resources := ToResources(&res)
+
+	assert.Equal(t, weight, *v2resources.CPU.Weight)
+	assert.Equal(t, CPUMax("8000 10000"), v2resources.CPU.Max)
+
+	res2 := specs.LinuxResources{CPU: &specs.LinuxCPU{Period: &period}}
+	v2resources2 := ToResources(&res2)
+	assert.Equal(t, CPUMax("max 10000"), v2resources2.CPU.Max)
 }

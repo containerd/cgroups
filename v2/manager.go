@@ -126,6 +126,8 @@ func (c *Value) write(path string, perm os.FileMode) error {
 		data = t
 	case string:
 		data = []byte(t)
+	case CPUMax:
+		data = []byte(t)
 	default:
 		return ErrInvalidFormat
 	}

@@ -176,7 +176,7 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			resources.CPU.Weight = &convertedWeight
 		}
 		if period := cpu.Period; period != nil {
-			resources.CPU.Max = period
+			resources.CPU.Max = NewCPUMax(cpu.Quota, period)
 		}
 	}
 	if mem := spec.Memory; mem != nil {
