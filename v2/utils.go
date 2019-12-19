@@ -240,7 +240,6 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 func getStatFileContentUint64(filePath string) uint64 {
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		logrus.Error(err)
 		return 0
 	}
 	trimmed := strings.TrimSpace(string(contents))
@@ -364,11 +363,6 @@ func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
 	return rdmaEntries
 }
 
-func splitName(path string) (slice string, unit string) {
-	slice, unit = filepath.Split(path)
-	return strings.TrimPrefix(strings.TrimSuffix(slice, "/"), "/"), unit
-}
-
 // isUnitExists returns true if the error is that a systemd unit already exists.
 func isUnitExists(err error) bool {
 	if err != nil {
@@ -377,4 +371,9 @@ func isUnitExists(err error) bool {
 		}
 	}
 	return false
+}
+
+func systemdUnitFromPath(path string) string {
+	_, unit := filepath.Split(path)
+	return unit
 }

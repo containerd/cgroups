@@ -21,6 +21,8 @@ import (
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func TestCgroupv2CpuStats(t *testing.T) {
@@ -51,4 +53,19 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	checkFileContent(t, c.path, "cpu.max", max)
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
+}
+
+func TestSystemdCgroupCpuController(t *testing.T) {
+	checkCgroupMode(t)
+	group := fmt.Sprintf("testing-cpu-%d.scope", os.Getpid())
+	var shares uint64 = 100
+	res := specs.LinuxResources{
+		CPU: &specs.LinuxCPU{Shares: &shares},
+	}
+	c, err := NewSystemd("", group, os.Getpid(), &res)
+	if err != nil {
+		t.Fatal("failed to init new cgroup systemd manager: ", err)
+	}
+	convertedWeight := (1 + ((shares-2)*9999)/262142)
+	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(convertedWeight, 10))
 }

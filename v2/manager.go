@@ -29,8 +29,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
-
 	"golang.org/x/sys/unix"
 
 	"github.com/containerd/cgroups/v2/stats"
@@ -46,6 +44,7 @@ const (
 	subtreeControl     = "cgroup.subtree_control"
 	controllersFile    = "cgroup.controllers"
 	defaultCgroup2Path = "/sys/fs/cgroup"
+	defaultSlice       = "system.slice"
 )
 
 var (
@@ -596,45 +595,31 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 	return nil
 }
 
-func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manager, error) {
-	if err := VerifyGroupPath(group); err != nil {
-		return nil, err
+func NewSystemd(slice, group string, pid int, resources *specs.LinuxResources) (*Manager, error) {
+	if slice == "" {
+		slice = defaultSlice
 	}
-	path := filepath.Join(defaultCgroup2Path, group)
+	path := filepath.Join(defaultCgroup2Path, slice, group)
 	conn, err := systemdDbus.New()
 	if err != nil {
 		return &Manager{}, err
 	}
 	defer conn.Close()
-	slice, name := splitName(group)
-
-	// We need to see if systemd can handle the delegate property
-	// Systemd will return an error if it cannot handle delegate regardless
-	// of its bool setting.
-	checkDelegate := func() {
-		canDelegate = true
-		dlSlice := newSystemdProperty("Delegate", true)
-		if _, err := conn.StartTransientUnit(slice, "testdelegate", []systemdDbus.Property{dlSlice}, nil); err != nil {
-			if dbusError, ok := err.(dbus.Error); ok {
-				// Starting with systemd v237, Delegate is not even a property of slices anymore,
-				// so the D-Bus call fails with "InvalidArgs" error.
-				if strings.Contains(dbusError.Name, "org.freedesktop.DBus.Error.PropertyReadOnly") || strings.Contains(dbusError.Name, "org.freedesktop.DBus.Error.InvalidArgs") {
-					canDelegate = false
-				}
-			}
-		}
-
-		conn.StopUnit(slice, "testDelegate", nil)
-	}
-	once.Do(checkDelegate)
 
 	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", name)),
-		systemdDbus.PropWants(slice),
+		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", group)),
 		newSystemdProperty("DefaultDependencies", false),
 		newSystemdProperty("MemoryAccounting", true),
 		newSystemdProperty("CPUAccounting", true),
 		newSystemdProperty("IOAccounting", true),
+	}
+
+	// if we create a slice, the parent is defined via a Wants=
+	if strings.HasSuffix(group, ".slice") {
+		properties = append(properties, systemdDbus.PropWants(defaultSlice))
+	} else {
+		// otherwise, we use Slice=
+		properties = append(properties, systemdDbus.PropSlice(defaultSlice))
 	}
 
 	// only add pid if its valid, -1 is used w/ general slice creation.
@@ -654,7 +639,7 @@ func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manage
 	}
 
 	// cpu.cfs_quota_us and cpu.cfs_period_us are controlled by systemd.
-	if resources.CPU != nil && *resources.CPU.Quota != 0 && *resources.CPU.Period != 0 {
+	if resources.CPU != nil && resources.CPU.Quota != nil && resources.CPU.Period != nil {
 		// corresponds to USEC_INFINITY in systemd
 		// if USEC_INFINITY is provided, CPUQuota is left unbound by systemd
 		// always setting a property value ensures we can apply a quota and remove it later
@@ -685,11 +670,11 @@ func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manage
 	}
 
 	statusChan := make(chan string, 1)
-	if _, err := conn.StartTransientUnit(name, "replace", properties, statusChan); err == nil {
+	if _, err := conn.StartTransientUnit(group, "replace", properties, statusChan); err == nil {
 		select {
 		case <-statusChan:
 		case <-time.After(time.Second):
-			logrus.Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", name)
+			logrus.Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", group)
 		}
 	} else if !isUnitExists(err) {
 		return &Manager{}, err
@@ -700,13 +685,13 @@ func NewSystemd(group string, pid int, resources *specs.LinuxResources) (*Manage
 	}, nil
 }
 
-func LoadSystemd(group string) (*Manager, error) {
-	if err := VerifyGroupPath(group); err != nil {
-		return nil, err
+func LoadSystemd(slice, group string) (*Manager, error) {
+	if slice == "" {
+		slice = defaultSlice
 	}
-	path := filepath.Join(defaultCgroup2Path, group)
+	group = filepath.Join(defaultCgroup2Path, slice, group)
 	return &Manager{
-		path: path,
+		path: group,
 	}, nil
 }
 
@@ -716,9 +701,9 @@ func (c *Manager) DeleteSystemd() error {
 		return err
 	}
 	defer conn.Close()
-	_, name := splitName(c.path)
+	group := systemdUnitFromPath(c.path)
 	ch := make(chan string)
-	_, err = conn.StopUnit(name, "replace", ch)
+	_, err = conn.StopUnit(group, "replace", ch)
 	if err != nil {
 		return err
 	}

@@ -21,6 +21,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,5 +50,18 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	assert.Equal(t, uint64(314572800), stats.Memory.SwapLimit)
 	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
 	checkFileContent(t, c.path, "memory.swap.max", "314572800")
+	checkFileContent(t, c.path, "memory.max", "629145600")
+}
+
+func TestSystemdCgroupMemoryController(t *testing.T) {
+	checkCgroupMode(t)
+	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())
+	res := specs.LinuxResources{
+		Memory: &specs.LinuxMemory{Limit: pointerInt64(629145600)},
+	}
+	c, err := NewSystemd("", group, os.Getpid(), &res)
+	if err != nil {
+		t.Fatal("failed to init new cgroup systemd manager: ", err)
+	}
 	checkFileContent(t, c.path, "memory.max", "629145600")
 }

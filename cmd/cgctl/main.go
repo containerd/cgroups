@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
@@ -169,15 +170,14 @@ var newSystemdCommand = cli.Command{
 	Usage: "create a new systemd managed cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.NewSystemd(path, os.Getpid(), &specs.LinuxResources{})
-		if err != nil {
-			return err
+		pidStr := clix.Args().Get(1)
+		pid := os.Getpid()
+		if pidStr != "" {
+			pid, _ = strconv.Atoi(pidStr)
 		}
-		controllers, err := c.RootControllers()
+
+		_, err := v2.NewSystemd("", path, pid, &specs.LinuxResources{})
 		if err != nil {
-			return err
-		}
-		if err := c.ToggleControllers(controllers, v2.Enable); err != nil {
 			return err
 		}
 		return nil
@@ -189,7 +189,7 @@ var deleteSystemdCommand = cli.Command{
 	Usage: "delete a systemd managed cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		m, err := v2.LoadSystemd(path)
+		m, err := v2.LoadSystemd("", path)
 		if err != nil {
 			return err
 		}
