@@ -404,29 +404,54 @@ file {
   message_type {
     name: "IOStat"
     field {
-      name: "rbytes"
+      name: "usage"
       number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.IOEntry"
+      json_name: "usage"
+    }
+  }
+  message_type {
+    name: "IOEntry"
+    field {
+      name: "major"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "major"
+    }
+    field {
+      name: "minor"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "minor"
+    }
+    field {
+      name: "rbytes"
+      number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rbytes"
     }
     field {
       name: "wbytes"
-      number: 2
+      number: 4
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "wbytes"
     }
     field {
       name: "rios"
-      number: 3
+      number: 5
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rios"
     }
     field {
       name: "wios"
-      number: 4
+      number: 6
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "wios"

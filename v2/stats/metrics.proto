@@ -76,8 +76,14 @@ message RdmaEntry {
 }
 
 message IOStat {
-	uint64 rbytes  = 1;
-	uint64 wbytes = 2;
-	uint64 rios = 3;
-	uint64 wios = 4;
+	repeated IOEntry usage = 1;
+}
+
+message IOEntry {
+	uint64 major = 1;
+	uint64 minor = 2;
+	uint64 rbytes = 3;
+	uint64 wbytes = 4;
+	uint64 rios = 5;
+	uint64 wios = 6;
 }

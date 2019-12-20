@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -253,6 +254,64 @@ func getStatFileContentUint64(filePath string) uint64 {
 
 	return res
 }
+
+func readIoStats(path string) []*stats.IOEntry {
+	// more details on the io.stat file format: https://www.kernel.org/doc/Documentation/cgroup-v2.txt
+	var usage []*stats.IOEntry
+	fpath := filepath.Join(path, "io.stat")
+	currentData, err := ioutil.ReadFile(fpath)
+	if err != nil {
+		return usage
+	}
+	entries := strings.Split(string(currentData), "\n")
+
+	for _, entry := range entries {
+		parts := strings.Split(entry, " ")
+		if len(parts) < 2 {
+			continue
+		}
+		majmin := strings.Split(parts[0], ":")
+		if len(majmin) != 2 {
+			continue
+		}
+		major, err := strconv.ParseUint(majmin[0], 10, 0)
+		if err != nil {
+			return usage
+		}
+		minor, err := strconv.ParseUint(majmin[1], 10, 0)
+		if err != nil {
+			return usage
+		}
+		parts = parts[1:]
+		ioEntry := stats.IOEntry{
+			Major: major,
+			Minor: minor,
+		}
+		for _, stats := range parts {
+			keyPairValue := strings.Split(stats, "=")
+			if len(keyPairValue) != 2 {
+				continue
+			}
+			v, err := strconv.ParseUint(keyPairValue[1], 10, 0)
+			if err != nil {
+				continue
+			}
+			switch keyPairValue[0] {
+			case "rbytes":
+				ioEntry.Rbytes = v
+			case "wbytes":
+				ioEntry.Wbytes = v
+			case "rios":
+				ioEntry.Rios = v
+			case "wios":
+				ioEntry.Wios = v
+			}
+		}
+		usage = append(usage, &ioEntry)
+	}
+	return usage
+}
+
 func rdmaStats(filepath string) []*stats.RdmaEntry {
 	currentData, err := ioutil.ReadFile(filepath)
 	if err != nil {
