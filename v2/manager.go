@@ -407,6 +407,8 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
 	}
 
+	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
+
 	metrics.Rdma = &stats.RdmaStat{
 		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
 		Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),

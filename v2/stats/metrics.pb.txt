@@ -39,6 +39,14 @@ file {
       type_name: ".io.containerd.cgroups.v2.RdmaStat"
       json_name: "rdma"
     }
+    field {
+      name: "io"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.IOStat"
+      json_name: "io"
+    }
   }
   message_type {
     name: "PidsStat"
@@ -391,6 +399,62 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_UINT32
       json_name: "hcaObjects"
+    }
+  }
+  message_type {
+    name: "IOStat"
+    field {
+      name: "usage"
+      number: 1
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.IOEntry"
+      json_name: "usage"
+    }
+  }
+  message_type {
+    name: "IOEntry"
+    field {
+      name: "major"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "major"
+    }
+    field {
+      name: "minor"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "minor"
+    }
+    field {
+      name: "rbytes"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "rbytes"
+    }
+    field {
+      name: "wbytes"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "wbytes"
+    }
+    field {
+      name: "rios"
+      number: 5
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "rios"
+    }
+    field {
+      name: "wios"
+      number: 6
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "wios"
     }
   }
   syntax: "proto3"
