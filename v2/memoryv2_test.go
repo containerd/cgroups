@@ -21,8 +21,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,8 +54,10 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 func TestSystemdCgroupMemoryController(t *testing.T) {
 	checkCgroupMode(t)
 	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())
-	res := specs.LinuxResources{
-		Memory: &specs.LinuxMemory{Limit: pointerInt64(629145600)},
+	res := Resources{
+		Memory: &Memory{
+			Max: pointerInt64(629145600),
+		},
 	}
 	c, err := NewSystemd("", group, os.Getpid(), &res)
 	if err != nil {

@@ -24,7 +24,6 @@ import (
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -176,7 +175,7 @@ var newSystemdCommand = cli.Command{
 			pid, _ = strconv.Atoi(pidStr)
 		}
 
-		_, err := v2.NewSystemd("", path, pid, &specs.LinuxResources{})
+		_, err := v2.NewSystemd("", path, pid, &v2.Resources{})
 		if err != nil {
 			return err
 		}

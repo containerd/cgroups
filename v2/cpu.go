@@ -17,6 +17,7 @@
 package v2
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -36,6 +37,21 @@ type CPU struct {
 	Max    CPUMax
 	Cpus   string
 	Mems   string
+}
+
+func (c CPUMax) extractQuotaAndPeriod() (int64, uint64) {
+	var (
+		quota  int64
+		period uint64
+	)
+	values := strings.Split(string(c), " ")
+	if values[0] == "max" {
+		quota = math.MaxInt64
+	} else {
+		quota, _ = strconv.ParseInt(values[0], 10, 64)
+	}
+	period, _ = strconv.ParseUint(values[1], 10, 64)
+	return quota, period
 }
 
 func (r *CPU) Values() (o []Value) {

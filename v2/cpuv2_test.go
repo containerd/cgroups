@@ -18,11 +18,12 @@ package v2
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"testing"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCgroupv2CpuStats(t *testing.T) {
@@ -58,14 +59,32 @@ func TestCgroupv2CpuStats(t *testing.T) {
 func TestSystemdCgroupCpuController(t *testing.T) {
 	checkCgroupMode(t)
 	group := fmt.Sprintf("testing-cpu-%d.scope", os.Getpid())
-	var shares uint64 = 100
-	res := specs.LinuxResources{
-		CPU: &specs.LinuxCPU{Shares: &shares},
-	}
+	var weight uint64 = 100
+	res := Resources{CPU: &CPU{Weight: &weight}}
 	c, err := NewSystemd("", group, os.Getpid(), &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup systemd manager: ", err)
 	}
-	convertedWeight := (1 + ((shares-2)*9999)/262142)
-	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(convertedWeight, 10))
+	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
+}
+
+func TestExtractQuotaAndPeriod(t *testing.T) {
+	var (
+		period uint64
+		quota  int64
+	)
+	quota = 10000
+	period = 8000
+	cpuMax := NewCPUMax(&quota, &period)
+	tquota, tPeriod := cpuMax.extractQuotaAndPeriod()
+
+	assert.Equal(t, quota, tquota)
+	assert.Equal(t, period, tPeriod)
+
+	//case with nil quota which makes it "max" - max int val
+	cpuMax2 := NewCPUMax(nil, &period)
+	tquota2, tPeriod2 := cpuMax2.extractQuotaAndPeriod()
+
+	assert.Equal(t, int64(math.MaxInt64), tquota2)
+	assert.Equal(t, period, tPeriod2)
 }

@@ -595,7 +595,7 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 	return nil
 }
 
-func NewSystemd(slice, group string, pid int, resources *specs.LinuxResources) (*Manager, error) {
+func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, error) {
 	if slice == "" {
 		slice = defaultSlice
 	}
@@ -627,29 +627,29 @@ func NewSystemd(slice, group string, pid int, resources *specs.LinuxResources) (
 		properties = append(properties, newSystemdProperty("PIDs", []uint32{uint32(pid)}))
 	}
 
-	if resources.Memory != nil && *resources.Memory.Limit != 0 {
+	if resources.Memory != nil && *resources.Memory.Max != 0 {
 		properties = append(properties,
-			newSystemdProperty("MemoryMax", uint64(*resources.Memory.Limit)))
+			newSystemdProperty("MemoryMax", uint64(*resources.Memory.Max)))
 	}
 
-	if resources.CPU != nil && *resources.CPU.Shares != 0 {
-		convertedWeight := (1 + ((*resources.CPU.Shares-2)*9999)/262142)
+	if resources.CPU != nil && *resources.CPU.Weight != 0 {
 		properties = append(properties,
-			newSystemdProperty("CPUWeight", &convertedWeight))
+			newSystemdProperty("CPUWeight", *resources.CPU.Weight))
 	}
 
-	// cpu.cfs_quota_us and cpu.cfs_period_us are controlled by systemd.
-	if resources.CPU != nil && resources.CPU.Quota != nil && resources.CPU.Period != nil {
+	if resources.CPU != nil && resources.CPU.Max != "" {
+		quota, period := resources.CPU.Max.extractQuotaAndPeriod()
+		// cpu.cfs_quota_us and cpu.cfs_period_us are controlled by systemd.
 		// corresponds to USEC_INFINITY in systemd
 		// if USEC_INFINITY is provided, CPUQuota is left unbound by systemd
 		// always setting a property value ensures we can apply a quota and remove it later
 		cpuQuotaPerSecUSec := uint64(math.MaxUint64)
-		if *resources.CPU.Quota > 0 {
+		if quota > 0 {
 			// systemd converts CPUQuotaPerSecUSec (microseconds per CPU second) to CPUQuota
 			// (integer percentage of CPU) internally.  This means that if a fractional percent of
 			// CPU is indicated by Resources.CpuQuota, we need to round up to the nearest
 			// 10ms (1% of a second) such that child cgroups can set the cpu.cfs_quota_us they expect.
-			cpuQuotaPerSecUSec = uint64(*resources.CPU.Quota*1000000) / *resources.CPU.Period
+			cpuQuotaPerSecUSec = uint64(quota*1000000) / period
 			if cpuQuotaPerSecUSec%10000 != 0 {
 				cpuQuotaPerSecUSec = ((cpuQuotaPerSecUSec / 10000) + 1) * 10000
 			}
@@ -663,10 +663,10 @@ func NewSystemd(slice, group string, pid int, resources *specs.LinuxResources) (
 		properties = append(properties, newSystemdProperty("Delegate", true))
 	}
 
-	if resources.Pids != nil && resources.Pids.Limit > 0 {
+	if resources.Pids != nil && resources.Pids.Max > 0 {
 		properties = append(properties,
 			newSystemdProperty("TasksAccounting", true),
-			newSystemdProperty("TasksMax", uint64(resources.Pids.Limit)))
+			newSystemdProperty("TasksMax", uint64(resources.Pids.Max)))
 	}
 
 	statusChan := make(chan string, 1)
