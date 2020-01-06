@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	systemdDbus "github.com/coreos/go-systemd/dbus"
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/godbus/dbus"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
