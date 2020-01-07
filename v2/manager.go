@@ -32,12 +32,12 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/containerd/cgroups/v2/stats"
-	"github.com/godbus/dbus"
+	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	systemdDbus "github.com/coreos/go-systemd/dbus"
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 )
 
 const (
