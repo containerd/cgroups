@@ -50,3 +50,18 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	checkFileContent(t, c.path, "memory.swap.max", "314572800")
 	checkFileContent(t, c.path, "memory.max", "629145600")
 }
+
+func TestSystemdCgroupMemoryController(t *testing.T) {
+	checkCgroupMode(t)
+	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())
+	res := Resources{
+		Memory: &Memory{
+			Max: pointerInt64(629145600),
+		},
+	}
+	c, err := NewSystemd("", group, os.Getpid(), &res)
+	if err != nil {
+		t.Fatal("failed to init new cgroup systemd manager: ", err)
+	}
+	checkFileContent(t, c.path, "memory.max", "629145600")
+}

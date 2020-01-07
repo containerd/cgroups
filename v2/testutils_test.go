@@ -28,8 +28,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const defaultCgroup2Path = "/sys/fs/cgroup"
-
 func checkCgroupMode(t *testing.T) {
 	var st syscall.Statfs_t
 	if err := syscall.Statfs(defaultCgroup2Path, &st); err != nil {

@@ -28,6 +28,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/godbus/dbus"
+
 	"github.com/containerd/cgroups/v2/stats"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
@@ -238,7 +240,6 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 func getStatFileContentUint64(filePath string) uint64 {
 	contents, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		logrus.Error(err)
 		return 0
 	}
 	trimmed := strings.TrimSpace(string(contents))
@@ -360,4 +361,19 @@ func toRdmaEntry(strEntries []string) []*stats.RdmaEntry {
 		}
 	}
 	return rdmaEntries
+}
+
+// isUnitExists returns true if the error is that a systemd unit already exists.
+func isUnitExists(err error) bool {
+	if err != nil {
+		if dbusError, ok := err.(dbus.Error); ok {
+			return strings.Contains(dbusError.Name, "org.freedesktop.systemd1.UnitExists")
+		}
+	}
+	return false
+}
+
+func systemdUnitFromPath(path string) string {
+	_, unit := filepath.Split(path)
+	return unit
 }

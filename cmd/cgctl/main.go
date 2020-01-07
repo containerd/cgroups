@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/containerd/cgroups"
 	v2 "github.com/containerd/cgroups/v2"
@@ -50,6 +51,8 @@ func main() {
 		listCommand,
 		listControllersCommand,
 		statCommand,
+		newSystemdCommand,
+		deleteSystemdCommand,
 	}
 	app.Before = func(clix *cli.Context) error {
 		if clix.GlobalBool("debug") {
@@ -158,6 +161,42 @@ var statCommand = cli.Command{
 			return err
 		}
 		return json.NewEncoder(os.Stdout).Encode(stats)
+	},
+}
+
+var newSystemdCommand = cli.Command{
+	Name:  "systemd",
+	Usage: "create a new systemd managed cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		pidStr := clix.Args().Get(1)
+		pid := os.Getpid()
+		if pidStr != "" {
+			pid, _ = strconv.Atoi(pidStr)
+		}
+
+		_, err := v2.NewSystemd("", path, pid, &v2.Resources{})
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+}
+
+var deleteSystemdCommand = cli.Command{
+	Name:  "del-systemd",
+	Usage: "delete a systemd managed cgroup",
+	Action: func(clix *cli.Context) error {
+		path := clix.Args().First()
+		m, err := v2.LoadSystemd("", path)
+		if err != nil {
+			return err
+		}
+		err = m.DeleteSystemd()
+		if err != nil {
+			return err
+		}
+		return nil
 	},
 }
 
