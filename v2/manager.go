@@ -350,12 +350,15 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	}
 	out := make(map[string]interface{})
 	for _, controller := range controllers {
-		filename := fmt.Sprintf("%s.stat", controller)
-		if err := readStatsFile(c.path, filename, out); err != nil {
-			if os.IsNotExist(err) {
-				continue
+		switch controller {
+		case "cpu", "memory":
+			filename := fmt.Sprintf("%s.stat", controller)
+			if err := readKVStatsFile(c.path, filename, out); err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return nil, err
 			}
-			return nil, err
 		}
 	}
 	for _, name := range singleValueFiles {
@@ -477,7 +480,7 @@ func readSingleFile(path string, file string, out map[string]interface{}) error 
 	return nil
 }
 
-func readStatsFile(path string, file string, out map[string]interface{}) error {
+func readKVStatsFile(path string, file string, out map[string]interface{}) error {
 	f, err := os.Open(filepath.Join(path, file))
 	if err != nil {
 		return err
@@ -491,7 +494,7 @@ func readStatsFile(path string, file string, out map[string]interface{}) error {
 		}
 		name, value, err := parseKV(s.Text())
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "error while parsing %s (line=%q)", filepath.Join(path, file), s.Text())
 		}
 		out[name] = value
 	}
@@ -560,7 +563,7 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 		}
 		var out map[string]interface{}
 		if bytesRead >= syscall.SizeofInotifyEvent {
-			if err := readStatsFile(c.path, "memory.events", out); err != nil {
+			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
 				e := Event{
 					High:    out["high"].(uint64),
 					Low:     out["low"].(uint64),
