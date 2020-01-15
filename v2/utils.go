@@ -202,7 +202,7 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 	if i := spec.BlockIO; i != nil {
 		resources.IO = &IO{}
 		if i.Weight != nil {
-			resources.IO.BFQ.Weight = *i.Weight
+			resources.IO.BFQ.Weight = 1 + (*i.Weight-10)*9999/990
 		}
 		for t, devices := range map[IOType][]specs.LinuxThrottleDevice{
 			ReadBPS:   i.ThrottleReadBpsDevice,
