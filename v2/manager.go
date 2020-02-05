@@ -526,20 +526,19 @@ func (c *Manager) freeze(path string, state State) error {
 	}
 }
 
-func (c *Manager) MemoryEventFD() (uintptr, error) {
+func (c *Manager) MemoryEventFD() (int, uint32, error) {
 	fpath := filepath.Join(c.path, "memory.events")
 	fd, err := syscall.InotifyInit()
 	if err != nil {
-		return 0, errors.Errorf("Failed to create inotify fd")
+		return 0, 0, errors.Errorf("Failed to create inotify fd")
 	}
-	defer syscall.Close(fd)
 	wd, err := syscall.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
 	if wd < 0 {
-		return 0, errors.Errorf("Failed to add inotify watch for %q", fpath)
+		syscall.Close(fd)
+		return 0, 0, errors.Errorf("Failed to add inotify watch for %q", fpath)
 	}
-	defer syscall.InotifyRmWatch(fd, uint32(wd))
 
-	return uintptr(fd), nil
+	return fd, uint32(wd), nil
 }
 
 func (c *Manager) EventChan() (<-chan Event, <-chan error) {
@@ -551,15 +550,22 @@ func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 }
 
 func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
-	fd, err := c.MemoryEventFD()
+	fd, wd, err := c.MemoryEventFD()
+
+	defer syscall.InotifyRmWatch(fd, wd)
+	defer syscall.Close(fd)
+
 	if err != nil {
-		errCh <- errors.Errorf("Failed to create memory event fd")
+		errCh <- err
+		return
 	}
+
 	for {
 		buffer := make([]byte, syscall.SizeofInotifyEvent*10)
-		bytesRead, err := syscall.Read(int(fd), buffer)
+		bytesRead, err := syscall.Read(fd, buffer)
 		if err != nil {
 			errCh <- err
+			return
 		}
 		var out map[string]interface{}
 		if bytesRead >= syscall.SizeofInotifyEvent {
@@ -572,6 +578,9 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 					OOMKill: out["oom_kill"].(uint64),
 				}
 				ec <- e
+			} else {
+				errCh <- err
+				return
 			}
 		}
 	}
