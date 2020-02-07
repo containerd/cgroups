@@ -526,6 +526,7 @@ func (c *Manager) freeze(path string, state State) error {
 	}
 }
 
+// MemoryEventFD returns inotify file descriptor and 'memory.events' inotify watch descriptor
 func (c *Manager) MemoryEventFD() (int, uint32, error) {
 	fpath := filepath.Join(c.path, "memory.events")
 	fd, err := syscall.InotifyInit()
