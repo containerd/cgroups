@@ -194,6 +194,16 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			resources.Memory.Low = l
 		}
 	}
+	if hugetlbs := spec.HugepageLimits; hugetlbs != nil {
+		hugeTlbUsage := HugeTlb{}
+		for _, hugetlb := range hugetlbs {
+			hugeTlbUsage = append(hugeTlbUsage, HugeTlbEntry{
+				HugePageSize: hugetlb.Pagesize,
+				Limit:        hugetlb.Limit,
+			})
+		}
+		resources.HugeTlb = &hugeTlbUsage
+	}
 	if pids := spec.Pids; pids != nil {
 		resources.Pids = &Pids{
 			Max: pids.Limit,
@@ -376,4 +386,57 @@ func isUnitExists(err error) bool {
 func systemdUnitFromPath(path string) string {
 	_, unit := filepath.Split(path)
 	return unit
+}
+
+func readHugeTlbStats(path string) []*stats.HugeTlbStat {
+	var usage = []*stats.HugeTlbStat{}
+	var keyUsage = make(map[string]*stats.HugeTlbStat)
+	f, err := os.Open(path)
+	if err != nil {
+		return usage
+	}
+	files, err := f.Readdir(-1)
+	f.Close()
+	if err != nil {
+		return usage
+	}
+
+	for _, file := range files {
+		if strings.Contains(file.Name(), "hugetlb") &&
+			(strings.HasSuffix(file.Name(), "max") || strings.HasSuffix(file.Name(), "current")) {
+			var hugeTlb *stats.HugeTlbStat
+			var ok bool
+			fileName := strings.Split(file.Name(), ".")
+			pageSize := fileName[1]
+			if hugeTlb, ok = keyUsage[pageSize]; !ok {
+				hugeTlb = &stats.HugeTlbStat{}
+			}
+			hugeTlb.Pagesize = pageSize
+			out, err := ioutil.ReadFile(filepath.Join(path, file.Name()))
+			if err != nil {
+				continue
+			}
+			var value uint64
+			stringVal := strings.TrimSpace(string(out))
+			if stringVal == "max" {
+				value = math.MaxUint64
+			} else {
+				value, err = strconv.ParseUint(stringVal, 10, 64)
+			}
+			if err != nil {
+				continue
+			}
+			switch fileName[2] {
+			case "max":
+				hugeTlb.Max = value
+			case "current":
+				hugeTlb.Current = value
+			}
+			keyUsage[pageSize] = hugeTlb
+		}
+	}
+	for _, entry := range keyUsage {
+		usage = append(usage, entry)
+	}
+	return usage
 }
