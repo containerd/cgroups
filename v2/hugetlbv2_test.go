@@ -25,8 +25,7 @@ import (
 )
 
 func TestCgroupv2HugetlbStats(t *testing.T) {
-	// This test will be temporary skipped, until the Fedora dist with kernel version 5.6 will be released.
-	t.Skip()
+	checkCgroupControllerSupported(t, "hugetlb")
 	checkCgroupMode(t)
 	group := "/hugetlb-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
