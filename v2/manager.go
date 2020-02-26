@@ -66,11 +66,12 @@ type Event struct {
 
 // Resources for a cgroups v2 unified hierarchy
 type Resources struct {
-	CPU    *CPU
-	Memory *Memory
-	Pids   *Pids
-	IO     *IO
-	RDMA   *RDMA
+	CPU     *CPU
+	Memory  *Memory
+	Pids    *Pids
+	IO      *IO
+	RDMA    *RDMA
+	HugeTlb *HugeTlb
 	// When len(Devices) is zero, devices are not controlled
 	Devices []specs.LinuxDeviceCgroup
 }
@@ -93,6 +94,9 @@ func (r *Resources) Values() (o []Value) {
 	if r.RDMA != nil {
 		o = append(o, r.RDMA.Values()...)
 	}
+	if r.HugeTlb != nil {
+		o = append(o, r.HugeTlb.Values()...)
+	}
 	return o
 }
 
@@ -113,6 +117,9 @@ func (r *Resources) EnabledControllers() (c []string) {
 	}
 	if r.RDMA != nil {
 		c = append(c, "rdma")
+	}
+	if r.HugeTlb != nil {
+		c = append(c, "hugetlb")
 	}
 	return
 }
@@ -422,11 +429,11 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	}
 
 	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
-
 	metrics.Rdma = &stats.RdmaStat{
 		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
 		Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),
 	}
+	metrics.Hugetlb = readHugeTlbStats(c.path)
 
 	return &metrics, nil
 }

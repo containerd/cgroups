@@ -47,6 +47,14 @@ file {
       type_name: ".io.containerd.cgroups.v2.IOStat"
       json_name: "io"
     }
+    field {
+      name: "hugetlb"
+      number: 7
+      label: LABEL_REPEATED
+      type: TYPE_MESSAGE
+      type_name: ".io.containerd.cgroups.v2.HugeTlbStat"
+      json_name: "hugetlb"
+    }
   }
   message_type {
     name: "PidsStat"
@@ -455,6 +463,30 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "wios"
+    }
+  }
+  message_type {
+    name: "HugeTlbStat"
+    field {
+      name: "current"
+      number: 1
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "current"
+    }
+    field {
+      name: "max"
+      number: 2
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "max"
+    }
+    field {
+      name: "pagesize"
+      number: 3
+      label: LABEL_OPTIONAL
+      type: TYPE_STRING
+      json_name: "pagesize"
     }
   }
   syntax: "proto3"
