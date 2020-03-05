@@ -17,6 +17,7 @@
 package cgroups
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -67,10 +68,15 @@ func TestNewBlkio(t *testing.T) {
 }
 
 func TestBlkioStat(t *testing.T) {
+	_, err := os.Stat("/sys/fs/cgroup/blkio")
+	if os.IsNotExist(err) {
+		t.Skip("failed to find /sys/fs/cgroup/blkio")
+	}
+
 	ctrl := NewBlkio("/sys/fs/cgroup")
 
 	var metrics v1.Metrics
-	err := ctrl.Stat("", &metrics)
+	err = ctrl.Stat("", &metrics)
 	if err != nil {
 		t.Fatalf("failed to call Stat: %v", err)
 	}
