@@ -17,8 +17,11 @@
 package cgroups
 
 import (
+	"os"
 	"strings"
 	"testing"
+
+	v1 "github.com/containerd/cgroups/stats/v1"
 )
 
 const data = `   7       0 loop0 0 0 0 0 0 0 0 0 0 0 0
@@ -61,6 +64,28 @@ func TestNewBlkio(t *testing.T) {
 	}
 	if ctrl.procRoot != expectedProc {
 		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
+	}
+}
+
+func TestBlkioStat(t *testing.T) {
+	_, err := os.Stat("/sys/fs/cgroup/blkio")
+	if os.IsNotExist(err) {
+		t.Skip("failed to find /sys/fs/cgroup/blkio")
+	}
+
+	ctrl := NewBlkio("/sys/fs/cgroup")
+
+	var metrics v1.Metrics
+	err = ctrl.Stat("", &metrics)
+	if err != nil {
+		t.Fatalf("failed to call Stat: %v", err)
+	}
+
+	if len(metrics.Blkio.IoServicedRecursive) == 0 {
+		t.Fatalf("IoServicedRecursive must not be empty")
+	}
+	if len(metrics.Blkio.IoServiceBytesRecursive) == 0 {
+		t.Fatalf("IoServiceBytesRecursive must not be empty")
 	}
 }
 
