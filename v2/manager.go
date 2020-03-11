@@ -356,6 +356,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		return nil, err
 	}
 	out := make(map[string]interface{})
+	memoryEvents := make(map[string]interface{})
 	for _, controller := range controllers {
 		switch controller {
 		case "cpu", "memory":
@@ -373,6 +374,11 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
+			return nil, err
+		}
+	}
+	if err := readKVStatsFile(c.path, "memory.events", memoryEvents); err != nil {
+		if !os.IsNotExist(err) {
 			return nil, err
 		}
 	}
@@ -426,6 +432,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
+		FailCnt:               getUint64Value("max", memoryEvents),
 	}
 
 	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
