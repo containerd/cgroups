@@ -63,6 +63,7 @@ message MemoryStat {
 	uint64 usage_limit = 33;
 	uint64 swap_usage = 34;
 	uint64 swap_limit = 35;
+	uint64 fail_cnt = 36;
 }
 
 message RdmaStat {
