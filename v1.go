@@ -54,9 +54,6 @@ func v1MountPoint() (string, error) {
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
-			return "", err
-		}
 		var (
 			text   = scanner.Text()
 			fields = strings.Split(text, " ")
@@ -76,6 +73,9 @@ func v1MountPoint() (string, error) {
 			}
 			return filepath.Dir(fields[4]), nil
 		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
 	}
 	return "", ErrMountPointNotExist
 }

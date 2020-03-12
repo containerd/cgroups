@@ -85,6 +85,9 @@ func parseCgroupProcsFile(path string) ([]uint64, error) {
 			out = append(out, pid)
 		}
 	}
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
@@ -144,9 +147,6 @@ func parseCgroupFromReader(r io.Reader) (string, error) {
 		s = bufio.NewScanner(r)
 	)
 	for s.Scan() {
-		if err := s.Err(); err != nil {
-			return "", err
-		}
 		var (
 			text  = s.Text()
 			parts = strings.SplitN(text, ":", 3)
@@ -158,6 +158,9 @@ func parseCgroupFromReader(r io.Reader) (string, error) {
 		if parts[0] == "0" && parts[1] == "" {
 			return parts[2], nil
 		}
+	}
+	if err := s.Err(); err != nil {
+		return "", err
 	}
 	return "", fmt.Errorf("cgroup path not found")
 }
