@@ -320,7 +320,14 @@ func getCgroupDestination(subsystem string) (string, error) {
 	defer f.Close()
 	s := bufio.NewScanner(f)
 	for s.Scan() {
-		fields := strings.Fields(s.Text())
+		fields := strings.Split(s.Text(), " ")
+		if len(fields) < 10 {
+			// broken mountinfo?
+			continue
+		}
+		if fields[len(fields)-3] != "cgroup" {
+			continue
+		}
 		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
 			if opt == subsystem {
 				return fields[3], nil
