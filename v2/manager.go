@@ -432,7 +432,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
-		FailCnt:               getUint64Value("max", memoryEvents),
+		EventsMax:             getUint64Value("max", memoryEvents),
 	}
 
 	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
