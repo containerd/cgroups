@@ -496,16 +496,13 @@ func readKVStatsFile(path string, file string, out map[string]interface{}) error
 
 	s := bufio.NewScanner(f)
 	for s.Scan() {
-		if err := s.Err(); err != nil {
-			return err
-		}
 		name, value, err := parseKV(s.Text())
 		if err != nil {
 			return errors.Wrapf(err, "error while parsing %s (line=%q)", filepath.Join(path, file), s.Text())
 		}
 		out[name] = value
 	}
-	return nil
+	return s.Err()
 }
 
 func (c *Manager) Freeze() error {

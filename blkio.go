@@ -181,9 +181,6 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 	defer f.Close()
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
-		if err := sc.Err(); err != nil {
-			return err
-		}
 		// format: dev type amount
 		fields := strings.FieldsFunc(sc.Text(), splitBlkIOStatLine)
 		if len(fields) < 3 {
@@ -220,7 +217,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 			Value:  v,
 		})
 	}
-	return nil
+	return sc.Err()
 }
 
 func createBlkioSettings(blkio *specs.LinuxBlockIO) []blkioSettings {
