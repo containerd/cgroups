@@ -17,6 +17,7 @@
 package cgroups
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -47,5 +48,27 @@ func TestGetDevices(t *testing.T) {
 	const expected = "/dev/sda"
 	if name != expected {
 		t.Fatalf("expected device name %q but received %q", expected, name)
+	}
+}
+
+func TestBlkioStat(t *testing.T) {
+	_, err := os.Stat("/sys/fs/cgroup/blkio")
+	if os.IsNotExist(err) {
+		t.Skip("failed to find /sys/fs/cgroup/blkio")
+	}
+
+	ctrl := NewBlkio("/sys/fs/cgroup")
+
+	var metrics Metrics
+	err = ctrl.Stat("", &metrics)
+	if err != nil {
+		t.Fatalf("failed to call Stat: %v", err)
+	}
+
+	if len(metrics.Blkio.IoServicedRecursive) == 0 {
+		t.Fatalf("IoServicedRecursive must not be empty")
+	}
+	if len(metrics.Blkio.IoServiceBytesRecursive) == 0 {
+		t.Fatalf("IoServiceBytesRecursive must not be empty")
 	}
 }
