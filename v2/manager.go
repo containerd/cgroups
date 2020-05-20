@@ -359,7 +359,6 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		return nil, err
 	}
 	out := make(map[string]interface{})
-	memoryEvents := make(map[string]interface{})
 	for _, controller := range controllers {
 		switch controller {
 		case "cpu", "memory":
@@ -380,6 +379,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 			return nil, err
 		}
 	}
+	memoryEvents := make(map[string]interface{})
 	if err := readKVStatsFile(c.path, "memory.events", memoryEvents); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -435,9 +435,16 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
-		EventsMax:             getUint64Value("max", memoryEvents),
 	}
-
+	if len(memoryEvents) > 0 {
+		metrics.MemoryEvents = &stats.MemoryEvents{
+			Low:     getUint64Value("low", memoryEvents),
+			High:    getUint64Value("high", memoryEvents),
+			Max:     getUint64Value("max", memoryEvents),
+			Oom:     getUint64Value("oom", memoryEvents),
+			OomKill: getUint64Value("oom_kill", memoryEvents),
+		}
+	}
 	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
 	metrics.Rdma = &stats.RdmaStat{
 		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
