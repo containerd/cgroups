@@ -572,15 +572,44 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 			errCh <- err
 			return
 		}
-		var out map[string]interface{}
 		if bytesRead >= syscall.SizeofInotifyEvent {
-			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
-				e := Event{
-					High:    out["high"].(uint64),
-					Low:     out["low"].(uint64),
-					Max:     out["max"].(uint64),
-					OOM:     out["oom"].(uint64),
-					OOMKill: out["oom_kill"].(uint64),
+			out := make(map[string]interface{})
+			if err := readKVStatsFile(c.path, "memory.events", out); err == nil {
+				e := Event{}
+				if v, ok := out["high"]; ok {
+					e.High, ok = v.(uint64)
+					if !ok {
+						errCh <- errors.Errorf("cannot convert high to uint64: %+v", v)
+						return
+					}
+				}
+				if v, ok := out["low"]; ok {
+					e.Low, ok = v.(uint64)
+					if !ok {
+						errCh <- errors.Errorf("cannot convert low to uint64: %+v", v)
+						return
+					}
+				}
+				if v, ok := out["max"]; ok {
+					e.Max, ok = v.(uint64)
+					if !ok {
+						errCh <- errors.Errorf("cannot convert max to uint64: %+v", v)
+						return
+					}
+				}
+				if v, ok := out["oom"]; ok {
+					e.OOM, ok = v.(uint64)
+					if !ok {
+						errCh <- errors.Errorf("cannot convert oom to uint64: %+v", v)
+						return
+					}
+				}
+				if v, ok := out["oom_kill"]; ok {
+					e.OOMKill, ok = v.(uint64)
+					if !ok {
+						errCh <- errors.Errorf("cannot convert oom_kill to uint64: %+v", v)
+						return
+					}
 				}
 				ec <- e
 			} else {
