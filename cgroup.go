@@ -325,26 +325,6 @@ func (c *cgroup) Thaw() error {
 	return s.(*freezerController).Thaw(sp)
 }
 
-// OOMEventFD returns the memory cgroup's out of memory event fd that triggers
-// when processes inside the cgroup receive an oom event. Returns
-// ErrMemoryNotSupported if memory cgroups is not supported.
-func (c *cgroup) OOMEventFD() (uintptr, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.err != nil {
-		return 0, c.err
-	}
-	s := c.getSubsystem(Memory)
-	if s == nil {
-		return 0, ErrMemoryNotSupported
-	}
-	sp, err := c.path(Memory)
-	if err != nil {
-		return 0, err
-	}
-	return s.(*memoryController).OOMEventFD(sp)
-}
-
 // State returns the state of the cgroup and its processes
 func (c *cgroup) State() State {
 	c.mu.Lock()

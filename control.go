@@ -65,8 +65,6 @@ type Cgroup interface {
 	Freeze() error
 	// Thaw thaw or resumes all processes inside the cgroup
 	Thaw() error
-	// OOMEventFD returns the memory subsystem's event fd for OOM events
-	OOMEventFD() (uintptr, error)
 	// State returns the cgroups current state
 	State() State
 	// Subsystems returns all the subsystems in the cgroup
