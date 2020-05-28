@@ -77,7 +77,7 @@ var newCommand = cli.Command{
 	},
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.NewManager(clix.GlobalString("mountpoint"), path, nil)
+		c, err := v2.NewManager(clix.GlobalString("mountpoint"), path, &v2.Resources{})
 		if err != nil {
 			return err
 		}
