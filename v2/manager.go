@@ -166,6 +166,9 @@ func writeValues(path string, values []Value) error {
 }
 
 func NewManager(mountpoint string, group string, resources *Resources) (*Manager, error) {
+	if resources == nil {
+		return nil, errors.New("resources reference is nil")
+	}
 	if err := VerifyGroupPath(group); err != nil {
 		return nil, err
 	}
