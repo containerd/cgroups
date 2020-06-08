@@ -65,7 +65,7 @@ To update the resources applied in the cgroup
 ```go
 shares = uint64(200)
 if err := control.Update(&specs.LinuxResources{
-    CPU: &specs.CPU{
+    CPU: &specs.LinuxCPU{
         Shares: &shares,
     },
 }); err != nil {
