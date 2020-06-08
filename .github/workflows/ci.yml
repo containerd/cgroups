@@ -1,0 +1,125 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+      - 'release/**'
+  pull_request:
+    branches:
+      - master
+      - 'release/**'
+
+jobs:
+  #
+  # Project checks
+  #
+  project:
+    name: Project Checks
+    runs-on: ubuntu-18.04
+    timeout-minutes: 5
+
+    steps:
+      #
+      # Install Go
+      #
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.11'
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      #
+      # Checkout repos
+      #
+      - name: Checkout cgroups
+        uses: actions/checkout@v2
+        with:
+          path: src/github.com/containerd/cgroups
+          fetch-depth: 25
+
+      - name: Checkout common project repo
+        uses: actions/checkout@v2
+        with:
+          repository: containerd/project
+          path: src/github.com/containerd/project
+
+      #
+      # Go get dependencies
+      #
+      - name: Install dependencies
+        env:
+          GO111MODULE: off
+        run: |
+          go get -u github.com/vbatts/git-validation
+          go get -u github.com/kunalkushwaha/ltag
+
+      #
+      # DCO / File headers
+      #
+      - name: DCO
+        env:
+          GITHUB_COMMIT_URL: ${{ github.event.pull_request.commits_url }}
+          DCO_VERBOSITY: "-q"
+          DCO_RANGE: ""
+        working-directory: src/github.com/containerd/cgroups
+        run: |
+          set -x
+          if [ -z "${GITHUB_COMMIT_URL}" ]; then
+          DCO_RANGE=$(jq -r '.after + "..HEAD"' ${GITHUB_EVENT_PATH})
+          else
+          DCO_RANGE=$(curl ${GITHUB_COMMIT_URL} | jq -r '.[0].parents[0].sha +".."+ .[-1].sha')
+          fi
+          ../project/script/validate/dco
+
+      - name: Headers
+        run: ../project/script/validate/fileheader ../project/
+        working-directory: src/github.com/containerd/cgroups
+
+  test-v1:
+    name: Test cgroups v1
+    runs-on: ubuntu-18.04
+    timeout-minutes: 15
+    needs: [project]
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.11'
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "::set-env name=GOPATH::${{ github.workspace }}"
+          echo "::add-path::${{ github.workspace }}/bin"
+
+      - name: Checkout cgroups
+        uses: actions/checkout@v2
+        with:
+          path: src/github.com/containerd/cgroups
+
+      - name: Run cgroup v1 tests
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+        working-directory: src/github.com/containerd/cgroups
+
+  test-v2:
+    name: Test cgroups v2
+    # nested virtualization is only available on macOS hosts
+    runs-on: macos-10.15
+    timeout-minutes: 20
+    needs: [project]
+
+    steps:
+      - name: Checkout cgroups
+        uses: actions/checkout@v2
+
+      - name: Start vagrant
+        run: vagrant up
+
+      - name: Run cgroups v2 tests
+        run: vagrant ssh default -- sudo -i /test.sh
