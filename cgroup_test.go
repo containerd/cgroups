@@ -56,6 +56,49 @@ func TestCreate(t *testing.T) {
 	}
 }
 
+func TestCreateSystemd(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+
+	control, err := New(mock.systemdHierarchy, Slice("", "test.slice"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if control == nil {
+		t.Error("control is nil")
+		return
+	}
+
+	for _, s := range Subsystems() {
+		if _, err := os.Stat(filepath.Join(mock.root, string(s), "test.slice")); err != nil {
+			if os.IsNotExist(err) {
+				t.Errorf("group %s was not created", s)
+				return
+			}
+			t.Errorf("group %s was not created correctly %s", s, err)
+			return
+		}
+	}
+
+	// looks good. let's test delete, and then recreation
+	control.Delete()
+
+	// re-create
+	cg, err := New(mock.systemdHierarchy, Slice("", "test.slice"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	// and, delete:
+	cg.Delete()
+}
+
 func TestStat(t *testing.T) {
 	mock, err := newMock()
 	if err != nil {
