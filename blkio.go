@@ -187,7 +187,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 				// skip total line
 				continue
 			} else {
-				return fmt.Errorf("Invalid line found while parsing %s: %s", path, sc.Text())
+				return fmt.Errorf("invalid line found while parsing %s: %s", path, sc.Text())
 			}
 		}
 		major, err := strconv.ParseUint(fields[0], 10, 64)

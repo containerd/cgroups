@@ -177,7 +177,7 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 			Mems: cpu.Mems,
 		}
 		if shares := cpu.Shares; shares != nil {
-			convertedWeight := (1 + ((*shares-2)*9999)/262142)
+			convertedWeight := 1 + ((*shares-2)*9999)/262142
 			resources.CPU.Weight = &convertedWeight
 		}
 		if period := cpu.Period; period != nil {
@@ -300,8 +300,8 @@ func readIoStats(path string) []*stats.IOEntry {
 			Major: major,
 			Minor: minor,
 		}
-		for _, stats := range parts {
-			keyPairValue := strings.Split(stats, "=")
+		for _, s := range parts {
+			keyPairValue := strings.Split(s, "=")
 			if len(keyPairValue) != 2 {
 				continue
 			}

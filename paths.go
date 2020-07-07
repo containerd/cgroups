@@ -63,7 +63,7 @@ var ErrControllerNotActive = errors.New("controller is not supported")
 func existingPath(paths map[string]string, suffix string) Path {
 	// localize the paths based on the root mount dest for nested cgroups
 	for n, p := range paths {
-		dest, err := getCgroupDestination(string(n))
+		dest, err := getCgroupDestination(n)
 		if err != nil {
 			return errorPath(err)
 		}

@@ -51,5 +51,5 @@ func TestSystemdCgroupPidsController(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to init new cgroup systemd manager: ", err)
 	}
-	checkFileContent(t, c.path, "cgroup.procs", strconv.Itoa(int(pid)))
+	checkFileContent(t, c.path, "cgroup.procs", strconv.Itoa(pid))
 }

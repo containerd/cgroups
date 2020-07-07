@@ -216,7 +216,7 @@ func (c *cgroup) Delete() error {
 	if c.err != nil {
 		return c.err
 	}
-	var errors []string
+	var errs []string
 	for _, s := range c.subsystems {
 		if d, ok := s.(deleter); ok {
 			sp, err := c.path(s.Name())
@@ -224,7 +224,7 @@ func (c *cgroup) Delete() error {
 				return err
 			}
 			if err := d.Delete(sp); err != nil {
-				errors = append(errors, string(s.Name()))
+				errs = append(errs, string(s.Name()))
 			}
 			continue
 		}
@@ -235,12 +235,12 @@ func (c *cgroup) Delete() error {
 			}
 			path := p.Path(sp)
 			if err := remove(path); err != nil {
-				errors = append(errors, path)
+				errs = append(errs, path)
 			}
 		}
 	}
-	if len(errors) > 0 {
-		return fmt.Errorf("cgroups: unable to remove paths %s", strings.Join(errors, ", "))
+	if len(errs) > 0 {
+		return fmt.Errorf("cgroups: unable to remove paths %s", strings.Join(errs, ", "))
 	}
 	c.err = ErrCgroupDeleted
 	return nil

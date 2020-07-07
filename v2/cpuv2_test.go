@@ -81,7 +81,7 @@ func TestExtractQuotaAndPeriod(t *testing.T) {
 	assert.Equal(t, quota, tquota)
 	assert.Equal(t, period, tPeriod)
 
-	//case with nil quota which makes it "max" - max int val
+	// case with nil quota which makes it "max" - max int val
 	cpuMax2 := NewCPUMax(nil, &period)
 	tquota2, tPeriod2 := cpuMax2.extractQuotaAndPeriod()
 

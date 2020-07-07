@@ -266,7 +266,7 @@ func (c *Manager) ToggleControllers(controllers []string, t ControllerToggle) er
 	// Note that /sys/fs/cgroup/foo/bar/baz/cgroup.subtree_control does not need to be written.
 	split := strings.Split(c.path, "/")
 	var lastErr error
-	for i, _ := range split {
+	for i := range split {
 		f := strings.Join(split[:i], "/")
 		if !strings.HasPrefix(f, c.unifiedMountpoint) || f == c.path {
 			continue

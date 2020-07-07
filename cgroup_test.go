@@ -207,7 +207,7 @@ func checkPid(mock *mockCgroup, path string, expected int) error {
 	if err != nil {
 		return err
 	}
-	v, err := strconv.Atoi(string(data))
+	v, err := strconv.Atoi(data)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func checkTaskid(mock *mockCgroup, path string, expected int) error {
 	if err != nil {
 		return err
 	}
-	v, err := strconv.Atoi(string(data))
+	v, err := strconv.Atoi(data)
 	if err != nil {
 		return err
 	}

@@ -389,7 +389,7 @@ func retryingWriteFile(path string, data []byte, mode os.FileMode) error {
 	// Retry writes on EINTR; see:
 	//    https://github.com/golang/go/issues/38033
 	for {
-		err := ioutil.WriteFile(path, []byte(data), mode)
+		err := ioutil.WriteFile(path, data, mode)
 		if err == nil {
 			return nil
 		} else if !errors.Is(err, syscall.EINTR) {

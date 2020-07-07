@@ -33,8 +33,8 @@ func TestParseCgroupFromReader(t *testing.T) {
 	for s, expected := range cases {
 		g, err := parseCgroupFromReader(strings.NewReader(s))
 		if expected != "" {
-			if string(g) != expected {
-				t.Errorf("expected %q, got %q", expected, string(g))
+			if g != expected {
+				t.Errorf("expected %q, got %q", expected, g)
 			}
 			if err != nil {
 				t.Error(err)
@@ -53,7 +53,7 @@ func TestToResources(t *testing.T) {
 		period uint64 = 10000
 		shares uint64 = 5000
 	)
-	weight := (1 + ((shares-2)*9999)/262142)
+	weight := 1 + ((shares-2)*9999)/262142
 	res := specs.LinuxResources{CPU: &specs.LinuxCPU{Quota: &quota, Period: &period, Shares: &shares}}
 	v2resources := ToResources(&res)
 
