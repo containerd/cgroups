@@ -29,15 +29,13 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/sys/unix"
-
 	"github.com/containerd/cgroups/v2/stats"
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-
-	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
+	"golang.org/x/sys/unix"
 )
 
 const (

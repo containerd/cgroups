@@ -28,9 +28,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/godbus/dbus/v5"
-
 	"github.com/containerd/cgroups/v2/stats"
+	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
