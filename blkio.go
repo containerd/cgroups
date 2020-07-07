@@ -20,7 +20,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -72,7 +71,7 @@ func (b *blkioController) Create(path string, resources *specs.LinuxResources) e
 	}
 	for _, t := range createBlkioSettings(resources.BlockIO) {
 		if t.value != nil {
-			if err := ioutil.WriteFile(
+			if err := retryingWriteFile(
 				filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", t.name)),
 				t.format(t.value),
 				defaultFilePerm,
