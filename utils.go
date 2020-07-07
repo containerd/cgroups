@@ -382,7 +382,7 @@ func cleanPath(path string) string {
 	if !filepath.IsAbs(path) {
 		path, _ = filepath.Rel(string(os.PathSeparator), filepath.Clean(string(os.PathSeparator)+path))
 	}
-	return filepath.Clean(path)
+	return path
 }
 
 func retryingWriteFile(path string, data []byte, mode os.FileMode) error {
