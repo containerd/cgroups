@@ -105,14 +105,6 @@ func parseKV(raw string) (string, interface{}, error) {
 	}
 }
 
-func readUint(path string) (uint64, error) {
-	v, err := ioutil.ReadFile(path)
-	if err != nil {
-		return 0, err
-	}
-	return parseUint(strings.TrimSpace(string(v)), 10, 64)
-}
-
 func parseUint(s string, base, bitSize int) (uint64, error) {
 	v, err := strconv.ParseUint(s, base, bitSize)
 	if err != nil {

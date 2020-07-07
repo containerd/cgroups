@@ -356,11 +356,3 @@ func getDevices(r io.Reader) (map[deviceKey]string, error) {
 	}
 	return devices, s.Err()
 }
-
-func major(devNumber uint64) uint64 {
-	return (devNumber >> 8) & 0xfff
-}
-
-func minor(devNumber uint64) uint64 {
-	return (devNumber & 0xff) | ((devNumber >> 12) & 0xfff00)
-}

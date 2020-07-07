@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -46,12 +45,7 @@ const (
 
 var (
 	canDelegate bool
-	once        sync.Once
 )
-
-type cgValuer interface {
-	Values() []Value
-}
 
 type Event struct {
 	Low     uint64

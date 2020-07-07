@@ -77,7 +77,7 @@ func (s *SystemdController) Name() Name {
 	return SystemdDbus
 }
 
-func (s *SystemdController) Create(path string, resources *specs.LinuxResources) error {
+func (s *SystemdController) Create(path string, _ *specs.LinuxResources) error {
 	conn, err := systemdDbus.New()
 	if err != nil {
 		return err
@@ -147,10 +147,6 @@ func newProperty(name string, units interface{}) systemdDbus.Property {
 		Name:  name,
 		Value: dbus.MakeVariant(units),
 	}
-}
-
-func unitName(name string) string {
-	return name + ".slice"
 }
 
 func splitName(path string) (slice string, unit string) {

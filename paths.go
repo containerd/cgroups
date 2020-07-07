@@ -25,7 +25,7 @@ import (
 
 type Path func(subsystem Name) (string, error)
 
-func RootPath(subsysem Name) (string, error) {
+func RootPath(subsystem Name) (string, error) {
 	return "/", nil
 }
 
