@@ -18,6 +18,7 @@ package v2
 
 import (
 	"bufio"
+	stderrors "errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -149,11 +150,21 @@ func (c *Value) write(path string, perm os.FileMode) error {
 	default:
 		return ErrInvalidFormat
 	}
-	return ioutil.WriteFile(
-		filepath.Join(path, c.filename),
-		data,
-		perm,
-	)
+
+	// Retry writes on EINTR; see:
+	//    https://github.com/golang/go/issues/38033
+	for {
+		err := ioutil.WriteFile(
+			filepath.Join(path, c.filename),
+			data,
+			perm,
+		)
+		if err == nil {
+			return nil
+		} else if !stderrors.Is(err, syscall.EINTR) {
+			return err
+		}
+	}
 }
 
 func writeValues(path string, values []Value) error {

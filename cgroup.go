@@ -18,7 +18,6 @@ package cgroups
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -169,7 +168,7 @@ func (c *cgroup) add(process Process) error {
 		if err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(
+		if err := retryingWriteFile(
 			filepath.Join(s.Path(p), cgroupProcs),
 			[]byte(strconv.Itoa(process.Pid)),
 			defaultFilePerm,
@@ -199,7 +198,7 @@ func (c *cgroup) addTask(process Process) error {
 		if err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(
+		if err := retryingWriteFile(
 			filepath.Join(s.Path(p), cgroupTasks),
 			[]byte(strconv.Itoa(process.Pid)),
 			defaultFilePerm,
