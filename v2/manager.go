@@ -18,7 +18,6 @@ package v2
 
 import (
 	"bufio"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"os"
@@ -370,8 +369,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	for _, controller := range controllers {
 		switch controller {
 		case "cpu", "memory":
-			filename := fmt.Sprintf("%s.stat", controller)
-			if err := readKVStatsFile(c.path, filename, out); err != nil {
+			if err := readKVStatsFile(c.path, controller+".stat", out); err != nil {
 				if os.IsNotExist(err) {
 					continue
 				}
@@ -678,7 +676,7 @@ func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, e
 	defer conn.Close()
 
 	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", group)),
+		systemdDbus.PropDescription("cgroup " + group),
 		newSystemdProperty("DefaultDependencies", false),
 		newSystemdProperty("MemoryAccounting", true),
 		newSystemdProperty("CPUAccounting", true),

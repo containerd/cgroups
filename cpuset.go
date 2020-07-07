@@ -70,7 +70,7 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 		} {
 			if t.value != "" {
 				if err := retryingWriteFile(
-					filepath.Join(c.Path(path), fmt.Sprintf("cpuset.%s", t.name)),
+					filepath.Join(c.Path(path), "cpuset."+t.name),
 					[]byte(t.value),
 					defaultFilePerm,
 				); err != nil {

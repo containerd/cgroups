@@ -18,7 +18,6 @@ package cgroups
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -84,7 +83,7 @@ func (c *cpuController) Create(path string, resources *specs.LinuxResources) err
 			}
 			if value != nil {
 				if err := retryingWriteFile(
-					filepath.Join(c.Path(path), fmt.Sprintf("cpu.%s", t.name)),
+					filepath.Join(c.Path(path), "cpu."+t.name),
 					value,
 					defaultFilePerm,
 				); err != nil {

@@ -17,7 +17,6 @@
 package cgroups
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -105,7 +104,7 @@ func (s *SystemdController) Create(path string, resources *specs.LinuxResources)
 	}
 	once.Do(checkDelegate)
 	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", name)),
+		systemdDbus.PropDescription("cgroup " + name),
 		systemdDbus.PropWants(slice),
 		newProperty("DefaultDependencies", false),
 		newProperty("MemoryAccounting", true),
@@ -151,7 +150,7 @@ func newProperty(name string, units interface{}) systemdDbus.Property {
 }
 
 func unitName(name string) string {
-	return fmt.Sprintf("%s.slice", name)
+	return name + ".slice"
 }
 
 func splitName(path string) (slice string, unit string) {

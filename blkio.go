@@ -72,7 +72,7 @@ func (b *blkioController) Create(path string, resources *specs.LinuxResources) e
 	for _, t := range createBlkioSettings(resources.BlockIO) {
 		if t.value != nil {
 			if err := retryingWriteFile(
-				filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", t.name)),
+				filepath.Join(b.Path(path), "blkio."+t.name),
 				t.format(t.value),
 				defaultFilePerm,
 			); err != nil {
@@ -93,7 +93,7 @@ func (b *blkioController) Stat(path string, stats *v1.Metrics) error {
 	var settings []blkioStatSettings
 
 	// Try to read CFQ stats available on all CFQ enabled kernels first
-	if _, err := os.Lstat(filepath.Join(b.Path(path), fmt.Sprintf("blkio.io_serviced_recursive"))); err == nil {
+	if _, err := os.Lstat(filepath.Join(b.Path(path), "blkio.io_serviced_recursive")); err == nil {
 		settings = []blkioStatSettings{
 			{
 				name:  "sectors_recursive",
@@ -173,7 +173,7 @@ func (b *blkioController) Stat(path string, stats *v1.Metrics) error {
 }
 
 func (b *blkioController) readEntry(devices map[deviceKey]string, path, name string, entry *[]*v1.BlkIOEntry) error {
-	f, err := os.Open(filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", name)))
+	f, err := os.Open(filepath.Join(b.Path(path), "blkio."+name))
 	if err != nil {
 		return err
 	}

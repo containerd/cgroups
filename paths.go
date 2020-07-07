@@ -79,7 +79,7 @@ func existingPath(paths map[string]string, suffix string) Path {
 	return func(name Name) (string, error) {
 		root, ok := paths[string(name)]
 		if !ok {
-			if root, ok = paths[fmt.Sprintf("name=%s", name)]; !ok {
+			if root, ok = paths["name="+string(name)]; !ok {
 				return "", ErrControllerNotActive
 			}
 		}
