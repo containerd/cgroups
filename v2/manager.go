@@ -18,7 +18,6 @@ package v2
 
 import (
 	"bufio"
-	stderrors "errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -161,7 +160,7 @@ func (c *Value) write(path string, perm os.FileMode) error {
 		)
 		if err == nil {
 			return nil
-		} else if !stderrors.Is(err, syscall.EINTR) {
+		} else if !errors.Is(err, syscall.EINTR) {
 			return err
 		}
 	}
