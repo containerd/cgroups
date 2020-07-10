@@ -28,7 +28,7 @@ func TestCgroupv2IOController(t *testing.T) {
 	group := "/io-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	var (
-		//weight uint16 = 100
+		// weight uint16 = 100
 		maj  int64  = 8
 		min  int64  = 0
 		rate uint64 = 120

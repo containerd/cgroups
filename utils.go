@@ -382,14 +382,14 @@ func cleanPath(path string) string {
 	if !filepath.IsAbs(path) {
 		path, _ = filepath.Rel(string(os.PathSeparator), filepath.Clean(string(os.PathSeparator)+path))
 	}
-	return filepath.Clean(path)
+	return path
 }
 
 func retryingWriteFile(path string, data []byte, mode os.FileMode) error {
 	// Retry writes on EINTR; see:
 	//    https://github.com/golang/go/issues/38033
 	for {
-		err := ioutil.WriteFile(path, []byte(data), mode)
+		err := ioutil.WriteFile(path, data, mode)
 		if err == nil {
 			return nil
 		} else if !errors.Is(err, syscall.EINTR) {

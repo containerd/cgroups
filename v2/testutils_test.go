@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
 	"golang.org/x/sys/unix"
 )
 

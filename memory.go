@@ -378,7 +378,7 @@ func (m *memoryController) set(path string, settings []memorySettings) error {
 	for _, t := range settings {
 		if t.value != nil {
 			if err := retryingWriteFile(
-				filepath.Join(m.Path(path), fmt.Sprintf("memory.%s", t.name)),
+				filepath.Join(m.Path(path), "memory."+t.name),
 				[]byte(strconv.FormatInt(*t.value, 10)),
 				defaultFilePerm,
 			); err != nil {
