@@ -61,6 +61,11 @@ total_active_file 31
 total_unevictable 32
 `
 
+const memoryOomControlData = `oom_kill_disable 1
+under_oom 2
+oom_kill 3
+`
+
 func TestParseMemoryStats(t *testing.T) {
 	var (
 		c = &memoryController{}
@@ -103,6 +108,27 @@ func TestParseMemoryStats(t *testing.T) {
 		m.TotalInactiveFile,
 		m.TotalActiveFile,
 		m.TotalUnevictable,
+	}
+	for i, v := range index {
+		if v != uint64(i)+1 {
+			t.Errorf("expected value at index %d to be %d but received %d", i, i+1, v)
+		}
+	}
+}
+
+func TestParseMemoryOomControl(t *testing.T) {
+	var (
+		c = &memoryController{}
+		m = &v1.MemoryOomControl{}
+		r = strings.NewReader(memoryOomControlData)
+	)
+	if err := c.parseOomControlStats(r, m); err != nil {
+		t.Fatal(err)
+	}
+	index := []uint64{
+		m.OomKillDisable,
+		m.UnderOom,
+		m.OomKill,
 	}
 	for i, v := range index {
 		if v != uint64(i)+1 {
@@ -242,6 +268,9 @@ func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string
 		t.Fatal(err)
 	}
 	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), defaultFilePerm); err != nil {
+		t.Fatal(err)
+	}
+	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.oom_control"), []byte(memoryOomControlData), defaultFilePerm); err != nil {
 		t.Fatal(err)
 	}
 	cnt := 0

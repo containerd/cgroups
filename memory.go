@@ -248,18 +248,28 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 }
 
 func (m *memoryController) Stat(path string, stats *v1.Metrics) error {
-	f, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
+	fMemStat, err := os.Open(filepath.Join(m.Path(path), "memory.stat"))
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer fMemStat.Close()
 	stats.Memory = &v1.MemoryStat{
 		Usage:     &v1.MemoryEntry{},
 		Swap:      &v1.MemoryEntry{},
 		Kernel:    &v1.MemoryEntry{},
 		KernelTCP: &v1.MemoryEntry{},
 	}
-	if err := m.parseStats(f, stats.Memory); err != nil {
+	if err := m.parseStats(fMemStat, stats.Memory); err != nil {
+		return err
+	}
+
+	fMemOomControl, err := os.Open(filepath.Join(m.Path(path), "memory.oom_control"))
+	if err != nil {
+		return err
+	}
+	defer fMemOomControl.Close()
+	stats.MemoryOomControl = &v1.MemoryOomControl{}
+	if err := m.parseOomControlStats(fMemOomControl, stats.MemoryOomControl); err != nil {
 		return err
 	}
 	for _, t := range []struct {
@@ -371,6 +381,29 @@ func (m *memoryController) parseStats(r io.Reader, stat *v1.MemoryStat) error {
 	stat.TotalInactiveFile = raw["total_inactive_file"]
 	stat.TotalActiveFile = raw["total_active_file"]
 	stat.TotalUnevictable = raw["total_unevictable"]
+	return nil
+}
+
+func (m *memoryController) parseOomControlStats(r io.Reader, stat *v1.MemoryOomControl) error {
+	var (
+		raw  = make(map[string]uint64)
+		sc   = bufio.NewScanner(r)
+		line int
+	)
+	for sc.Scan() {
+		key, v, err := parseKV(sc.Text())
+		if err != nil {
+			return fmt.Errorf("%d: %v", line, err)
+		}
+		raw[key] = v
+		line++
+	}
+	if err := sc.Err(); err != nil {
+		return err
+	}
+	stat.OomKillDisable = raw["oom_kill_disable"]
+	stat.UnderOom = raw["under_oom"]
+	stat.OomKill = raw["oom_kill"]
 	return nil
 }
 
