@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -206,21 +205,6 @@ func (m *memoryController) Create(path string, resources *specs.LinuxResources) 
 	}
 	if resources.Memory == nil {
 		return nil
-	}
-	if resources.Memory.Kernel != nil {
-		// Check if kernel memory is enabled
-		// We have to limit the kernel memory here as it won't be accounted at all
-		// until a limit is set on the cgroup and limit cannot be set once the
-		// cgroup has children, or if there are already tasks in the cgroup.
-		for _, i := range []int64{1, -1} {
-			if err := retryingWriteFile(
-				filepath.Join(m.Path(path), "memory.kmem.limit_in_bytes"),
-				[]byte(strconv.FormatInt(i, 10)),
-				defaultFilePerm,
-			); err != nil {
-				return checkEBUSY(err)
-			}
-		}
 	}
 	return m.set(path, getMemorySettings(resources))
 }
@@ -464,18 +448,6 @@ func getMemorySettings(resources *specs.LinuxResources) []memorySettings {
 			value: swappiness,
 		},
 	}
-}
-
-func checkEBUSY(err error) error {
-	if pathErr, ok := err.(*os.PathError); ok {
-		if errNo, ok := pathErr.Err.(syscall.Errno); ok {
-			if errNo == unix.EBUSY {
-				return fmt.Errorf(
-					"failed to set memory.kmem.limit_in_bytes, because either tasks have already joined this cgroup or it has children")
-			}
-		}
-	}
-	return err
 }
 
 func getOomControlValue(mem *specs.LinuxMemory) *int64 {
