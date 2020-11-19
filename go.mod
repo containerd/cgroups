@@ -3,7 +3,7 @@ module github.com/containerd/cgroups
 go 1.13
 
 require (
-	github.com/cilium/ebpf v0.0.0-20200702112145-1c8d4c9ef775
+	github.com/cilium/ebpf v0.2.0
 	github.com/coreos/go-systemd/v22 v22.0.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/docker/go-units v0.4.0
