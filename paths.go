@@ -71,9 +71,6 @@ func existingPath(paths map[string]string, suffix string) Path {
 		if err != nil {
 			return errorPath(err)
 		}
-		if rel == "." {
-			rel = dest
-		}
 		paths[n] = filepath.Join("/", rel)
 	}
 	return func(name Name) (string, error) {
