@@ -18,6 +18,7 @@ package cgroups
 
 import (
 	"fmt"
+	"os"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -46,7 +47,6 @@ const (
 // available on most linux systems
 func Subsystems() []Name {
 	n := []Name{
-		Hugetlb,
 		Freezer,
 		Pids,
 		NetCLS,
@@ -61,6 +61,9 @@ func Subsystems() []Name {
 	}
 	if !RunningInUserNS() {
 		n = append(n, Devices)
+	}
+	if _, err := os.Stat("/sys/kernel/mm/hugepages"); err == nil {
+		n = append(n, Hugetlb)
 	}
 	return n
 }
