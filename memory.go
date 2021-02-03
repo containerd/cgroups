@@ -45,6 +45,7 @@ type memoryThresholdEvent struct {
 
 // MemoryThresholdEvent returns a new memory threshold event to be used with RegisterMemoryEvent.
 // If swap is true, the event will be registered using memory.memsw.usage_in_bytes
+//MemoryThresholdEvent returns a MemoryEvent interface so they can all be registered via the memory controllers memoryEvent method
 func MemoryThresholdEvent(threshold uint64, swap bool) MemoryEvent {
 	return &memoryThresholdEvent{
 		threshold,
@@ -84,6 +85,7 @@ type memoryPressureEvent struct {
 }
 
 // MemoryPressureEvent returns a new memory pressure event to be used with RegisterMemoryEvent.
+// MemoryPressureEvent return a MemoryEvent interface so they can all be registered via the memory controllers memoryEvent method
 func MemoryPressureEvent(pressureLevel MemoryPressureLevel, hierarchy EventNotificationMode) MemoryEvent {
 	return &memoryPressureEvent{
 		pressureLevel,
