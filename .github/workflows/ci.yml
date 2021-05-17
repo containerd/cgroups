@@ -111,7 +111,7 @@ jobs:
     name: Test cgroups v2
     # nested virtualization is only available on macOS hosts
     runs-on: macos-10.15
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [project]
 
     steps:
