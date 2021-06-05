@@ -41,7 +41,7 @@ func TestSelfPath(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
-	paths, err := parseCgroupFile("/proc/self/cgroup")
+	paths, err := ParseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestPidPath(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
-	paths, err := parseCgroupFile("/proc/self/cgroup")
+	paths, err := ParseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
 	}
