@@ -76,3 +76,11 @@ func (m *mockCgroup) delete() error {
 func (m *mockCgroup) hierarchy() ([]Subsystem, error) {
 	return m.subsystems, nil
 }
+
+func (m *mockCgroup) systemdHierarchy() ([]Subsystem, error) {
+	s, err := NewSystemd(m.root)
+	if err != nil {
+		return nil, err
+	}
+	return append([]Subsystem{s}, m.subsystems...), nil
+}
