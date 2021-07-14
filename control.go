@@ -61,6 +61,8 @@ type Cgroup interface {
 	New(string, *specs.LinuxResources) (Cgroup, error)
 	// Add adds a process to the cgroup (cgroup.procs)
 	Add(Process) error
+	// AddProc adds the process with the given id to the cgroup (cgroup.procs)
+	AddProc(pid uint64) error
 	// AddTask adds a process to the cgroup (tasks)
 	AddTask(Process) error
 	// Delete removes the cgroup as a whole
