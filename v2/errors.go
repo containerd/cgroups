@@ -18,21 +18,9 @@ package v2
 
 import (
 	"errors"
-	"os"
 )
 
 var (
 	ErrInvalidFormat    = errors.New("cgroups: parsing file with invalid format failed")
 	ErrInvalidGroupPath = errors.New("cgroups: invalid group path")
 )
-
-// ErrorHandler is a function that handles and acts on errors
-type ErrorHandler func(err error) error
-
-// IgnoreNotExist ignores any errors that are for not existing files
-func IgnoreNotExist(err error) error {
-	if os.IsNotExist(err) {
-		return nil
-	}
-	return err
-}
