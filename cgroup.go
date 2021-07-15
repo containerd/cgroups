@@ -162,6 +162,16 @@ func (c *cgroup) Add(process Process) error {
 	return c.add(process)
 }
 
+// AddProc moves the provided process id into the new cgroup
+func (c *cgroup) AddProc(pid uint64) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.err != nil {
+		return c.err
+	}
+	return c.Add(Process{Pid: int(pid)})
+}
+
 func (c *cgroup) add(process Process) error {
 	for _, s := range pathers(c.subsystems) {
 		p, err := c.path(s.Name())
