@@ -54,12 +54,22 @@ type Task = Process
 type Cgroup interface {
 	// New creates a new cgroup under the calling cgroup
 	New(string, *specs.LinuxResources) (Cgroup, error)
-	// Add adds a process to the cgroup (cgroup.procs)
-	Add(Process) error
-	// AddProc adds the process with the given id to the cgroup (cgroup.procs)
-	AddProc(pid uint64) error
-	// AddTask adds a process to the cgroup (tasks)
-	AddTask(Process) error
+	// Add adds a process to the cgroup (cgroup.procs). Without additional arguments,
+	// the process is added to all the cgroup subsystems. When giving Add a list of
+	// subsystem names, the process is only added to those subsystems, provided that
+	// they are active in the targeted cgroup.
+	Add(Process, ...Name) error
+	// AddProc adds the process with the given id to the cgroup (cgroup.procs).
+	// Without additional arguments, the process with the given id is added to all
+	// the cgroup subsystems. When giving AddProc a list of subsystem names, the process
+	// id is only added to those subsystems, provided that they are active in the targeted
+	// cgroup.
+	AddProc(uint64, ...Name) error
+	// AddTask adds a process to the cgroup (tasks). Without additional arguments, the
+	// task is added to all the cgroup subsystems. When giving AddTask a list of subsystem
+	// names, the task is only added to those subsystems, provided that they are active in
+	// the targeted cgroup.
+	AddTask(Process, ...Name) error
 	// Delete removes the cgroup as a whole
 	Delete() error
 	// MoveTo moves all the processes under the calling cgroup to the provided one

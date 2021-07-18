@@ -101,6 +101,63 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestAddFilteredSubsystems(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	filteredSubsystems := []Name{"memory", "cpu"}
+	if err := control.Add(Process{Pid: 1234}, filteredSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if err := checkPid(mock, filepath.Join("devices", "test"), 1234); err == nil {
+		t.Error("Pid should not be added to the devices subsystem")
+		return
+	}
+
+	bogusSubsystems := append(filteredSubsystems, "bogus")
+	if err := control.Add(Process{Pid: 5678}, bogusSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 5678); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	nilSubsystems := []Name{}
+	if err := control.Add(Process{Pid: 9012}, nilSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range Subsystems() {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 9012); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
 func TestAddTask(t *testing.T) {
 	mock, err := newMock()
 	if err != nil {
@@ -118,6 +175,48 @@ func TestAddTask(t *testing.T) {
 	}
 	for _, s := range Subsystems() {
 		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
+func TestAddTaskFilteredSubsystems(t *testing.T) {
+	mock, err := newMock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	filteredSubsystems := []Name{"memory", "cpu"}
+	if err := control.AddTask(Process{Pid: 1234}, filteredSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range filteredSubsystems {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if err := checkTaskid(mock, filepath.Join("devices", "test"), 1234); err == nil {
+		t.Error("Task should not be added to the devices subsystem")
+		return
+	}
+
+	bogusSubsystems := append(filteredSubsystems, "bogus")
+	if err := control.AddTask(Process{Pid: 5678}, bogusSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 5678); err != nil {
 			t.Error(err)
 			return
 		}
