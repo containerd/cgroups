@@ -164,9 +164,9 @@ func remove(path string) error {
 	return fmt.Errorf("cgroups: unable to remove path %q", path)
 }
 
-// readPids will read all the pids of processes in a cgroup by the provided path
-func readPids(path string, subsystem Name) ([]Process, error) {
-	f, err := os.Open(filepath.Join(path, cgroupProcs))
+// readPids will read all the pids of processes or tasks in a cgroup by the provided path
+func readPids(path string, subsystem Name, pType procType) ([]Process, error) {
+	f, err := os.Open(filepath.Join(path, pType))
 	if err != nil {
 		return nil, err
 	}
@@ -190,36 +190,6 @@ func readPids(path string, subsystem Name) ([]Process, error) {
 	}
 	if err := s.Err(); err != nil {
 		// failed to read all pids?
-		return nil, err
-	}
-	return out, nil
-}
-
-// readTasksPids will read all the pids of tasks in a cgroup by the provided path
-func readTasksPids(path string, subsystem Name) ([]Task, error) {
-	f, err := os.Open(filepath.Join(path, cgroupTasks))
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	var (
-		out []Task
-		s   = bufio.NewScanner(f)
-	)
-	for s.Scan() {
-		if t := s.Text(); t != "" {
-			pid, err := strconv.Atoi(t)
-			if err != nil {
-				return nil, err
-			}
-			out = append(out, Task{
-				Pid:       pid,
-				Subsystem: subsystem,
-				Path:      path,
-			})
-		}
-	}
-	if err := s.Err(); err != nil {
 		return nil, err
 	}
 	return out, nil
