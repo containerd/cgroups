@@ -301,15 +301,23 @@ func (c *Manager) NewChild(name string, resources *Resources) (*Manager, error) 
 	if err := os.MkdirAll(path, defaultDirPerm); err != nil {
 		return nil, err
 	}
+	m := Manager{
+		unifiedMountpoint: c.unifiedMountpoint,
+		path:              path,
+	}
+	if resources != nil {
+		if err := m.ToggleControllers(resources.EnabledControllers(), Enable); err != nil {
+			// clean up cgroup dir on failure
+			os.Remove(path)
+			return nil, err
+		}
+	}
 	if err := setResources(path, resources); err != nil {
 		// clean up cgroup dir on failure
 		os.Remove(path)
 		return nil, err
 	}
-	return &Manager{
-		unifiedMountpoint: c.unifiedMountpoint,
-		path:              path,
-	}, nil
+	return &m, nil
 }
 
 func (c *Manager) AddProc(pid uint64) error {
