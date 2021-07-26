@@ -272,6 +272,8 @@ func (c *Manager) ToggleControllers(controllers []string, t ControllerToggle) er
 			// controller is already written.
 			// So we only return the last error.
 			lastErr = errors.Wrapf(err, "failed to write subtree controllers %+v to %q", controllers, filePath)
+		} else {
+			lastErr = nil
 		}
 	}
 	return lastErr
