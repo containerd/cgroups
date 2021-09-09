@@ -327,6 +327,9 @@ func (c *cgroup) processes(subsystem Name, recursive bool, pType procType) ([]Pr
 	if err != nil {
 		return nil, err
 	}
+	if s == nil {
+		return nil, fmt.Errorf("cgroups: %s doesn't exist in %s subsystem", sp, subsystem)
+	}
 	path := s.(pather).Path(sp)
 	var processes []Process
 	err = filepath.Walk(path, func(p string, info os.FileInfo, err error) error {
