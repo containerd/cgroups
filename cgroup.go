@@ -17,6 +17,7 @@
 package cgroups
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,8 +26,8 @@ import (
 	"sync"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
-	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/pkg/errors"
+
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 // New returns a new control via the cgroup cgroups interface
@@ -83,7 +84,7 @@ func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
 	for _, s := range pathers(subsystems) {
 		p, err := path(s.Name())
 		if err != nil {
-			if os.IsNotExist(errors.Cause(err)) {
+			if  errors.Is(err, os.ErrNotExist) {
 				return nil, ErrCgroupDeleted
 			}
 			if err == ErrControllerNotActive {
