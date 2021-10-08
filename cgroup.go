@@ -150,22 +150,50 @@ func (c *cgroup) Subsystems() []Subsystem {
 	return c.subsystems
 }
 
-// Add moves the provided process into the new cgroup
-func (c *cgroup) Add(process Process) error {
-	return c.add(process, cgroupProcs)
+func (c *cgroup) subsystemsFilter(subsystems ...Name) []Subsystem {
+	if len(subsystems) == 0 {
+		return c.subsystems
+	}
+
+	var filteredSubsystems = []Subsystem{}
+	for _, s := range c.subsystems {
+		for _, f := range subsystems {
+			if s.Name() == f {
+				filteredSubsystems = append(filteredSubsystems, s)
+				break
+			}
+		}
+	}
+
+	return filteredSubsystems
 }
 
-// AddProc moves the provided process id into the new cgroup
-func (c *cgroup) AddProc(pid uint64) error {
-	return c.add(Process{Pid: int(pid)}, cgroupProcs)
+// Add moves the provided process into the new cgroup.
+// Without additional arguments, the process is added to all the cgroup subsystems.
+// When giving Add a list of subsystem names, the process is only added to those
+// subsystems, provided that they are active in the targeted cgroup.
+func (c *cgroup) Add(process Process, subsystems ...Name) error {
+	return c.add(process, cgroupProcs, subsystems...)
 }
 
-// AddTask moves the provided tasks (threads) into the new cgroup
-func (c *cgroup) AddTask(process Process) error {
-	return c.add(process, cgroupTasks)
+// AddProc moves the provided process id into the new cgroup.
+// Without additional arguments, the process with the given id is added to all
+// the cgroup subsystems. When giving AddProc a list of subsystem names, the process
+// id is only added to those subsystems, provided that they are active in the targeted
+// cgroup.
+func (c *cgroup) AddProc(pid uint64, subsystems ...Name) error {
+	return c.add(Process{Pid: int(pid)}, cgroupProcs, subsystems...)
 }
 
-func (c *cgroup) add(process Process, pType procType) error {
+// AddTask moves the provided tasks (threads) into the new cgroup.
+// Without additional arguments, the task is added to all the cgroup subsystems.
+// When giving AddTask a list of subsystem names, the task is only added to those
+// subsystems, provided that they are active in the targeted cgroup.
+func (c *cgroup) AddTask(process Process, subsystems ...Name) error {
+	return c.add(process, cgroupTasks, subsystems...)
+}
+
+func (c *cgroup) add(process Process, pType procType, subsystems ...Name) error {
 	if process.Pid <= 0 {
 		return ErrInvalidPid
 	}
@@ -174,7 +202,7 @@ func (c *cgroup) add(process Process, pType procType) error {
 	if c.err != nil {
 		return c.err
 	}
-	for _, s := range pathers(c.subsystems) {
+	for _, s := range pathers(c.subsystemsFilter(subsystems...)) {
 		p, err := c.path(s.Name())
 		if err != nil {
 			return err
