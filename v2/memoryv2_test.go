@@ -56,6 +56,7 @@ func TestSystemdCgroupMemoryController(t *testing.T) {
 	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())
 	res := Resources{
 		Memory: &Memory{
+			Min: pointerInt64(16384),
 			Max: pointerInt64(629145600),
 		},
 	}
@@ -63,5 +64,6 @@ func TestSystemdCgroupMemoryController(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to init new cgroup systemd manager: ", err)
 	}
+	checkFileContent(t, c.path, "memory.min", "16384")
 	checkFileContent(t, c.path, "memory.max", "629145600")
 }
