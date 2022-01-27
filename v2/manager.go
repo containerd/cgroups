@@ -660,20 +660,19 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 		}
 		if bytesRead >= syscall.SizeofInotifyEvent {
 			out := make(map[string]interface{})
-			if err := readKVStatsFile(c.path, "memory.events", out); err == nil {
-				e, err := parseMemoryEvents(out)
-				if err != nil {
-					errCh <- err
-					return
-				}
-				ec <- e
-			} else {
+			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
 				// When cgroup is deleted read may return -ENODEV instead of -ENOENT from open.
 				if _, statErr := os.Lstat(filepath.Join(c.path, "memory.events")); !os.IsNotExist(statErr) {
 					errCh <- err
 				}
 				return
 			}
+			e, err := parseMemoryEvents(out)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			ec <- e
 			if c.isCgroupEmpty() {
 				return
 			}
