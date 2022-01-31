@@ -606,6 +606,41 @@ func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 	return ec, errCh
 }
 
+func parseMemoryEvents(out map[string]interface{}) (Event, error) {
+	e := Event{}
+	if v, ok := out["high"]; ok {
+		e.High, ok = v.(uint64)
+		if !ok {
+			return Event{}, fmt.Errorf("cannot convert high to uint64: %+v", v)
+		}
+	}
+	if v, ok := out["low"]; ok {
+		e.Low, ok = v.(uint64)
+		if !ok {
+			return Event{}, fmt.Errorf("cannot convert low to uint64: %+v", v)
+		}
+	}
+	if v, ok := out["max"]; ok {
+		e.Max, ok = v.(uint64)
+		if !ok {
+			return Event{}, fmt.Errorf("cannot convert max to uint64: %+v", v)
+		}
+	}
+	if v, ok := out["oom"]; ok {
+		e.OOM, ok = v.(uint64)
+		if !ok {
+			return Event{}, fmt.Errorf("cannot convert oom to uint64: %+v", v)
+		}
+	}
+	if v, ok := out["oom_kill"]; ok {
+		e.OOMKill, ok = v.(uint64)
+		if !ok {
+			return Event{}, fmt.Errorf("cannot convert oom_kill to uint64: %+v", v)
+		}
+	}
+	return e, nil
+}
+
 func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 	defer close(errCh)
 
@@ -626,41 +661,10 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 		if bytesRead >= syscall.SizeofInotifyEvent {
 			out := make(map[string]interface{})
 			if err := readKVStatsFile(c.path, "memory.events", out); err == nil {
-				e := Event{}
-				if v, ok := out["high"]; ok {
-					e.High, ok = v.(uint64)
-					if !ok {
-						errCh <- fmt.Errorf("cannot convert high to uint64: %+v", v)
-						return
-					}
-				}
-				if v, ok := out["low"]; ok {
-					e.Low, ok = v.(uint64)
-					if !ok {
-						errCh <- fmt.Errorf("cannot convert low to uint64: %+v", v)
-						return
-					}
-				}
-				if v, ok := out["max"]; ok {
-					e.Max, ok = v.(uint64)
-					if !ok {
-						errCh <- fmt.Errorf("cannot convert max to uint64: %+v", v)
-						return
-					}
-				}
-				if v, ok := out["oom"]; ok {
-					e.OOM, ok = v.(uint64)
-					if !ok {
-						errCh <- fmt.Errorf("cannot convert oom to uint64: %+v", v)
-						return
-					}
-				}
-				if v, ok := out["oom_kill"]; ok {
-					e.OOMKill, ok = v.(uint64)
-					if !ok {
-						errCh <- fmt.Errorf("cannot convert oom_kill to uint64: %+v", v)
-						return
-					}
+				e, err := parseMemoryEvents(out)
+				if err != nil {
+					errCh <- err
+					return
 				}
 				ec <- e
 			} else {
