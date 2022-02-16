@@ -68,6 +68,25 @@ func TestSystemdCgroupCpuController(t *testing.T) {
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 }
 
+func TestSystemdCgroupCpuController_NilWeight(t *testing.T) {
+	checkCgroupMode(t)
+	group := "testingCpuNilWeight.slice"
+	// nil weight defaults to 100
+	var quota int64 = 10000
+	var period uint64 = 8000
+	cpuMax := NewCPUMax(&quota, &period)
+	res := Resources{
+		CPU: &CPU{
+			Weight: nil,
+			Max:    cpuMax,
+		},
+	}
+	_, err := NewSystemd("/", group, -1, &res)
+	if err != nil {
+		t.Fatal("failed to init new cgroup systemd manager: ", err)
+	}
+}
+
 func TestExtractQuotaAndPeriod(t *testing.T) {
 	var (
 		period uint64
