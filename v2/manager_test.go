@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
 
@@ -73,4 +74,68 @@ func TestEventChanCleanupOnCgroupRemoval(t *testing.T) {
 		}
 	}
 	goleak.VerifyNone(t)
+}
+
+func TestSystemdFullPath(t *testing.T) {
+	tests := []struct {
+		inputSlice  string
+		inputGroup  string
+		expectedOut string
+	}{
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "myGroup.slice",
+			expectedOut: "/sys/fs/cgroup/user.slice/myGroup.slice",
+		},
+		{
+			inputSlice:  "/",
+			inputGroup:  "myGroup.slice",
+			expectedOut: "/sys/fs/cgroup/myGroup.slice",
+		},
+		{
+			inputSlice:  "system.slice",
+			inputGroup:  "myGroup.slice",
+			expectedOut: "/sys/fs/cgroup/system.slice/myGroup.slice",
+		},
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "my-group.slice",
+			expectedOut: "/sys/fs/cgroup/user.slice/my.slice/my-group.slice",
+		},
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "my-group-more-dashes.slice",
+			expectedOut: "/sys/fs/cgroup/user.slice/my.slice/my-group.slice/my-group-more.slice/my-group-more-dashes.slice",
+		},
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "my-group-dashes.slice",
+			expectedOut: "/sys/fs/cgroup/user.slice/my.slice/my-group.slice/my-group-dashes.slice",
+		},
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "myGroup.scope",
+			expectedOut: "/sys/fs/cgroup/user.slice/myGroup.scope",
+		},
+		{
+			inputSlice:  "user.slice",
+			inputGroup:  "my-group-dashes.scope",
+			expectedOut: "/sys/fs/cgroup/user.slice/my-group-dashes.scope",
+		},
+		{
+			inputSlice:  "test-waldo.slice",
+			inputGroup:  "my-group.slice",
+			expectedOut: "/sys/fs/cgroup/test.slice/test-waldo.slice/my.slice/my-group.slice",
+		},
+		{
+			inputSlice:  "test-waldo.slice",
+			inputGroup:  "my.service",
+			expectedOut: "/sys/fs/cgroup/test.slice/test-waldo.slice/my.service",
+		},
+	}
+
+	for _, test := range tests {
+		actual := getSystemdFullPath(test.inputSlice, test.inputGroup)
+		assert.Equal(t, test.expectedOut, actual)
+	}
 }
