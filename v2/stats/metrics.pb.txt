@@ -1,7 +1,6 @@
 file {
   name: "github.com/containerd/cgroups/v2/stats/metrics.proto"
   package: "io.containerd.cgroups.v2"
-  dependency: "gogoproto/gogo.proto"
   message_type {
     name: "Metrics"
     field {
@@ -18,9 +17,6 @@ file {
       label: LABEL_OPTIONAL
       type: TYPE_MESSAGE
       type_name: ".io.containerd.cgroups.v2.CPUStat"
-      options {
-        65004: "CPU"
-      }
       json_name: "cpu"
     }
     field {
@@ -534,6 +530,9 @@ file {
       type: TYPE_STRING
       json_name: "pagesize"
     }
+  }
+  options {
+    go_package: "github.com/containerd/cgroups/v2/stats"
   }
   syntax: "proto3"
 }
