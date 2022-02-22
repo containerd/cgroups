@@ -80,6 +80,41 @@ jobs:
         run: ../project/script/validate/fileheader ../project/
         working-directory: src/github.com/containerd/cgroups
 
+  test:
+    name: Test cgroups
+
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-18.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    needs: [project]
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.x'
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+
+      - name: Checkout cgroups
+        uses: actions/checkout@v2
+        with:
+          path: src/github.com/containerd/cgroups
+
+      - name: mount
+        run: mount
+
+      - name: Run cgroup v1 tests
+        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic -exec sudo ./...
+        working-directory: src/github.com/containerd/cgroups
+
   test-v1:
     name: Test cgroups v1
     runs-on: ubuntu-18.04

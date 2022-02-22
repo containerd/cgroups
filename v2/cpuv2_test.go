@@ -26,8 +26,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func cgroup2Path(t *testing.T) string {
+	t.Helper()
+
+	return "/sys/fs/cgroup/unified"
+}
+
 func TestCgroupv2CpuStats(t *testing.T) {
-	checkCgroupMode(t)
 	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	var (
@@ -44,7 +49,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 			Mems:   "0",
 		},
 	}
-	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
+	c, err := NewManager(cgroup2Path(t), groupPath, &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
