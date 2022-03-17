@@ -240,6 +240,10 @@ func (c *Manager) Controllers() ([]string, error) {
 	return strings.Fields(string(b)), nil
 }
 
+func (c *Manager) Update(resources *Resources) error {
+	return setResources(c.path, resources)
+}
+
 type ControllerToggle int
 
 const (
