@@ -241,6 +241,10 @@ func (c *Manager) Controllers() ([]string, error) {
 }
 
 func (c *Manager) Update(resources *Resources) error {
+	// skip updating devices because the default devices setting is by runc.
+	if len(resources.Devices) > 0 {
+		resources.Devices = []specs.LinuxDeviceCgroup{}
+	}
 	return setResources(c.path, resources)
 }
 
