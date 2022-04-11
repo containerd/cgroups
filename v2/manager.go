@@ -337,6 +337,14 @@ func (c *Manager) AddProc(pid uint64) error {
 }
 
 func (c *Manager) Delete() error {
+	// kernel prevents cgroups with running process from being removed, check the tree is empty
+	processes, err := c.Procs(true)
+	if err != nil {
+		return err
+	}
+	if len(processes) > 0 {
+		return fmt.Errorf("cgroups: unable to remove path %q: still contains running processes", c.path)
+	}
 	return remove(c.path)
 }
 
