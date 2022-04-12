@@ -229,7 +229,7 @@ func (c *cgroup) Delete() error {
 	var errs []string
 	for _, s := range c.subsystems {
 		// kernel prevents cgroups with running process from being removed, check the tree is empty
-		procs, err := c.Processes(s.Name(), true)
+		procs, err := c.processes(s.Name(), true, cgroupProcs)
 		if err != nil {
 			return err
 		}
