@@ -234,7 +234,7 @@ func (c *cgroup) Delete() error {
 			return err
 		}
 		if len(procs) > 0 {
-			errs = append(errs, string(s.Name()))
+			errs = append(errs, fmt.Sprintf("%s (contains running processes)", string(s.Name())))
 			continue
 		}
 		if d, ok := s.(deleter); ok {
