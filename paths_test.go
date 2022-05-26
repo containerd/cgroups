@@ -102,7 +102,7 @@ func TestEmptySubsystem(t *testing.T) {
 	1:name=systemd:/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service
 	0::/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service`
 	r := strings.NewReader(data)
-	paths, err := parseCgroupFromReader(r)
+	paths, unified, err := parseCgroupFromReaderUnified(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,6 +110,10 @@ func TestEmptySubsystem(t *testing.T) {
 		if subsystem == "" {
 			t.Fatalf("empty subsystem for %q", path)
 		}
+	}
+	unifiedExpected := "/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service"
+	if unified != unifiedExpected {
+		t.Fatalf("expected %q, got %q", unifiedExpected, unified)
 	}
 }
 
@@ -127,7 +131,7 @@ func TestSystemd240(t *testing.T) {
 	1:name=systemd:/system.slice/docker.service
 	0::/system.slice/docker.service`
 	r := strings.NewReader(data)
-	paths, err := parseCgroupFromReader(r)
+	paths, unified, err := parseCgroupFromReaderUnified(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,5 +143,9 @@ func TestSystemd240(t *testing.T) {
 	}
 	if err != ErrControllerNotActive {
 		t.Fatalf("expected error %q but received %q", ErrControllerNotActive, err)
+	}
+	unifiedExpected := "/system.slice/docker.service"
+	if unified != unifiedExpected {
+		t.Fatalf("expected %q, got %q", unifiedExpected, unified)
 	}
 }
