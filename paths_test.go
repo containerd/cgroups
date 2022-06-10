@@ -139,7 +139,7 @@ func TestSystemd240(t *testing.T) {
 	path := existingPath(paths, "")
 	_, err = path("net_prio")
 	if err == nil {
-		t.Fatal("error for net_prio shoulld not be nil")
+		t.Fatal("error for net_prio should not be nil")
 	}
 	if err != ErrControllerNotActive {
 		t.Fatalf("expected error %q but received %q", ErrControllerNotActive, err)
