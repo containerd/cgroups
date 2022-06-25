@@ -18,10 +18,12 @@ package v2
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 	"time"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/goleak"
 )
@@ -137,5 +139,37 @@ func TestSystemdFullPath(t *testing.T) {
 	for _, test := range tests {
 		actual := getSystemdFullPath(test.inputSlice, test.inputGroup)
 		assert.Equal(t, test.expectedOut, actual)
+	}
+}
+
+func TestMoveTo(t *testing.T) {
+	checkCgroupMode(t)
+	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	proc := os.Getpid()
+	if err := manager.AddProc(uint64(proc)); err != nil {
+		t.Error(err)
+		return
+	}
+	destination, err := NewManager(defaultCgroup2Path, "/test2", ToResources(&specs.LinuxResources{}))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if err := manager.MoveTo(destination); err != nil {
+		t.Error(err)
+		return
+	}
+	desProcs, err := destination.Procs(true)
+	desMap := make(map[int]bool)
+	for _, p := range desProcs {
+		desMap[int(p)] = true
+	}
+	if !desMap[proc] {
+		t.Errorf("process %v not in destination cgroup", proc)
+		return
 	}
 }
