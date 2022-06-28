@@ -80,12 +80,16 @@ jobs:
         run: ../project/script/validate/fileheader ../project/
         working-directory: src/github.com/containerd/cgroups
 
-  test-v1:
-    name: Test cgroups v1
-    runs-on: ubuntu-18.04
+  test:
+    name: Test cgroups
     timeout-minutes: 15
     needs: [project]
 
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-22.04]
+
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
@@ -103,23 +107,8 @@ jobs:
         with:
           path: src/github.com/containerd/cgroups
 
-      - name: Run cgroup v1 tests
-        run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Run cgroup tests
+        run: |
+          sudo -E PATH=$PATH GOPATH=$GOPATH \
+            $(command -v go) test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
         working-directory: src/github.com/containerd/cgroups
-
-  test-v2:
-    name: Test cgroups v2
-    # nested virtualization is only available on macOS hosts
-    runs-on: macos-10.15
-    timeout-minutes: 20
-    needs: [project]
-
-    steps:
-      - name: Checkout cgroups
-        uses: actions/checkout@v2
-
-      - name: Start vagrant
-        run: vagrant up
-
-      - name: Run cgroups v2 tests
-        run: vagrant ssh default -- sudo -i /test.sh
