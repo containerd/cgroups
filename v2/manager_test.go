@@ -173,3 +173,53 @@ func TestMoveTo(t *testing.T) {
 		return
 	}
 }
+
+func TestNewSystemd(t *testing.T) {
+	checkCgroupMode(t)
+	tests := []struct {
+		inputSlice string
+		inputGroup string
+		fullPath   string
+	}{
+		{
+			inputSlice: "user.slice",
+			inputGroup: "myGroup.scope",
+			fullPath:   "/sys/fs/cgroup/user.slice/myGroup.scope",
+		},
+		{
+			inputSlice: "user.slice",
+			inputGroup: "my-group-dashes.scope",
+			fullPath:   "/sys/fs/cgroup/user.slice/my-group-dashes.scope",
+		},
+		{
+			inputSlice: "user-name.slice",
+			inputGroup: "my-group.scope",
+			fullPath:   "/sys/fs/cgroup/user.slice/user-name.slice/my-group.scope",
+		},
+		{
+			inputSlice: "kubepods-besteffort-pod12345.slice",
+			inputGroup: "cri-containerd-12345.scope",
+			fullPath:   "/sys/fs/cgroup/kubepods.slice/kubepods-besteffort.slice/kubepods-besteffort-pod12345.slice/cri-containerd-12345.scope",
+		},
+	}
+	for i, test := range tests {
+		control, err := NewSystemd(test.inputSlice, test.inputGroup, os.Getpid(), ToResources(&specs.LinuxResources{}))
+		if err != nil {
+			t.Errorf("%v, %s", i, err)
+			return
+		}
+		if control == nil {
+			t.Error("control is nil")
+			return
+		}
+
+		if _, err := os.Stat(test.fullPath); err != nil {
+			if os.IsNotExist(err) {
+				t.Errorf("group %s was not created", test.fullPath)
+				return
+			}
+			t.Errorf("group %s was not created correctly %s", test.fullPath, err)
+			return
+		}
+	}
+}

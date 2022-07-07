@@ -768,12 +768,12 @@ func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, e
 		newSystemdProperty("IOAccounting", true),
 	}
 
-	// if we create a slice, the parent is defined via a Wants=
 	if strings.HasSuffix(group, ".slice") {
+		// if we create a slice, the parent is defined via a Wants=
 		properties = append(properties, systemdDbus.PropWants(defaultSlice))
 	} else {
-		// otherwise, we use Slice=
-		properties = append(properties, systemdDbus.PropSlice(defaultSlice))
+		// Otherwise it's a scope, which we put into a Slice=
+		properties = append(properties, systemdDbus.PropSlice(slice))
 	}
 
 	// only add pid if its valid, -1 is used w/ general slice creation.
