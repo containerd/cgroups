@@ -3,7 +3,7 @@ module github.com/containerd/cgroups
 go 1.17
 
 require (
-	github.com/cilium/ebpf v0.9.1
+	github.com/cilium/ebpf v0.9.2
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/docker/go-units v0.4.0
 	github.com/godbus/dbus/v5 v5.0.4
@@ -12,7 +12,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/goleak v1.1.12
-	golang.org/x/sys v0.0.0-20210906170528-6f6e22806c34
+	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261
 )
 
 require (
