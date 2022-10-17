@@ -17,7 +17,7 @@
 package v2
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
@@ -39,14 +39,14 @@ func checkCgroupMode(t *testing.T) {
 }
 
 func checkCgroupControllerSupported(t *testing.T, controller string) {
-	b, err := ioutil.ReadFile(filepath.Join(defaultCgroup2Path, controllersFile))
+	b, err := os.ReadFile(filepath.Join(defaultCgroup2Path, controllersFile))
 	if err != nil || !strings.Contains(string(b), controller) {
 		t.Skipf("Controller: %s is not supported on that system", controller)
 	}
 }
 
 func checkFileContent(t *testing.T, path, filename, value string) {
-	out, err := ioutil.ReadFile(filepath.Join(path, filename))
+	out, err := os.ReadFile(filepath.Join(path, filename))
 	if err != nil {
 		t.Fatalf("failed to read %s file", filename)
 	}

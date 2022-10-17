@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -147,7 +147,7 @@ func (c *Value) write(path string, perm os.FileMode) error {
 	// Retry writes on EINTR; see:
 	//    https://github.com/golang/go/issues/38033
 	for {
-		err := ioutil.WriteFile(
+		err := os.WriteFile(
 			filepath.Join(path, c.filename),
 			data,
 			perm,
@@ -225,7 +225,7 @@ func setResources(path string, resources *Resources) error {
 }
 
 func (c *Manager) RootControllers() ([]string, error) {
-	b, err := ioutil.ReadFile(filepath.Join(c.unifiedMountpoint, controllersFile))
+	b, err := os.ReadFile(filepath.Join(c.unifiedMountpoint, controllersFile))
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +233,7 @@ func (c *Manager) RootControllers() ([]string, error) {
 }
 
 func (c *Manager) Controllers() ([]string, error) {
-	b, err := ioutil.ReadFile(filepath.Join(c.path, controllersFile))
+	b, err := os.ReadFile(filepath.Join(c.path, controllersFile))
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +530,7 @@ func readSingleFile(path string, file string, out map[string]interface{}) error 
 		return err
 	}
 	defer f.Close()
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}
