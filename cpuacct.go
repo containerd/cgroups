@@ -19,7 +19,6 @@ package cgroups
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -72,7 +71,7 @@ func (c *cpuacctController) Stat(path string, stats *v1.Metrics) error {
 
 func (c *cpuacctController) percpuUsage(path string) ([]uint64, error) {
 	var usage []uint64
-	data, err := ioutil.ReadFile(filepath.Join(c.Path(path), "cpuacct.usage_percpu"))
+	data, err := os.ReadFile(filepath.Join(c.Path(path), "cpuacct.usage_percpu"))
 	if err != nil {
 		return nil, err
 	}

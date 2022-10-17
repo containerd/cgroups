@@ -18,7 +18,6 @@ package cgroups
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -259,18 +258,15 @@ func checkMemoryStatHasNoSwap(t *testing.T, mem *v1.MemoryStat) {
 
 // buildMemoryMetrics creates fake cgroups memory entries in a temporary dir. Returns the fake cgroups root
 func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string {
-	tmpRoot, err := ioutil.TempDir("", "memtests")
-	if err != nil {
-		t.Fatal(err)
-	}
+	tmpRoot := t.TempDir()
 	tmpDir := path.Join(tmpRoot, string(Memory))
 	if err := os.MkdirAll(tmpDir, defaultDirPerm); err != nil {
 		t.Fatal(err)
 	}
-	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), defaultFilePerm); err != nil {
+	if err := os.WriteFile(path.Join(tmpDir, "memory.stat"), []byte(memoryData), defaultFilePerm); err != nil {
 		t.Fatal(err)
 	}
-	if err := ioutil.WriteFile(path.Join(tmpDir, "memory.oom_control"), []byte(memoryOomControlData), defaultFilePerm); err != nil {
+	if err := os.WriteFile(path.Join(tmpDir, "memory.oom_control"), []byte(memoryOomControlData), defaultFilePerm); err != nil {
 		t.Fatal(err)
 	}
 	cnt := 0
@@ -282,7 +278,7 @@ func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string
 			} else {
 				fileName = path.Join(tmpDir, strings.Join([]string{"memory", mod, metric}, "."))
 			}
-			if err := ioutil.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), defaultFilePerm); err != nil {
+			if err := os.WriteFile(fileName, []byte(fmt.Sprintln(cnt)), defaultFilePerm); err != nil {
 				t.Fatal(err)
 			}
 			cnt++

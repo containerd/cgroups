@@ -17,7 +17,6 @@
 package cgroups
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +28,7 @@ sched_delay 3
 `
 
 func TestGetUsage(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +42,7 @@ func TestGetUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	current := filepath.Join(mock.root, string(Cpuacct), "test", "cpuacct.stat")
-	if err = ioutil.WriteFile(
+	if err = os.WriteFile(
 		current,
 		[]byte(cpuacctStatData),
 		defaultFilePerm,
