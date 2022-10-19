@@ -209,7 +209,7 @@ func (c *cgroup) add(process Process, pType procType, subsystems ...Name) error 
 		}
 		err = retryingWriteFile(
 			filepath.Join(s.Path(p), pType),
-			[]byte(strconv.Itoa(process.Pid)),
+			strconv.AppendInt(nil, int64(process.Pid), 10),
 			defaultFilePerm,
 		)
 		if err != nil {
