@@ -15,7 +15,7 @@ jobs:
   #
   project:
     name: Project Checks
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 5
 
     steps:
@@ -23,7 +23,7 @@ jobs:
       # Install Go
       #
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.19.x'
 
@@ -37,13 +37,13 @@ jobs:
       # Checkout repos
       #
       - name: Checkout cgroups
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/cgroups
           fetch-depth: 25
 
       - name: Checkout common project repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: containerd/project
           path: src/github.com/containerd/project
@@ -87,12 +87,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-18.04, ubuntu-22.04]
+        # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
+        os: [ubuntu-20.04, ubuntu-22.04]
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.19.x'
 
@@ -103,7 +104,7 @@ jobs:
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
       - name: Checkout cgroups
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/cgroups
 
