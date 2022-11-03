@@ -22,3 +22,5 @@ cgutil:
 
 proto:
 	protobuild --quiet ${PACKAGES}
+	# Keep them Go-idiomatic and backward-compatible with the gogo/protobuf era.
+	go-fix-acronym -w -a '(Cpu|Tcp|Rss)' $(shell find stats/v1/ v2/stats/ -name '*.pb.go')

@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package io.containerd.cgroups.v2;
 
- import "gogoproto/gogo.proto";
+option go_package = "github.com/containerd/cgroups/v2/stats";
 
 message Metrics {
 	PidsStat pids = 1;
-	CPUStat cpu = 2 [(gogoproto.customname) = "CPU"];
+	CPUStat cpu = 2;
 	MemoryStat memory = 4;
 	RdmaStat rdma = 5;
 	IOStat io = 6;
