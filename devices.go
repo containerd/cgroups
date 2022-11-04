@@ -60,7 +60,7 @@ func (d *devicesController) Create(path string, resources *specs.LinuxResources)
 		if device.Type == "" {
 			device.Type = "a"
 		}
-		if err := retryingWriteFile(
+		if err := os.WriteFile(
 			filepath.Join(d.Path(path), file),
 			[]byte(deviceString(device)),
 			defaultFilePerm,

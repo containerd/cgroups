@@ -18,7 +18,6 @@ package cgroups
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -26,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	units "github.com/docker/go-units"
@@ -256,8 +254,10 @@ func parseKV(raw string) (string, uint64, error) {
 
 // ParseCgroupFile parses the given cgroup file, typically /proc/self/cgroup
 // or /proc/<pid>/cgroup, into a map of subsystems to cgroup paths, e.g.
-//   "cpu": "/user.slice/user-1000.slice"
-//   "pids": "/user.slice/user-1000.slice"
+//
+//	"cpu": "/user.slice/user-1000.slice"
+//	"pids": "/user.slice/user-1000.slice"
+//
 // etc.
 //
 // The resulting map does not have an element for cgroup v2 unified hierarchy.
@@ -375,17 +375,4 @@ func cleanPath(path string) string {
 		path, _ = filepath.Rel(string(os.PathSeparator), filepath.Clean(string(os.PathSeparator)+path))
 	}
 	return path
-}
-
-func retryingWriteFile(path string, data []byte, mode os.FileMode) error {
-	// Retry writes on EINTR; see:
-	//    https://github.com/golang/go/issues/38033
-	for {
-		err := os.WriteFile(path, data, mode)
-		if err == nil {
-			return nil
-		} else if !errors.Is(err, syscall.EINTR) {
-			return err
-		}
-	}
 }

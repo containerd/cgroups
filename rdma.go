@@ -67,7 +67,7 @@ func (p *rdmaController) Create(path string, resources *specs.LinuxResources) er
 	for device, limit := range resources.Rdma {
 		if device != "" && (limit.HcaHandles != nil || limit.HcaObjects != nil) {
 			limit := limit
-			return retryingWriteFile(
+			return os.WriteFile(
 				filepath.Join(p.Path(path), "rdma.max"),
 				[]byte(createCmdString(device, &limit)),
 				defaultFilePerm,

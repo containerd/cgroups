@@ -71,7 +71,7 @@ func (b *blkioController) Create(path string, resources *specs.LinuxResources) e
 	}
 	for _, t := range createBlkioSettings(resources.BlockIO) {
 		if t.value != nil {
-			if err := retryingWriteFile(
+			if err := os.WriteFile(
 				filepath.Join(b.Path(path), "blkio."+t.name),
 				t.format(t.value),
 				defaultFilePerm,

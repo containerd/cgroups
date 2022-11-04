@@ -48,7 +48,7 @@ func (n *netprioController) Create(path string, resources *specs.LinuxResources)
 	}
 	if resources.Network != nil {
 		for _, prio := range resources.Network.Priorities {
-			if err := retryingWriteFile(
+			if err := os.WriteFile(
 				filepath.Join(n.Path(path), "net_prio.ifpriomap"),
 				formatPrio(prio.Name, prio.Priority),
 				defaultFilePerm,
