@@ -26,3 +26,6 @@ target = "v2/stats/metrics.pb.txt"
 ignore_files = [
 	"google/protobuf/descriptor.proto",
 ]
+
+[parameters.go]
+paths = "source_relative"

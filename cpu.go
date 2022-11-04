@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	v1 "github.com/containerd/cgroups/stats/v1"
+	v1 "github.com/containerd/cgroups/v2/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 

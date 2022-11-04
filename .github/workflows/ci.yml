@@ -144,8 +144,8 @@ jobs:
       - name: Install proto-related tools for Go
         run: |
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-          go install github.com/containerd/protobuild@v0.2.0
-          go install github.com/containerd/protobuild/cmd/go-fix-acronym@v0.2.0
+          go install github.com/containerd/protobuild@v0.3.0
+          go install github.com/containerd/protobuild/cmd/go-fix-acronym@v0.3.0
 
       - name: Compare auto-generated Go files
         run: |

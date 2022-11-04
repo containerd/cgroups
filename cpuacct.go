@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	v1 "github.com/containerd/cgroups/stats/v1"
+	v1 "github.com/containerd/cgroups/v2/stats/v1"
 )
 
 const nanosecondsInSecond = 1000000000
