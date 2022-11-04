@@ -68,7 +68,7 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 			},
 		} {
 			if t.value != "" {
-				if err := retryingWriteFile(
+				if err := os.WriteFile(
 					filepath.Join(c.Path(path), "cpuset."+t.name),
 					[]byte(t.value),
 					defaultFilePerm,
@@ -133,7 +133,7 @@ func (c *cpusetController) copyIfNeeded(current, parent string) error {
 		return err
 	}
 	if isEmpty(currentCpus) {
-		if err := retryingWriteFile(
+		if err := os.WriteFile(
 			filepath.Join(current, "cpuset.cpus"),
 			parentCpus,
 			defaultFilePerm,
@@ -142,7 +142,7 @@ func (c *cpusetController) copyIfNeeded(current, parent string) error {
 		}
 	}
 	if isEmpty(currentMems) {
-		if err := retryingWriteFile(
+		if err := os.WriteFile(
 			filepath.Join(current, "cpuset.mems"),
 			parentMems,
 			defaultFilePerm,
