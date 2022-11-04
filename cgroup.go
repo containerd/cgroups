@@ -19,11 +19,14 @@ package cgroups
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
 	v1 "github.com/containerd/cgroups/stats/v1"
 
@@ -193,6 +196,31 @@ func (c *cgroup) AddTask(process Process, subsystems ...Name) error {
 	return c.add(process, cgroupTasks, subsystems...)
 }
 
+// writeCgroupsProcs writes to the file, but retries on EINVAL.
+func writeCgroupProcs(path string, content []byte, perm fs.FileMode) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, perm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	for i := 0; i < 5; i++ {
+		_, err = f.Write(content)
+		if err == nil {
+			return nil
+		}
+		// If the process's associated task's state is TASK_NEW, the kernel
+		// returns EINVAL. The function will retry on the error like runc.
+		// https://github.com/torvalds/linux/blob/v6.0/kernel/sched/core.c#L10308-L10337
+		// https://github.com/opencontainers/runc/pull/1950
+		if !errors.Is(err, syscall.EINVAL) {
+			return err
+		}
+		time.Sleep(30 * time.Millisecond)
+	}
+	return err
+}
+
 func (c *cgroup) add(process Process, pType procType, subsystems ...Name) error {
 	if process.Pid <= 0 {
 		return ErrInvalidPid
@@ -207,7 +235,7 @@ func (c *cgroup) add(process Process, pType procType, subsystems ...Name) error 
 		if err != nil {
 			return err
 		}
-		err = os.WriteFile(
+		err = writeCgroupProcs(
 			filepath.Join(s.Path(p), pType),
 			[]byte(strconv.Itoa(process.Pid)),
 			defaultFilePerm,
