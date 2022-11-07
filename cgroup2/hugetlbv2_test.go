@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
 import (
 	"fmt"
@@ -24,16 +24,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCgroupv2MemoryStats(t *testing.T) {
+func TestCgroupv2HugetlbStats(t *testing.T) {
+	checkCgroupControllerSupported(t, "hugetlb")
 	checkCgroupMode(t)
-	group := "/memory-test-cg"
+	group := "/hugetlb-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	hugeTlb := HugeTlb{HugeTlbEntry{HugePageSize: "2MB", Limit: 1073741824}}
 	res := Resources{
-		Memory: &Memory{
-			Max:  pointerInt64(629145600),
-			Swap: pointerInt64(314572800),
-			High: pointerInt64(524288000),
-		},
+		HugeTlb: &hugeTlb,
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {
@@ -44,26 +42,11 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	if err != nil {
 		t.Fatal("failed to get cgroups stats: ", err)
 	}
-
-	assert.Equal(t, uint64(314572800), stats.Memory.SwapLimit)
-	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
-	checkFileContent(t, c.path, "memory.swap.max", "314572800")
-	checkFileContent(t, c.path, "memory.max", "629145600")
-}
-
-func TestSystemdCgroupMemoryController(t *testing.T) {
-	checkCgroupMode(t)
-	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())
-	res := Resources{
-		Memory: &Memory{
-			Min: pointerInt64(16384),
-			Max: pointerInt64(629145600),
-		},
+	for _, entry := range stats.Hugetlb {
+		if entry.Pagesize == "2MB" {
+			assert.Equal(t, uint64(1073741824), entry.Max)
+			break
+		}
 	}
-	c, err := NewSystemd("", group, os.Getpid(), &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup systemd manager: ", err)
-	}
-	checkFileContent(t, c.path, "memory.min", "16384")
-	checkFileContent(t, c.path, "memory.max", "629145600")
+
 }

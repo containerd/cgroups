@@ -24,7 +24,7 @@
 // This particular Go implementation based on runc version
 // https://github.com/opencontainers/runc/blob/master/libcontainer/cgroups/ebpf/devicefilter/devicefilter.go
 
-package v2
+package cgroup2
 
 import (
 	"errors"

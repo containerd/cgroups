@@ -14,39 +14,35 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
 import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestCgroupv2HugetlbStats(t *testing.T) {
-	checkCgroupControllerSupported(t, "hugetlb")
+func TestCgroupv2IOController(t *testing.T) {
+	t.Skip("FIXME: this test doesn't work on Fedora 32 Vagrant: TestCgroupv2IOController: iov2_test.go:42: failed to init new cgroup manager:  write /sys/fs/cgroup/io-test-cg-22708/io.max: no such device")
 	checkCgroupMode(t)
-	group := "/hugetlb-test-cg"
+	group := "/io-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
-	hugeTlb := HugeTlb{HugeTlbEntry{HugePageSize: "2MB", Limit: 1073741824}}
+	var (
+		// weight uint16 = 100
+		maj  int64  = 8
+		min  int64  = 0
+		rate uint64 = 120
+	)
 	res := Resources{
-		HugeTlb: &hugeTlb,
+		IO: &IO{
+			Max: []Entry{{Major: maj, Minor: min, Type: ReadIOPS, Rate: rate}},
+		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
 	if err != nil {
 		t.Fatal("failed to init new cgroup manager: ", err)
 	}
 	defer os.Remove(c.path)
-	stats, err := c.Stat()
-	if err != nil {
-		t.Fatal("failed to get cgroups stats: ", err)
-	}
-	for _, entry := range stats.Hugetlb {
-		if entry.Pagesize == "2MB" {
-			assert.Equal(t, uint64(1073741824), entry.Max)
-			break
-		}
-	}
 
+	checkFileContent(t, c.path, "io.max", "8:0 rbps=max wbps=max riops=120 wiops=max")
 }

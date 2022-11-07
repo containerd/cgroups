@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
 import (
 	"bufio"
@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/cgroups/v2/v2/stats"
+	"github.com/containerd/cgroups/v2/cgroup2/stats"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"

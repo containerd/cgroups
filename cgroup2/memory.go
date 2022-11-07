@@ -14,33 +14,46 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
-import (
-	"fmt"
-)
-
-type RDMA struct {
-	Limit []RDMAEntry
+type Memory struct {
+	Swap *int64
+	Min  *int64
+	Max  *int64
+	Low  *int64
+	High *int64
 }
 
-type RDMAEntry struct {
-	Device     string
-	HcaHandles uint32
-	HcaObjects uint32
-}
-
-func (r RDMAEntry) String() string {
-	return fmt.Sprintf("%s hca_handle=%d hca_object=%d", r.Device, r.HcaHandles, r.HcaObjects)
-}
-
-func (r *RDMA) Values() (o []Value) {
-	for _, e := range r.Limit {
+func (r *Memory) Values() (o []Value) {
+	if r.Swap != nil {
 		o = append(o, Value{
-			filename: "rdma.max",
-			value:    e.String(),
+			filename: "memory.swap.max",
+			value:    *r.Swap,
 		})
 	}
-
+	if r.Min != nil {
+		o = append(o, Value{
+			filename: "memory.min",
+			value:    *r.Min,
+		})
+	}
+	if r.Max != nil {
+		o = append(o, Value{
+			filename: "memory.max",
+			value:    *r.Max,
+		})
+	}
+	if r.Low != nil {
+		o = append(o, Value{
+			filename: "memory.low",
+			value:    *r.Low,
+		})
+	}
+	if r.High != nil {
+		o = append(o, Value{
+			filename: "memory.high",
+			value:    *r.High,
+		})
+	}
 	return o
 }

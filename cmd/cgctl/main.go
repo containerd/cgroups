@@ -23,7 +23,7 @@ import (
 	"strconv"
 
 	"github.com/containerd/cgroups/v2"
-	v2 "github.com/containerd/cgroups/v2/v2"
+	"github.com/containerd/cgroups/v2/cgroup2"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -77,7 +77,7 @@ var newCommand = cli.Command{
 	},
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.NewManager(clix.GlobalString("mountpoint"), path, &v2.Resources{})
+		c, err := cgroup2.NewManager(clix.GlobalString("mountpoint"), path, &cgroup2.Resources{})
 		if err != nil {
 			return err
 		}
@@ -86,7 +86,7 @@ var newCommand = cli.Command{
 			if err != nil {
 				return err
 			}
-			if err := c.ToggleControllers(controllers, v2.Enable); err != nil {
+			if err := c.ToggleControllers(controllers, cgroup2.Enable); err != nil {
 				return err
 			}
 		}
@@ -99,7 +99,7 @@ var delCommand = cli.Command{
 	Usage: "delete a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ var listCommand = cli.Command{
 	Usage: "list processes in a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ var listControllersCommand = cli.Command{
 	Usage: "list controllers in a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ var statCommand = cli.Command{
 	Usage: "stat a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := v2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
 		if err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ var newSystemdCommand = cli.Command{
 			pid, _ = strconv.Atoi(pidStr)
 		}
 
-		_, err := v2.NewSystemd("", path, pid, &v2.Resources{})
+		_, err := cgroup2.NewSystemd("", path, pid, &cgroup2.Resources{})
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ var deleteSystemdCommand = cli.Command{
 	Usage: "delete a systemd managed cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		m, err := v2.LoadSystemd("", path)
+		m, err := cgroup2.LoadSystemd("", path)
 		if err != nil {
 			return err
 		}
