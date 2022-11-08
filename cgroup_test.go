@@ -18,7 +18,6 @@ package cgroups
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,7 +29,7 @@ import (
 // using t.Error in test were defers do cleanup on the filesystem
 
 func TestCreate(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +56,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestStat(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +78,7 @@ func TestStat(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,8 +100,65 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestAddFilteredSubsystems(t *testing.T) {
+	mock, err := newMock(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	filteredSubsystems := []Name{"memory", "cpu"}
+	if err := control.Add(Process{Pid: 1234}, filteredSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if err := checkPid(mock, filepath.Join("devices", "test"), 1234); err == nil {
+		t.Error("Pid should not be added to the devices subsystem")
+		return
+	}
+
+	bogusSubsystems := append(filteredSubsystems, "bogus")
+	if err := control.Add(Process{Pid: 5678}, bogusSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 5678); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	nilSubsystems := []Name{}
+	if err := control.Add(Process{Pid: 9012}, nilSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range Subsystems() {
+		if err := checkPid(mock, filepath.Join(string(s), "test"), 9012); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
 func TestAddTask(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,8 +180,50 @@ func TestAddTask(t *testing.T) {
 	}
 }
 
+func TestAddTaskFilteredSubsystems(t *testing.T) {
+	mock, err := newMock(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.delete()
+	control, err := New(mock.hierarchy, StaticPath("test"), &specs.LinuxResources{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	filteredSubsystems := []Name{"memory", "cpu"}
+	if err := control.AddTask(Process{Pid: 1234}, filteredSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+	for _, s := range filteredSubsystems {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 1234); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	if err := checkTaskid(mock, filepath.Join("devices", "test"), 1234); err == nil {
+		t.Error("Task should not be added to the devices subsystem")
+		return
+	}
+
+	bogusSubsystems := append(filteredSubsystems, "bogus")
+	if err := control.AddTask(Process{Pid: 5678}, bogusSubsystems...); err != nil {
+		t.Error(err)
+		return
+	}
+
+	for _, s := range filteredSubsystems {
+		if err := checkTaskid(mock, filepath.Join(string(s), "test"), 5678); err != nil {
+			t.Error(err)
+			return
+		}
+	}
+}
+
 func TestListPids(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +258,7 @@ func TestListPids(t *testing.T) {
 }
 
 func TestListTasksPids(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +293,7 @@ func TestListTasksPids(t *testing.T) {
 }
 
 func readValue(mock *mockCgroup, path string) (string, error) {
-	data, err := ioutil.ReadFile(filepath.Join(mock.root, path))
+	data, err := os.ReadFile(filepath.Join(mock.root, path))
 	if err != nil {
 		return "", err
 	}
@@ -207,7 +305,7 @@ func checkPid(mock *mockCgroup, path string, expected int) error {
 	if err != nil {
 		return err
 	}
-	v, err := strconv.Atoi(string(data))
+	v, err := strconv.Atoi(data)
 	if err != nil {
 		return err
 	}
@@ -222,7 +320,7 @@ func checkTaskid(mock *mockCgroup, path string, expected int) error {
 	if err != nil {
 		return err
 	}
-	v, err := strconv.Atoi(string(data))
+	v, err := strconv.Atoi(data)
 	if err != nil {
 		return err
 	}
@@ -247,7 +345,7 @@ func mockNewNotInRdma(subsystems []Subsystem, path Path, resources *specs.LinuxR
 }
 
 func TestLoad(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -268,7 +366,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadWithMissingSubsystems(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -302,7 +400,7 @@ func TestLoadWithMissingSubsystems(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +416,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestCreateSubCgroup(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -356,7 +454,7 @@ func TestCreateSubCgroup(t *testing.T) {
 }
 
 func TestFreezeThaw(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,7 +483,7 @@ func TestFreezeThaw(t *testing.T) {
 }
 
 func TestSubsystems(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -408,7 +506,7 @@ func TestSubsystems(t *testing.T) {
 
 func TestCpusetParent(t *testing.T) {
 	const expected = "0-3"
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}

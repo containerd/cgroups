@@ -19,14 +19,13 @@ package cgroups
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewCputset(root string) *cpusetController {
+func NewCpuset(root string) *cpusetController {
 	return &cpusetController{
 		root: filepath.Join(root, string(Cpuset)),
 	}
@@ -69,8 +68,8 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 			},
 		} {
 			if t.value != "" {
-				if err := ioutil.WriteFile(
-					filepath.Join(c.Path(path), fmt.Sprintf("cpuset.%s", t.name)),
+				if err := retryingWriteFile(
+					filepath.Join(c.Path(path), "cpuset."+t.name),
 					[]byte(t.value),
 					defaultFilePerm,
 				); err != nil {
@@ -87,10 +86,10 @@ func (c *cpusetController) Update(path string, resources *specs.LinuxResources) 
 }
 
 func (c *cpusetController) getValues(path string) (cpus []byte, mems []byte, err error) {
-	if cpus, err = ioutil.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil && !os.IsNotExist(err) {
+	if cpus, err = os.ReadFile(filepath.Join(path, "cpuset.cpus")); err != nil && !os.IsNotExist(err) {
 		return
 	}
-	if mems, err = ioutil.ReadFile(filepath.Join(path, "cpuset.mems")); err != nil && !os.IsNotExist(err) {
+	if mems, err = os.ReadFile(filepath.Join(path, "cpuset.mems")); err != nil && !os.IsNotExist(err) {
 		return
 	}
 	return cpus, mems, nil
@@ -134,7 +133,7 @@ func (c *cpusetController) copyIfNeeded(current, parent string) error {
 		return err
 	}
 	if isEmpty(currentCpus) {
-		if err := ioutil.WriteFile(
+		if err := retryingWriteFile(
 			filepath.Join(current, "cpuset.cpus"),
 			parentCpus,
 			defaultFilePerm,
@@ -143,7 +142,7 @@ func (c *cpusetController) copyIfNeeded(current, parent string) error {
 		}
 	}
 	if isEmpty(currentMems) {
-		if err := ioutil.WriteFile(
+		if err := retryingWriteFile(
 			filepath.Join(current, "cpuset.mems"),
 			parentMems,
 			defaultFilePerm,

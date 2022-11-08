@@ -17,13 +17,13 @@
 package cgroups
 
 import (
-	"fmt"
+	"context"
 	"path/filepath"
 	"strings"
 	"sync"
 
-	systemdDbus "github.com/coreos/go-systemd/dbus"
-	"github.com/godbus/dbus"
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
+	"github.com/godbus/dbus/v5"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -78,8 +78,9 @@ func (s *SystemdController) Name() Name {
 	return SystemdDbus
 }
 
-func (s *SystemdController) Create(path string, resources *specs.LinuxResources) error {
-	conn, err := systemdDbus.New()
+func (s *SystemdController) Create(path string, _ *specs.LinuxResources) error {
+	ctx := context.TODO()
+	conn, err := systemdDbus.NewWithContext(ctx)
 	if err != nil {
 		return err
 	}
@@ -91,7 +92,7 @@ func (s *SystemdController) Create(path string, resources *specs.LinuxResources)
 	checkDelegate := func() {
 		canDelegate = true
 		dlSlice := newProperty("Delegate", true)
-		if _, err := conn.StartTransientUnit(slice, "testdelegate", []systemdDbus.Property{dlSlice}, nil); err != nil {
+		if _, err := conn.StartTransientUnitContext(ctx, slice, "testdelegate", []systemdDbus.Property{dlSlice}, nil); err != nil {
 			if dbusError, ok := err.(dbus.Error); ok {
 				// Starting with systemd v237, Delegate is not even a property of slices anymore,
 				// so the D-Bus call fails with "InvalidArgs" error.
@@ -101,11 +102,11 @@ func (s *SystemdController) Create(path string, resources *specs.LinuxResources)
 			}
 		}
 
-		conn.StopUnit(slice, "testDelegate", nil)
+		_, _ = conn.StopUnitContext(ctx, slice, "testDelegate", nil)
 	}
 	once.Do(checkDelegate)
 	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription(fmt.Sprintf("cgroup %s", name)),
+		systemdDbus.PropDescription("cgroup " + name),
 		systemdDbus.PropWants(slice),
 		newProperty("DefaultDependencies", false),
 		newProperty("MemoryAccounting", true),
@@ -119,7 +120,7 @@ func (s *SystemdController) Create(path string, resources *specs.LinuxResources)
 	}
 
 	ch := make(chan string)
-	_, err = conn.StartTransientUnit(name, "replace", properties, ch)
+	_, err = conn.StartTransientUnitContext(ctx, name, "replace", properties, ch)
 	if err != nil {
 		return err
 	}
@@ -128,14 +129,15 @@ func (s *SystemdController) Create(path string, resources *specs.LinuxResources)
 }
 
 func (s *SystemdController) Delete(path string) error {
-	conn, err := systemdDbus.New()
+	ctx := context.TODO()
+	conn, err := systemdDbus.NewWithContext(ctx)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 	_, name := splitName(path)
 	ch := make(chan string)
-	_, err = conn.StopUnit(name, "replace", ch)
+	_, err = conn.StopUnitContext(ctx, name, "replace", ch)
 	if err != nil {
 		return err
 	}
@@ -148,10 +150,6 @@ func newProperty(name string, units interface{}) systemdDbus.Property {
 		Name:  name,
 		Value: dbus.MakeVariant(units),
 	}
-}
-
-func unitName(name string) string {
-	return fmt.Sprintf("%s.slice", name)
 }
 
 func splitName(path string) (slice string, unit string) {

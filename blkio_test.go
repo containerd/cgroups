@@ -20,20 +20,23 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	v1 "github.com/containerd/cgroups/stats/v1"
 )
 
-const data = `   7       0 loop0 0 0 0 0 0 0 0 0 0 0 0
-   7       1 loop1 0 0 0 0 0 0 0 0 0 0 0
-   7       2 loop2 0 0 0 0 0 0 0 0 0 0 0
-   7       3 loop3 0 0 0 0 0 0 0 0 0 0 0
-   7       4 loop4 0 0 0 0 0 0 0 0 0 0 0
-   7       5 loop5 0 0 0 0 0 0 0 0 0 0 0
-   7       6 loop6 0 0 0 0 0 0 0 0 0 0 0
-   7       7 loop7 0 0 0 0 0 0 0 0 0 0 0
-   8       0 sda 1892042 187697 63489222 1246284 1389086 2887005 134903104 11390608 1 1068060 12692228
-   8       1 sda1 1762875 37086 61241570 1200512 1270037 2444415 131214808 11152764 1 882624 12409308
-   8       2 sda2 2 0 4 0 0 0 0 0 0 0 0
-   8       5 sda5 129102 150611 2244440 45716 18447 442590 3688296 67268 0 62584 112984`
+const data = `major minor  #blocks  name
+
+   7        0          4 loop0
+   7        1     163456 loop1
+   7        2     149616 loop2
+   7        3     147684 loop3
+   7        4     122572 loop4
+   7        5       8936 loop5
+   7        6      31464 loop6
+   7        7     182432 loop7
+ 259        0  937692504 nvme0n1
+ 259        1      31744 nvme0n1p1
+`
 
 func TestGetDevices(t *testing.T) {
 	r := strings.NewReader(data)
@@ -41,13 +44,32 @@ func TestGetDevices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	name, ok := devices[deviceKey{8, 0}]
-	if !ok {
-		t.Fatal("no device found for 8,0")
+	for dev, expected := range map[deviceKey]string{
+		{7, 0}:   "/dev/loop0",
+		{259, 0}: "/dev/nvme0n1",
+		{259, 1}: "/dev/nvme0n1p1",
+	} {
+		name, ok := devices[dev]
+		if !ok {
+			t.Fatalf("no device found for %d:%d", dev.major, dev.minor)
+		}
+		if name != expected {
+			t.Fatalf("expected device name %q but received %q", expected, name)
+		}
 	}
-	const expected = "/dev/sda"
-	if name != expected {
-		t.Fatalf("expected device name %q but received %q", expected, name)
+}
+
+func TestNewBlkio(t *testing.T) {
+	const root = "/test/folder"
+	const expected = "/test/folder/blkio"
+	const expectedProc = "/proc"
+
+	ctrl := NewBlkio(root)
+	if ctrl.root != expected {
+		t.Fatalf("expected cgroups root %q but received %q", expected, ctrl.root)
+	}
+	if ctrl.procRoot != expectedProc {
+		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
 	}
 }
 
@@ -59,7 +81,7 @@ func TestBlkioStat(t *testing.T) {
 
 	ctrl := NewBlkio("/sys/fs/cgroup")
 
-	var metrics Metrics
+	var metrics v1.Metrics
 	err = ctrl.Stat("", &metrics)
 	if err != nil {
 		t.Fatalf("failed to call Stat: %v", err)
@@ -70,5 +92,19 @@ func TestBlkioStat(t *testing.T) {
 	}
 	if len(metrics.Blkio.IoServiceBytesRecursive) == 0 {
 		t.Fatalf("IoServiceBytesRecursive must not be empty")
+	}
+}
+
+func TestNewBlkio_Proc(t *testing.T) {
+	const root = "/test/folder"
+	const expected = "/test/folder/blkio"
+	const expectedProc = "/test/proc"
+
+	ctrl := NewBlkio(root, ProcRoot(expectedProc))
+	if ctrl.root != expected {
+		t.Fatalf("expected cgroups root %q but received %q", expected, ctrl.root)
+	}
+	if ctrl.procRoot != expectedProc {
+		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
 	}
 }

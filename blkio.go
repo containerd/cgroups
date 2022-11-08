@@ -20,23 +20,38 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func NewBlkio(root string) *blkioController {
-	return &blkioController{
-		root: filepath.Join(root, string(Blkio)),
+// NewBlkio returns a Blkio controller given the root folder of cgroups.
+// It may optionally accept other configuration options, such as ProcRoot(path)
+func NewBlkio(root string, options ...func(controller *blkioController)) *blkioController {
+	ctrl := &blkioController{
+		root:     filepath.Join(root, string(Blkio)),
+		procRoot: "/proc",
+	}
+	for _, opt := range options {
+		opt(ctrl)
+	}
+	return ctrl
+}
+
+// ProcRoot overrides the default location of the "/proc" filesystem
+func ProcRoot(path string) func(controller *blkioController) {
+	return func(c *blkioController) {
+		c.procRoot = path
 	}
 }
 
 type blkioController struct {
-	root string
+	root     string
+	procRoot string
 }
 
 func (b *blkioController) Name() Name {
@@ -56,8 +71,8 @@ func (b *blkioController) Create(path string, resources *specs.LinuxResources) e
 	}
 	for _, t := range createBlkioSettings(resources.BlockIO) {
 		if t.value != nil {
-			if err := ioutil.WriteFile(
-				filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", t.name)),
+			if err := retryingWriteFile(
+				filepath.Join(b.Path(path), "blkio."+t.name),
 				t.format(t.value),
 				defaultFilePerm,
 			); err != nil {
@@ -72,13 +87,13 @@ func (b *blkioController) Update(path string, resources *specs.LinuxResources) e
 	return b.Create(path, resources)
 }
 
-func (b *blkioController) Stat(path string, stats *Metrics) error {
-	stats.Blkio = &BlkIOStat{}
+func (b *blkioController) Stat(path string, stats *v1.Metrics) error {
+	stats.Blkio = &v1.BlkIOStat{}
 
 	var settings []blkioStatSettings
 
 	// Try to read CFQ stats available on all CFQ enabled kernels first
-	if _, err := os.Lstat(filepath.Join(b.Path(path), fmt.Sprintf("blkio.io_serviced_recursive"))); err == nil {
+	if _, err := os.Lstat(filepath.Join(b.Path(path), "blkio.io_serviced_recursive")); err == nil {
 		settings = []blkioStatSettings{
 			{
 				name:  "sectors_recursive",
@@ -115,7 +130,7 @@ func (b *blkioController) Stat(path string, stats *Metrics) error {
 		}
 	}
 
-	f, err := os.Open("/proc/diskstats")
+	f, err := os.Open(filepath.Join(b.procRoot, "partitions"))
 	if err != nil {
 		return err
 	}
@@ -157,17 +172,14 @@ func (b *blkioController) Stat(path string, stats *Metrics) error {
 	return nil
 }
 
-func (b *blkioController) readEntry(devices map[deviceKey]string, path, name string, entry *[]*BlkIOEntry) error {
-	f, err := os.Open(filepath.Join(b.Path(path), fmt.Sprintf("blkio.%s", name)))
+func (b *blkioController) readEntry(devices map[deviceKey]string, path, name string, entry *[]*v1.BlkIOEntry) error {
+	f, err := os.Open(filepath.Join(b.Path(path), "blkio."+name))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
-		if err := sc.Err(); err != nil {
-			return err
-		}
 		// format: dev type amount
 		fields := strings.FieldsFunc(sc.Text(), splitBlkIOStatLine)
 		if len(fields) < 3 {
@@ -175,7 +187,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 				// skip total line
 				continue
 			} else {
-				return fmt.Errorf("Invalid line found while parsing %s: %s", path, sc.Text())
+				return fmt.Errorf("invalid line found while parsing %s: %s", path, sc.Text())
 			}
 		}
 		major, err := strconv.ParseUint(fields[0], 10, 64)
@@ -196,7 +208,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 		if err != nil {
 			return err
 		}
-		*entry = append(*entry, &BlkIOEntry{
+		*entry = append(*entry, &v1.BlkIOEntry{
 			Device: devices[deviceKey{major, minor}],
 			Major:  major,
 			Minor:  minor,
@@ -204,7 +216,7 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 			Value:  v,
 		})
 	}
-	return nil
+	return sc.Err()
 }
 
 func createBlkioSettings(blkio *specs.LinuxBlockIO) []blkioSettings {
@@ -284,7 +296,7 @@ type blkioSettings struct {
 
 type blkioStatSettings struct {
 	name  string
-	entry *[]*BlkIOEntry
+	entry *[]*v1.BlkIOEntry
 }
 
 func uintf(v interface{}) []byte {
@@ -323,7 +335,10 @@ func getDevices(r io.Reader) (map[deviceKey]string, error) {
 		s       = bufio.NewScanner(r)
 		devices = make(map[deviceKey]string)
 	)
-	for s.Scan() {
+	for i := 0; s.Scan(); i++ {
+		if i < 2 {
+			continue
+		}
 		fields := strings.Fields(s.Text())
 		major, err := strconv.Atoi(fields[0])
 		if err != nil {
@@ -340,15 +355,7 @@ func getDevices(r io.Reader) (map[deviceKey]string, error) {
 		if _, ok := devices[key]; ok {
 			continue
 		}
-		devices[key] = filepath.Join("/dev", fields[2])
+		devices[key] = filepath.Join("/dev", fields[3])
 	}
 	return devices, s.Err()
-}
-
-func major(devNumber uint64) uint64 {
-	return (devNumber >> 8) & 0xfff
-}
-
-func minor(devNumber uint64) uint64 {
-	return (devNumber & 0xff) | ((devNumber >> 12) & 0xfff00)
 }

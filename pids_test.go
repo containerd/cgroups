@@ -18,17 +18,17 @@ package cgroups
 
 import (
 	"encoding/hex"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
 
+	v1 "github.com/containerd/cgroups/stats/v1"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 func TestPids(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,14 +45,14 @@ func TestPids(t *testing.T) {
 		t.Fatal(err)
 	}
 	current := filepath.Join(mock.root, "pids", "test", "pids.current")
-	if err = ioutil.WriteFile(
+	if err = os.WriteFile(
 		current,
 		[]byte(strconv.Itoa(5)),
 		defaultFilePerm,
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err != nil {
 		t.Fatal(err)
@@ -85,7 +85,7 @@ func TestPids(t *testing.T) {
 }
 
 func TestPidsMissingCurrent(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +94,7 @@ func TestPidsMissingCurrent(t *testing.T) {
 	if pids == nil {
 		t.Fatal("pids is nil")
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")
@@ -102,7 +102,7 @@ func TestPidsMissingCurrent(t *testing.T) {
 }
 
 func TestPidsMissingMax(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,14 +116,14 @@ func TestPidsMissingMax(t *testing.T) {
 		t.Fatal(err)
 	}
 	current := filepath.Join(mock.root, "pids", "test", "pids.current")
-	if err = ioutil.WriteFile(
+	if err = os.WriteFile(
 		current,
 		[]byte(strconv.Itoa(5)),
 		defaultFilePerm,
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")
@@ -131,7 +131,7 @@ func TestPidsMissingMax(t *testing.T) {
 }
 
 func TestPidsOverflowMax(t *testing.T) {
-	mock, err := newMock()
+	mock, err := newMock(t)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ func TestPidsOverflowMax(t *testing.T) {
 		t.Fatal(err)
 	}
 	current := filepath.Join(mock.root, "pids", "test", "pids.current")
-	if err = ioutil.WriteFile(
+	if err = os.WriteFile(
 		current,
 		[]byte(strconv.Itoa(5)),
 		defaultFilePerm,
@@ -157,14 +157,14 @@ func TestPidsOverflowMax(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = ioutil.WriteFile(
+	if err = os.WriteFile(
 		max,
 		bytes,
 		defaultFilePerm,
 	); err != nil {
 		t.Fatal(err)
 	}
-	metrics := Metrics{}
+	metrics := v1.Metrics{}
 	err = pids.Stat("test", &metrics)
 	if err == nil {
 		t.Fatal("expected not nil err")

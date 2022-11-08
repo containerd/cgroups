@@ -17,20 +17,17 @@
 package cgroups
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"testing"
 )
 
 func init() {
 	defaultFilePerm = 0666
 }
 
-func newMock() (*mockCgroup, error) {
-	root, err := ioutil.TempDir("", "cgroups")
-	if err != nil {
-		return nil, err
-	}
+func newMock(tb testing.TB) (*mockCgroup, error) {
+	root := tb.TempDir()
 	subsystems, err := defaults(root)
 	if err != nil {
 		return nil, err
@@ -54,7 +51,7 @@ func newMock() (*mockCgroup, error) {
 			value: []byte("0-3"),
 		},
 	} {
-		if err := ioutil.WriteFile(filepath.Join(root, "cpuset", v.name), v.value, defaultFilePerm); err != nil {
+		if err := os.WriteFile(filepath.Join(root, "cpuset", v.name), v.value, defaultFilePerm); err != nil {
 			return nil, err
 		}
 	}

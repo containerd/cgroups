@@ -41,7 +41,7 @@ func TestSelfPath(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
-	paths, err := parseCgroupFile("/proc/self/cgroup")
+	paths, err := ParseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestPidPath(t *testing.T) {
 	} else if err != nil {
 		t.Fatal(err)
 	}
-	paths, err := parseCgroupFile("/proc/self/cgroup")
+	paths, err := ParseCgroupFile("/proc/self/cgroup")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestEmptySubsystem(t *testing.T) {
 	1:name=systemd:/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service
 	0::/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service`
 	r := strings.NewReader(data)
-	paths, err := parseCgroupFromReader(r)
+	paths, unified, err := parseCgroupFromReaderUnified(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,9 +111,16 @@ func TestEmptySubsystem(t *testing.T) {
 			t.Fatalf("empty subsystem for %q", path)
 		}
 	}
+	unifiedExpected := "/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service"
+	if unified != unifiedExpected {
+		t.Fatalf("expected %q, got %q", unifiedExpected, unified)
+	}
 }
 
 func TestSystemd240(t *testing.T) {
+	if isUnified {
+		t.Skipf("requires the system to be running in legacy mode")
+	}
 	const data = `8:net_cls:/
 	7:memory:/system.slice/docker.service
 	6:freezer:/
@@ -124,7 +131,7 @@ func TestSystemd240(t *testing.T) {
 	1:name=systemd:/system.slice/docker.service
 	0::/system.slice/docker.service`
 	r := strings.NewReader(data)
-	paths, err := parseCgroupFromReader(r)
+	paths, unified, err := parseCgroupFromReaderUnified(r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,9 +139,13 @@ func TestSystemd240(t *testing.T) {
 	path := existingPath(paths, "")
 	_, err = path("net_prio")
 	if err == nil {
-		t.Fatal("error for net_prio shoulld not be nil")
+		t.Fatal("error for net_prio should not be nil")
 	}
 	if err != ErrControllerNotActive {
 		t.Fatalf("expected error %q but received %q", ErrControllerNotActive, err)
+	}
+	unifiedExpected := "/system.slice/docker.service"
+	if unified != unifiedExpected {
+		t.Fatalf("expected %q, got %q", unifiedExpected, unified)
 	}
 }
