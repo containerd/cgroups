@@ -25,7 +25,7 @@ uses the v1 implementation of cgroups.
 
 ```go
 shares := uint64(100)
-control, err := cgroups.New(cgroups.V1, cgroups.StaticPath("/test"), &specs.LinuxResources{
+control, err := cgroup1.New(cgroup1.Default, cgroup1.StaticPath("/test"), &specs.LinuxResources{
     CPU: &specs.LinuxCPU{
         Shares: &shares,
     },
@@ -37,7 +37,7 @@ defer control.Delete()
 
 
 ```go
-control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc-test"), &specs.LinuxResources{
+control, err := cgroup1.New(cgroup1.Systemd, cgroup1.Slice("system.slice", "runc-test"), &specs.LinuxResources{
     CPU: &specs.CPU{
         Shares: &shares,
     },
@@ -48,13 +48,13 @@ control, err := cgroups.New(cgroups.Systemd, cgroups.Slice("system.slice", "runc
 ### Load an existing cgroup
 
 ```go
-control, err = cgroups.Load(cgroups.V1, cgroups.StaticPath("/test"))
+control, err = cgroup1.Load(cgroup1.Default, cgroups.StaticPath("/test"))
 ```
 
 ### Add a process to the cgroup
 
 ```go
-if err := control.Add(cgroups.Process{Pid:1234}); err != nil {
+if err := control.Add(cgroup1.Process{Pid:1234}); err != nil {
 }
 ```
 
@@ -84,7 +84,7 @@ if err := control.Thaw(); err != nil {
 ### List all processes in the cgroup or recursively
 
 ```go
-processes, err := control.Processes(cgroups.Devices, recursive)
+processes, err := control.Processes(cgroup1.Devices, recursive)
 ```
 
 ### Get Stats on the cgroup
@@ -95,7 +95,7 @@ stats, err := control.Stat()
 
 By adding `cgroups.IgnoreNotExist` all non-existent files will be ignored, e.g. swap memory stats without swap enabled
 ```go
-stats, err := control.Stat(cgroups.IgnoreNotExist)
+stats, err := control.Stat(cgroup1.IgnoreNotExist)
 ```
 
 ### Move process across cgroups
@@ -117,19 +117,19 @@ subCgroup, err := control.New("child", resources)
 This allows you to get notified by an eventfd for v1 memory cgroups events.
 
 ```go
-event := cgroups.MemoryThresholdEvent(50 * 1024 * 1024, false)
+event := cgroup1.MemoryThresholdEvent(50 * 1024 * 1024, false)
 efd, err := control.RegisterMemoryEvent(event)
 ```
 
 ```go
-event := cgroups.MemoryPressureEvent(cgroups.MediumPressure, cgroups.DefaultMode)
+event := cgroup1.MemoryPressureEvent(cgroup1.MediumPressure, cgroup1.DefaultMode)
 efd, err := control.RegisterMemoryEvent(event)
 ```
 
 ```go
 efd, err := control.OOMEventFD()
 // or by using RegisterMemoryEvent
-event := cgroups.OOMEvent()
+event := cgroup1.OOMEvent()
 efd, err := control.RegisterMemoryEvent(event)
 ```
 
@@ -153,14 +153,14 @@ so the resulting slice would be located here on disk:
 
 ```go
 import (
-    cgroupsv2 "github.com/containerd/cgroups/v2"
+    "github.com/containerd/cgroups/v2/cgroup2"
     specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-res := cgroupsv2.Resources{}
+res := cgroup2.Resources{}
 // dummy PID of -1 is used for creating a "general slice" to be used as a parent cgroup.
 // see https://github.com/containerd/cgroups/blob/1df78138f1e1e6ee593db155c6b369466f577651/v2/manager.go#L732-L735
-m, err := cgroupsv2.NewSystemd("/", "my-cgroup-abc.slice", -1, &res)
+m, err := cgroup2.NewSystemd("/", "my-cgroup-abc.slice", -1, &res)
 if err != nil {
 	return err
 }
@@ -169,7 +169,7 @@ if err != nil {
 ### Load an existing cgroup
 
 ```go
-m, err := cgroupsv2.LoadSystemd("/", "my-cgroup-abc.slice")
+m, err := cgroup2.LoadSystemd("/", "my-cgroup-abc.slice")
 if err != nil {
 	return err
 }
@@ -178,7 +178,7 @@ if err != nil {
 ### Delete a cgroup
 
 ```go
-m, err := cgroupsv2.LoadSystemd("/", "my-cgroup-abc.slice")
+m, err := cgroup2.LoadSystemd("/", "my-cgroup-abc.slice")
 if err != nil {
 	return err
 }

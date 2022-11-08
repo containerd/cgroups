@@ -24,8 +24,8 @@ import (
 	"strings"
 )
 
-// V1 returns all the groups in the default cgroups mountpoint in a single hierarchy
-func V1() ([]Subsystem, error) {
+// Default returns all the groups in the default cgroups mountpoint in a single hierarchy
+func Default() ([]Subsystem, error) {
 	root, err := v1MountPoint()
 	if err != nil {
 		return nil, err
