@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package io.containerd.cgroups.v2;
 
-option go_package = "github.com/containerd/cgroups/v2/stats";
+option go_package = "github.com/containerd/cgroups/cgroup2/stats";
 
 message Metrics {
 	PidsStat pids = 1;

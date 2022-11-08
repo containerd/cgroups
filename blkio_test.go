@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/containerd/cgroups/stats/v1"
+	v1 "github.com/containerd/cgroups/v2/stats/v1"
 )
 
 const data = `major minor  #blocks  name
@@ -45,7 +45,7 @@ func TestGetDevices(t *testing.T) {
 		t.Fatal(err)
 	}
 	for dev, expected := range map[deviceKey]string{
-		deviceKey{7, 0}: "/dev/loop0",
+		deviceKey{7, 0}:   "/dev/loop0",
 		deviceKey{259, 0}: "/dev/nvme0n1",
 		deviceKey{259, 1}: "/dev/nvme0n1p1",
 	} {

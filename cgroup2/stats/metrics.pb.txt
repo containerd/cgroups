@@ -1,5 +1,5 @@
 file {
-  name: "github.com/containerd/cgroups/v2/stats/metrics.proto"
+  name: "github.com/containerd/cgroups/cgroup2/stats/metrics.proto"
   package: "io.containerd.cgroups.v2"
   message_type {
     name: "Metrics"
@@ -532,7 +532,7 @@ file {
     }
   }
   options {
-    go_package: "github.com/containerd/cgroups/v2/stats"
+    go_package: "github.com/containerd/cgroups/cgroup2/stats"
   }
   syntax: "proto3"
 }

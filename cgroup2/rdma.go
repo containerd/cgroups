@@ -14,24 +14,33 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
-import "strconv"
+import (
+	"fmt"
+)
 
-type Pids struct {
-	Max int64
+type RDMA struct {
+	Limit []RDMAEntry
 }
 
-func (r *Pids) Values() (o []Value) {
-	if r.Max != 0 {
-		limit := "max"
-		if r.Max > 0 {
-			limit = strconv.FormatInt(r.Max, 10)
-		}
+type RDMAEntry struct {
+	Device     string
+	HcaHandles uint32
+	HcaObjects uint32
+}
+
+func (r RDMAEntry) String() string {
+	return fmt.Sprintf("%s hca_handle=%d hca_object=%d", r.Device, r.HcaHandles, r.HcaObjects)
+}
+
+func (r *RDMA) Values() (o []Value) {
+	for _, e := range r.Limit {
 		o = append(o, Value{
-			filename: "pids.max",
-			value:    limit,
+			filename: "rdma.max",
+			value:    e.String(),
 		})
 	}
+
 	return o
 }

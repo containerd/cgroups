@@ -14,46 +14,24 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
-type Memory struct {
-	Swap *int64
-	Min  *int64
-	Max  *int64
-	Low  *int64
-	High *int64
+import "strings"
+
+type HugeTlb []HugeTlbEntry
+
+type HugeTlbEntry struct {
+	HugePageSize string
+	Limit        uint64
 }
 
-func (r *Memory) Values() (o []Value) {
-	if r.Swap != nil {
+func (r *HugeTlb) Values() (o []Value) {
+	for _, e := range *r {
 		o = append(o, Value{
-			filename: "memory.swap.max",
-			value:    *r.Swap,
+			filename: strings.Join([]string{"hugetlb", e.HugePageSize, "max"}, "."),
+			value:    e.Limit,
 		})
 	}
-	if r.Min != nil {
-		o = append(o, Value{
-			filename: "memory.min",
-			value:    *r.Min,
-		})
-	}
-	if r.Max != nil {
-		o = append(o, Value{
-			filename: "memory.max",
-			value:    *r.Max,
-		})
-	}
-	if r.Low != nil {
-		o = append(o, Value{
-			filename: "memory.low",
-			value:    *r.Low,
-		})
-	}
-	if r.High != nil {
-		o = append(o, Value{
-			filename: "memory.high",
-			value:    *r.High,
-		})
-	}
+
 	return o
 }

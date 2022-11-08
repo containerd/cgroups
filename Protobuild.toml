@@ -21,8 +21,11 @@ ignore_files = [
 	"google/protobuf/descriptor.proto",
 ]
 [[descriptors]]
-prefix = "github.com/containerd/cgroups/v2/stats"
-target = "v2/stats/metrics.pb.txt"
+prefix = "github.com/containerd/cgroups/cgroup2/stats"
+target = "cgroup2/stats/metrics.pb.txt"
 ignore_files = [
 	"google/protobuf/descriptor.proto",
 ]
+
+[parameters.go]
+paths = "source_relative"

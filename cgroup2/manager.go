@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package v2
+package cgroup2
 
 import (
 	"bufio"
@@ -30,7 +30,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/cgroups/v2/stats"
+	"github.com/containerd/cgroups/v2/cgroup2/stats"
 
 	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/godbus/dbus/v5"
