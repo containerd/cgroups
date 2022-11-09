@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"strings"
 
-	v1 "github.com/containerd/cgroups/v2/cgroup1/stats"
+	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 )

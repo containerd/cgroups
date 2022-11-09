@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containerd/cgroups/v2"
+	"github.com/containerd/cgroups/v3"
 	units "github.com/docker/go-units"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )

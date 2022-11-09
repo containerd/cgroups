@@ -21,7 +21,7 @@ import (
 	"strings"
 	"testing"
 
-	v1 "github.com/containerd/cgroups/v2/cgroup1/stats"
+	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 )
 
 const data = `major minor  #blocks  name
