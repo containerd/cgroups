@@ -34,14 +34,14 @@ import (
 )
 
 // New returns a new control via the cgroup cgroups interface
-func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources, opts ...InitOpts) (Cgroup, error) {
+func New(path Path, resources *specs.LinuxResources, opts ...InitOpts) (Cgroup, error) {
 	config := newInitConfig()
 	for _, o := range opts {
 		if err := o(config); err != nil {
 			return nil, err
 		}
 	}
-	subsystems, err := hierarchy()
+	subsystems, err := config.hiearchy()
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func New(hierarchy Hierarchy, path Path, resources *specs.LinuxResources, opts .
 
 // Load will load an existing cgroup and allow it to be controlled
 // All static path should not include `/sys/fs/cgroup/` prefix, it should start with your own cgroups name
-func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
+func Load(path Path, opts ...InitOpts) (Cgroup, error) {
 	config := newInitConfig()
 	for _, o := range opts {
 		if err := o(config); err != nil {
@@ -79,7 +79,7 @@ func Load(hierarchy Hierarchy, path Path, opts ...InitOpts) (Cgroup, error) {
 		}
 	}
 	var activeSubsystems []Subsystem
-	subsystems, err := hierarchy()
+	subsystems, err := config.hiearchy()
 	if err != nil {
 		return nil, err
 	}

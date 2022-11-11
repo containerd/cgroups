@@ -99,7 +99,7 @@ var delCommand = cli.Command{
 	Usage: "delete a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.Load(path, cgroup2.WithMountpoint(clix.GlobalString("mountpoint")))
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ var listCommand = cli.Command{
 	Usage: "list processes in a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.Load(path, cgroup2.WithMountpoint(clix.GlobalString("mountpoint")))
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ var listControllersCommand = cli.Command{
 	Usage: "list controllers in a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.Load(path, cgroup2.WithMountpoint(clix.GlobalString("mountpoint")))
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ var statCommand = cli.Command{
 	Usage: "stat a cgroup",
 	Action: func(clix *cli.Context) error {
 		path := clix.Args().First()
-		c, err := cgroup2.LoadManager(clix.GlobalString("mountpoint"), path)
+		c, err := cgroup2.Load(path, cgroup2.WithMountpoint(clix.GlobalString("mountpoint")))
 		if err != nil {
 			return err
 		}
