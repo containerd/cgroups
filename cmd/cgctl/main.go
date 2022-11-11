@@ -22,8 +22,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/containerd/cgroups/v2"
-	"github.com/containerd/cgroups/v2/cgroup2"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
