@@ -56,7 +56,7 @@ func (h *hugetlbController) Create(path string, resources *specs.LinuxResources)
 		return err
 	}
 	for _, limit := range resources.HugepageLimits {
-		if err := retryingWriteFile(
+		if err := os.WriteFile(
 			filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", limit.Pagesize, "limit_in_bytes"}, ".")),
 			[]byte(strconv.FormatUint(limit.Limit, 10)),
 			defaultFilePerm,

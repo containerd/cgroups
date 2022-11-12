@@ -82,7 +82,7 @@ func (c *cpuController) Create(path string, resources *specs.LinuxResources) err
 				value = []byte(strconv.FormatInt(*t.ivalue, 10))
 			}
 			if value != nil {
-				if err := retryingWriteFile(
+				if err := os.WriteFile(
 					filepath.Join(c.Path(path), "cpu."+t.name),
 					value,
 					defaultFilePerm,

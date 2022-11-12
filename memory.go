@@ -104,22 +104,22 @@ func (m *memoryPressureEvent) EventFile() string {
 type MemoryPressureLevel string
 
 // The three memory pressure levels are as follows.
-//  - The "low" level means that the system is reclaiming memory for new
-//    allocations. Monitoring this reclaiming activity might be useful for
-//    maintaining cache level. Upon notification, the program (typically
-//    "Activity Manager") might analyze vmstat and act in advance (i.e.
-//    prematurely shutdown unimportant services).
-//  - The "medium" level means that the system is experiencing medium memory
-//    pressure, the system might be making swap, paging out active file caches,
-//    etc. Upon this event applications may decide to further analyze
-//    vmstat/zoneinfo/memcg or internal memory usage statistics and free any
-//    resources that can be easily reconstructed or re-read from a disk.
-//  - The "critical" level means that the system is actively thrashing, it is
-//    about to out of memory (OOM) or even the in-kernel OOM killer is on its
-//    way to trigger. Applications should do whatever they can to help the
-//    system. It might be too late to consult with vmstat or any other
-//    statistics, so it is advisable to take an immediate action.
-//    "https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt" Section 11
+//   - The "low" level means that the system is reclaiming memory for new
+//     allocations. Monitoring this reclaiming activity might be useful for
+//     maintaining cache level. Upon notification, the program (typically
+//     "Activity Manager") might analyze vmstat and act in advance (i.e.
+//     prematurely shutdown unimportant services).
+//   - The "medium" level means that the system is experiencing medium memory
+//     pressure, the system might be making swap, paging out active file caches,
+//     etc. Upon this event applications may decide to further analyze
+//     vmstat/zoneinfo/memcg or internal memory usage statistics and free any
+//     resources that can be easily reconstructed or re-read from a disk.
+//   - The "critical" level means that the system is actively thrashing, it is
+//     about to out of memory (OOM) or even the in-kernel OOM killer is on its
+//     way to trigger. Applications should do whatever they can to help the
+//     system. It might be too late to consult with vmstat or any other
+//     statistics, so it is advisable to take an immediate action.
+//     "https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt" Section 11
 const (
 	LowPressure      MemoryPressureLevel = "low"
 	MediumPressure   MemoryPressureLevel = "medium"
@@ -131,21 +131,21 @@ const (
 type EventNotificationMode string
 
 // There are three optional modes that specify different propagation behavior:
-//  - "default": this is the default behavior specified above. This mode is the
-//    same as omitting the optional mode parameter, preserved by backwards
-//    compatibility.
-//  - "hierarchy": events always propagate up to the root, similar to the default
-//    behavior, except that propagation continues regardless of whether there are
-//    event listeners at each level, with the "hierarchy" mode. In the above
-//    example, groups A, B, and C will receive notification of memory pressure.
-//  - "local": events are pass-through, i.e. they only receive notifications when
-//    memory pressure is experienced in the memcg for which the notification is
-//    registered. In the above example, group C will receive notification if
-//    registered for "local" notification and the group experiences memory
-//    pressure. However, group B will never receive notification, regardless if
-//    there is an event listener for group C or not, if group B is registered for
-//    local notification.
-//    "https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt" Section 11
+//   - "default": this is the default behavior specified above. This mode is the
+//     same as omitting the optional mode parameter, preserved by backwards
+//     compatibility.
+//   - "hierarchy": events always propagate up to the root, similar to the default
+//     behavior, except that propagation continues regardless of whether there are
+//     event listeners at each level, with the "hierarchy" mode. In the above
+//     example, groups A, B, and C will receive notification of memory pressure.
+//   - "local": events are pass-through, i.e. they only receive notifications when
+//     memory pressure is experienced in the memcg for which the notification is
+//     registered. In the above example, group C will receive notification if
+//     registered for "local" notification and the group experiences memory
+//     pressure. However, group B will never receive notification, regardless if
+//     there is an event listener for group C or not, if group B is registered for
+//     local notification.
+//     "https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt" Section 11
 const (
 	DefaultMode   EventNotificationMode = "default"
 	LocalMode     EventNotificationMode = "local"
@@ -394,7 +394,7 @@ func (m *memoryController) parseOomControlStats(r io.Reader, stat *v1.MemoryOomC
 func (m *memoryController) set(path string, settings []memorySettings) error {
 	for _, t := range settings {
 		if t.value != nil {
-			if err := retryingWriteFile(
+			if err := os.WriteFile(
 				filepath.Join(m.Path(path), "memory."+t.name),
 				[]byte(strconv.FormatInt(*t.value, 10)),
 				defaultFilePerm,
@@ -472,7 +472,7 @@ func (m *memoryController) memoryEvent(path string, event MemoryEvent) (uintptr,
 	defer evtFile.Close()
 	data := fmt.Sprintf("%d %d %s", efd, evtFile.Fd(), event.Arg())
 	evctlPath := filepath.Join(root, "cgroup.event_control")
-	if err := retryingWriteFile(evctlPath, []byte(data), 0700); err != nil {
+	if err := os.WriteFile(evctlPath, []byte(data), 0700); err != nil {
 		unix.Close(efd)
 		return 0, err
 	}
