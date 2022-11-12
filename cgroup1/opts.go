@@ -36,11 +36,13 @@ type InitOpts func(*InitConfig) error
 type InitConfig struct {
 	// InitCheck can be used to check initialization errors from the subsystem
 	InitCheck InitCheck
+	hiearchy  Hierarchy
 }
 
 func newInitConfig() *InitConfig {
 	return &InitConfig{
 		InitCheck: RequireDevices,
+		hiearchy:  Default,
 	}
 }
 
@@ -58,4 +60,13 @@ func RequireDevices(s Subsystem, _ Path, _ error) error {
 		return ErrDevicesRequired
 	}
 	return ErrIgnoreSubsystem
+}
+
+// WithHiearchy sets a list of cgroup subsystems.
+// The default list is coming from /proc/self/mountinfo.
+func WithHiearchy(h Hierarchy) InitOpts {
+	return func(c *InitConfig) error {
+		c.hiearchy = h
+		return nil
+	}
 }

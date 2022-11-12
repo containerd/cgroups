@@ -196,13 +196,35 @@ func NewManager(mountpoint string, group string, resources *Resources) (*Manager
 	return &m, nil
 }
 
-func LoadManager(mountpoint string, group string) (*Manager, error) {
+type InitConfig struct {
+	mountpoint string
+}
+
+type InitOpts func(c *InitConfig) error
+
+// WithMountpoint sets the unified mountpoint. The deault path is /sys/fs/cgroup.
+func WithMountpoint(path string) InitOpts {
+	return func(c *InitConfig) error {
+		c.mountpoint = path
+		return nil
+	}
+}
+
+// Load a cgroup.
+func Load(group string, opts ...InitOpts) (*Manager, error) {
+	c := InitConfig{mountpoint: defaultCgroup2Path}
+	for _, opt := range opts {
+		if err := opt(&c); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := VerifyGroupPath(group); err != nil {
 		return nil, err
 	}
-	path := filepath.Join(mountpoint, group)
+	path := filepath.Join(c.mountpoint, group)
 	return &Manager{
-		unifiedMountpoint: mountpoint,
+		unifiedMountpoint: c.mountpoint,
 		path:              path,
 	}, nil
 }
