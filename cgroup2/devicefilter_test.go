@@ -77,8 +77,7 @@ func TestDeviceFilter_Privileged(t *testing.T) {
 			Allow:  true,
 		},
 	}
-	expected :=
-		`
+	expected := `
 // load parameters into registers
         0: LdXMemH dst: r2 src: r1 off: 0 imm: 0
         1: LdXMemW dst: r3 src: r1 off: 0 imm: 0

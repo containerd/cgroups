@@ -23,7 +23,7 @@ import (
 )
 
 func init() {
-	defaultFilePerm = 0666
+	defaultFilePerm = 0o666
 }
 
 func newMock(tb testing.TB) (*mockCgroup, error) {

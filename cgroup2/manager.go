@@ -47,9 +47,7 @@ const (
 	defaultSlice       = "system.slice"
 )
 
-var (
-	canDelegate bool
-)
+var canDelegate bool
 
 type Event struct {
 	Low     uint64
@@ -818,7 +816,7 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 	if err != nil {
 		return err
 	}
-	dirFD, err := unix.Open(path, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0600)
+	dirFD, err := unix.Open(path, unix.O_DIRECTORY|unix.O_RDONLY|unix.O_CLOEXEC, 0o600)
 	if err != nil {
 		return fmt.Errorf("cannot get dir FD for %s", path)
 	}
