@@ -144,20 +144,11 @@ func (c *Value) write(path string, perm os.FileMode) error {
 		return ErrInvalidFormat
 	}
 
-	// Retry writes on EINTR; see:
-	//    https://github.com/golang/go/issues/38033
-	for {
-		err := os.WriteFile(
-			filepath.Join(path, c.filename),
-			data,
-			perm,
-		)
-		if err == nil {
-			return nil
-		} else if !errors.Is(err, syscall.EINTR) {
-			return err
-		}
-	}
+	return os.WriteFile(
+		filepath.Join(path, c.filename),
+		data,
+		perm,
+	)
 }
 
 func writeValues(path string, values []Value) error {
@@ -763,7 +754,8 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 // the reason this is necessary is because the "-" character has a special meaning in
 // systemd slice. For example, when creating a slice called "my-group-112233.slice",
 // systemd will create a hierarchy like this:
-//      /sys/fs/cgroup/my.slice/my-group.slice/my-group-112233.slice
+//
+//	/sys/fs/cgroup/my.slice/my-group.slice/my-group-112233.slice
 func getSystemdFullPath(slice, group string) string {
 	return filepath.Join(defaultCgroup2Path, dashesToPath(slice), dashesToPath(group))
 }
