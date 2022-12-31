@@ -202,7 +202,7 @@ type InitConfig struct {
 
 type InitOpts func(c *InitConfig) error
 
-// WithMountpoint sets the unified mountpoint. The deault path is /sys/fs/cgroup.
+// WithMountpoint sets the unified mountpoint. The default path is /sys/fs/cgroup.
 func WithMountpoint(path string) InitOpts {
 	return func(c *InitConfig) error {
 		c.mountpoint = path
@@ -763,7 +763,8 @@ func setDevices(path string, devices []specs.LinuxDeviceCgroup) error {
 // the reason this is necessary is because the "-" character has a special meaning in
 // systemd slice. For example, when creating a slice called "my-group-112233.slice",
 // systemd will create a hierarchy like this:
-//      /sys/fs/cgroup/my.slice/my-group.slice/my-group-112233.slice
+//
+//	/sys/fs/cgroup/my.slice/my-group.slice/my-group-112233.slice
 func getSystemdFullPath(slice, group string) string {
 	return filepath.Join(defaultCgroup2Path, dashesToPath(slice), dashesToPath(group))
 }
