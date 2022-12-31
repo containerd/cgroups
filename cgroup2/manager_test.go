@@ -142,6 +142,54 @@ func TestSystemdFullPath(t *testing.T) {
 	}
 }
 
+func TestKill(t *testing.T) {
+	checkCgroupMode(t)
+	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var procs []*exec.Cmd
+	for i := 0; i < 5; i++ {
+		cmd := exec.Command("sleep", "infinity")
+		if err := cmd.Start(); err != nil {
+			t.Fatal(err)
+		}
+		if cmd.Process == nil {
+			t.Fatal("Process is nil")
+		}
+		if err := manager.AddProc(uint64(cmd.Process.Pid)); err != nil {
+			t.Fatal(err)
+		}
+		procs = append(procs, cmd)
+	}
+	// Verify we have 5 pids before beginning Kill below.
+	pids, err := manager.Procs(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pids) != 5 {
+		t.Fatalf("expected 5 pids, got %d", len(pids))
+	}
+	// Now run kill, and check that nothing is running after.
+	if err := manager.Kill(); err != nil {
+		t.Fatal(err)
+	}
+
+	done := make(chan struct{})
+	go func() {
+		for _, proc := range procs {
+			_ = proc.Wait()
+		}
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-time.After(time.Second * 3):
+		t.Fatal("timed out waiting for processes to exit")
+	case <-done:
+	}
+}
+
 func TestMoveTo(t *testing.T) {
 	checkCgroupMode(t)
 	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
