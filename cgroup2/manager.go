@@ -144,20 +144,11 @@ func (c *Value) write(path string, perm os.FileMode) error {
 		return ErrInvalidFormat
 	}
 
-	// Retry writes on EINTR; see:
-	//    https://github.com/golang/go/issues/38033
-	for {
-		err := os.WriteFile(
-			filepath.Join(path, c.filename),
-			data,
-			perm,
-		)
-		if err == nil {
-			return nil
-		} else if !errors.Is(err, syscall.EINTR) {
-			return err
-		}
-	}
+	return os.WriteFile(
+		filepath.Join(path, c.filename),
+		data,
+		perm,
+	)
 }
 
 func writeValues(path string, values []Value) error {
