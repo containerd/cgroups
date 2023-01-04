@@ -32,6 +32,8 @@ import (
 
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/shirou/gopsutil/mem"
+
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -250,7 +252,14 @@ func getStatFileContentUint64(filePath string) uint64 {
 	}
 	trimmed := strings.TrimSpace(string(contents))
 	if trimmed == "max" {
-		return math.MaxUint64
+		totalMem, err := readTotalMem()
+		if err != nil {
+			// Reading total system memory adds a new dependency for a non-critical improvement.
+			// Fall back to the behaviour if there is anything wrong with system memory.
+			logrus.Warnf("falling back to returning hardcoded memory limit: %s", err)
+			return math.MaxUint64
+		}
+		return totalMem
 	}
 
 	res, err := parseUint(trimmed, 10, 64)
@@ -260,6 +269,14 @@ func getStatFileContentUint64(filePath string) uint64 {
 	}
 
 	return res
+}
+
+func readTotalMem() (uint64, error) {
+	vmStat, err := mem.VirtualMemory()
+	if err != nil {
+		return 0, err
+	}
+	return vmStat.Total, nil
 }
 
 func readIoStats(path string) []*stats.IOEntry {
