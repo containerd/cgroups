@@ -32,7 +32,7 @@ import (
 
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v3/mem"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
