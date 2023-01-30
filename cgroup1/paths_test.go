@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/containerd/cgroups/v3"
 )
 
 func TestStaticPath(t *testing.T) {
@@ -89,34 +91,6 @@ func TestRootPath(t *testing.T) {
 	}
 }
 
-func TestEmptySubsystem(t *testing.T) {
-	const data = `10:devices:/user.slice
-	9:net_cls,net_prio:/
-	8:blkio:/
-	7:freezer:/
-	6:perf_event:/
-	5:cpuset:/
-	4:memory:/
-	3:pids:/user.slice/user-1000.slice/user@1000.service
-	2:cpu,cpuacct:/
-	1:name=systemd:/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service
-	0::/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service`
-	r := strings.NewReader(data)
-	paths, unified, err := parseCgroupFromReaderUnified(r)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for subsystem, path := range paths {
-		if subsystem == "" {
-			t.Fatalf("empty subsystem for %q", path)
-		}
-	}
-	unifiedExpected := "/user.slice/user-1000.slice/user@1000.service/gnome-terminal-server.service"
-	if unified != unifiedExpected {
-		t.Fatalf("expected %q, got %q", unifiedExpected, unified)
-	}
-}
-
 func TestSystemd240(t *testing.T) {
 	if isUnified {
 		t.Skipf("requires the system to be running in legacy mode")
@@ -131,7 +105,7 @@ func TestSystemd240(t *testing.T) {
 	1:name=systemd:/system.slice/docker.service
 	0::/system.slice/docker.service`
 	r := strings.NewReader(data)
-	paths, unified, err := parseCgroupFromReaderUnified(r)
+	paths, unified, err := cgroups.ParseCgroupFromReaderUnified(r)
 	if err != nil {
 		t.Fatal(err)
 	}
