@@ -8,7 +8,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/godbus/dbus/v5 v5.0.4
 	github.com/opencontainers/runtime-spec v1.0.2
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/goleak v1.1.12
 	golang.org/x/sys v0.2.0
