@@ -48,5 +48,4 @@ func TestCgroupv2HugetlbStats(t *testing.T) {
 			break
 		}
 	}
-
 }

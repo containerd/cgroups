@@ -158,7 +158,7 @@ func (c *cgroup) subsystemsFilter(subsystems ...Name) []Subsystem {
 		return c.subsystems
 	}
 
-	var filteredSubsystems = []Subsystem{}
+	filteredSubsystems := []Subsystem{}
 	for _, s := range c.subsystems {
 		for _, f := range subsystems {
 			if s.Name() == f {

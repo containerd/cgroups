@@ -45,9 +45,9 @@ func TestGetDevices(t *testing.T) {
 		t.Fatal(err)
 	}
 	for dev, expected := range map[deviceKey]string{
-		deviceKey{7, 0}:   "/dev/loop0",
-		deviceKey{259, 0}: "/dev/nvme0n1",
-		deviceKey{259, 1}: "/dev/nvme0n1p1",
+		{7, 0}:   "/dev/loop0",
+		{259, 0}: "/dev/nvme0n1",
+		{259, 1}: "/dev/nvme0n1p1",
 	} {
 		name, ok := devices[dev]
 		if !ok {
