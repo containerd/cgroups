@@ -20,7 +20,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,8 +27,8 @@ import (
 )
 
 func checkCgroupMode(t *testing.T) {
-	var st syscall.Statfs_t
-	if err := syscall.Statfs(defaultCgroup2Path, &st); err != nil {
+	var st unix.Statfs_t
+	if err := unix.Statfs(defaultCgroup2Path, &st); err != nil {
 		t.Fatal("cannot statfs cgroup root")
 	}
 	isUnified := st.Type == unix.CGROUP2_SUPER_MAGIC

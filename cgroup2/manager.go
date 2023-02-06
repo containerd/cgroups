@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/containerd/cgroups/v3/cgroup2/stats"
@@ -707,19 +706,19 @@ func (c *Manager) isCgroupEmpty() bool {
 // MemoryEventFD returns inotify file descriptor and 'memory.events' inotify watch descriptor
 func (c *Manager) MemoryEventFD() (int, uint32, error) {
 	fpath := filepath.Join(c.path, "memory.events")
-	fd, err := syscall.InotifyInit()
+	fd, err := unix.InotifyInit()
 	if err != nil {
 		return 0, 0, errors.New("failed to create inotify fd")
 	}
-	wd, err := syscall.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
+	wd, err := unix.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
 	if err != nil {
-		syscall.Close(fd)
+		unix.Close(fd)
 		return 0, 0, fmt.Errorf("failed to add inotify watch for %q: %w", fpath, err)
 	}
 	// monitor to detect process exit/cgroup deletion
 	evpath := filepath.Join(c.path, "cgroup.events")
-	if _, err = syscall.InotifyAddWatch(fd, evpath, unix.IN_MODIFY); err != nil {
-		syscall.Close(fd)
+	if _, err = unix.InotifyAddWatch(fd, evpath, unix.IN_MODIFY); err != nil {
+		unix.Close(fd)
 		return 0, 0, fmt.Errorf("failed to add inotify watch for %q: %w", evpath, err)
 	}
 
@@ -777,16 +776,16 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 		errCh <- err
 		return
 	}
-	defer syscall.Close(fd)
+	defer unix.Close(fd)
 
 	for {
-		buffer := make([]byte, syscall.SizeofInotifyEvent*10)
-		bytesRead, err := syscall.Read(fd, buffer)
+		buffer := make([]byte, unix.SizeofInotifyEvent*10)
+		bytesRead, err := unix.Read(fd, buffer)
 		if err != nil {
 			errCh <- err
 			return
 		}
-		if bytesRead >= syscall.SizeofInotifyEvent {
+		if bytesRead >= unix.SizeofInotifyEvent {
 			out := make(map[string]interface{})
 			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
 				// When cgroup is deleted read may return -ENODEV instead of -ENOENT from open.
