@@ -25,6 +25,7 @@ import (
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
 
@@ -220,4 +221,21 @@ func TestMoveTo(t *testing.T) {
 		t.Errorf("process %v not in destination cgroup", proc)
 		return
 	}
+}
+
+func TestCgroupType(t *testing.T) {
+	checkCgroupMode(t)
+	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
+	require.NoError(t, err)
+
+	cgType, err := manager.GetType()
+	require.NoError(t, err)
+	require.Equal(t, cgType, Domain)
+
+	// Swap to threaded
+	require.NoError(t, manager.SetType(Threaded))
+
+	cgType, err = manager.GetType()
+	require.NoError(t, err)
+	require.Equal(t, cgType, Threaded)
 }

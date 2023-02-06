@@ -43,6 +43,7 @@ const (
 	subtreeControl     = "cgroup.subtree_control"
 	controllersFile    = "cgroup.controllers"
 	killFile           = "cgroup.kill"
+	typeFile           = "cgroup.type"
 	defaultCgroup2Path = "/sys/fs/cgroup"
 	defaultSlice       = "system.slice"
 )
@@ -234,6 +235,35 @@ func setResources(path string, resources *Resources) error {
 		}
 	}
 	return nil
+}
+
+// CgroupType represents the types a cgroup can be.
+type CgroupType string
+
+const (
+	Domain   CgroupType = "domain"
+	Threaded CgroupType = "threaded"
+)
+
+func (c *Manager) GetType() (CgroupType, error) {
+	val, err := os.ReadFile(filepath.Join(c.path, typeFile))
+	if err != nil {
+		return "", err
+	}
+	trimmed := strings.TrimSpace(string(val))
+	return CgroupType(trimmed), nil
+}
+
+func (c *Manager) SetType(cgType CgroupType) error {
+	// NOTE: We could abort if cgType != Threaded here as currently
+	// it's not possible to revert back to domain, but not sure
+	// it's worth being that opinionated, especially if that may
+	// ever change.
+	v := Value{
+		filename: typeFile,
+		value:    string(cgType),
+	}
+	return writeValues(c.path, []Value{v})
 }
 
 func (c *Manager) RootControllers() ([]string, error) {
