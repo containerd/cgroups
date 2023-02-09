@@ -32,7 +32,11 @@ func TestPids(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	pids := NewPids(mock.root)
 	if pids == nil {
 		t.Fatal("pids is nil")
@@ -89,7 +93,11 @@ func TestPidsMissingCurrent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	pids := NewPids(mock.root)
 	if pids == nil {
 		t.Fatal("pids is nil")
@@ -106,7 +114,11 @@ func TestPidsMissingMax(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	pids := NewPids(mock.root)
 	if pids == nil {
 		t.Fatal("pids is nil")
@@ -135,7 +147,11 @@ func TestPidsOverflowMax(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	pids := NewPids(mock.root)
 	if pids == nil {
 		t.Fatal("pids is nil")

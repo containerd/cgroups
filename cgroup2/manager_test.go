@@ -28,6 +28,7 @@ import (
 	"go.uber.org/goleak"
 )
 
+//nolint:staticcheck // Staticcheck false positives for nil pointer deference after t.Fatal
 func TestEventChanCleanupOnCgroupRemoval(t *testing.T) {
 	checkCgroupMode(t)
 
@@ -212,6 +213,10 @@ func TestMoveTo(t *testing.T) {
 		return
 	}
 	desProcs, err := destination.Procs(true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	desMap := make(map[int]bool)
 	for _, p := range desProcs {
 		desMap[int(p)] = true

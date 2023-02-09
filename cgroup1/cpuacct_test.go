@@ -32,7 +32,11 @@ func TestGetUsage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	cpuacct := NewCpuacct(mock.root)
 	if cpuacct == nil {
 		t.Fatal("cpuacct is nil")

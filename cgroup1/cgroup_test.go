@@ -33,7 +33,11 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -60,7 +64,11 @@ func TestStat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -82,7 +90,11 @@ func TestAdd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -105,7 +117,11 @@ func TestAddFilteredSubsystems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -162,7 +178,11 @@ func TestAddTask(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -185,7 +205,11 @@ func TestAddTaskFilteredSubsystems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -227,7 +251,11 @@ func TestListPids(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -262,7 +290,11 @@ func TestListTasksPids(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -349,12 +381,21 @@ func TestLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	defer func() {
+		if err := control.Delete(); err != nil {
+			t.Errorf("failed to delete cgroup: %v", err)
+		}
+	}()
 	if control, err = Load(StaticPath("test"), WithHiearchy(mock.hierarchy)); err != nil {
 		t.Error(err)
 		return
@@ -370,7 +411,11 @@ func TestLoadWithMissingSubsystems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	subsystems, err := mock.hierarchy()
 	if err != nil {
 		t.Error(err)
@@ -404,7 +449,11 @@ func TestDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -420,7 +469,11 @@ func TestCreateSubCgroup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -458,7 +511,11 @@ func TestFreezeThaw(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -487,7 +544,11 @@ func TestSubsystems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("test"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
@@ -510,13 +571,21 @@ func TestCpusetParent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer mock.delete()
+	defer func() {
+		if err := mock.delete(); err != nil {
+			t.Errorf("failed delete: %v", err)
+		}
+	}()
 	control, err := New(StaticPath("/parent/child"), &specs.LinuxResources{}, WithHiearchy(mock.hierarchy))
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	defer control.Delete()
+	defer func() {
+		if err := control.Delete(); err != nil {
+			t.Errorf("failed to delete cgroup: %v", err)
+		}
+	}()
 	for _, file := range []string{
 		"parent/cpuset.cpus",
 		"parent/cpuset.mems",

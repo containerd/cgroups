@@ -47,6 +47,34 @@ jobs:
         with:
           working-directory: src/github.com/containerd/cgroups
 
+  lint:
+    name: Lint
+    timeout-minutes: 10
+    needs: [project]
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        go-version: [1.19.x, 1.20.x]
+
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Checkout cgroups
+        uses: actions/checkout@v3
+        with:
+          path: src/github.com/containerd/cgroups
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.51.1
+          args: --verbose
+          working-directory: src/github.com/containerd/cgroups
+
   test:
     name: Test cgroups
     timeout-minutes: 15
