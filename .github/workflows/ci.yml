@@ -25,7 +25,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.19.x'
+          go-version: '1.20.x'
 
       - name: Set env
         shell: bash
@@ -54,6 +54,7 @@ jobs:
 
     strategy:
       matrix:
+        go-version: [1.19.x, 1.20.x]
         # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
         os: [ubuntu-20.04, ubuntu-22.04]
 
@@ -62,7 +63,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.19.x'
+          go-version: ${{ matrix.go }}
 
       - name: Set env
         shell: bash
