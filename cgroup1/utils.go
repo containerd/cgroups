@@ -18,7 +18,9 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -130,12 +132,23 @@ func hugePageSizes() ([]string, error) {
 	return pageSizes, nil
 }
 
-func readUint(path string) (uint64, error) {
-	v, err := os.ReadFile(path)
+// readUint reads a uint64 from the given file and uses the given buffer as
+// scratch space. The buffer is intended to be reused across calls.
+func readUint(path string, buf *bytes.Buffer) (uint64, error) {
+	buf.Reset()
+
+	f, err := os.Open(path)
 	if err != nil {
 		return 0, err
 	}
-	return parseUint(strings.TrimSpace(string(v)), 10, 64)
+	defer f.Close()
+
+	_, err = io.Copy(buf, f)
+	if err != nil {
+		return 0, err
+	}
+
+	return parseUint(strings.TrimSpace(buf.String()), 10, 64)
 }
 
 func parseUint(s string, base, bitSize int) (uint64, error) {

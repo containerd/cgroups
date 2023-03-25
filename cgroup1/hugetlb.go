@@ -17,6 +17,7 @@
 package cgroup1
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -35,12 +36,14 @@ func NewHugetlb(root string) (*hugetlbController, error) {
 	return &hugetlbController{
 		root:  filepath.Join(root, string(Hugetlb)),
 		sizes: sizes,
+		buf:   bytes.NewBuffer(make([]byte, 0, 32)),
 	}, nil
 }
 
 type hugetlbController struct {
 	root  string
 	sizes []string
+	buf   *bytes.Buffer
 }
 
 func (h *hugetlbController) Name() Name {
@@ -99,7 +102,7 @@ func (h *hugetlbController) readSizeStat(path, size string) (*v1.HugetlbStat, er
 			value: &s.Failcnt,
 		},
 	} {
-		v, err := readUint(filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", size, t.name}, ".")))
+		v, err := readUint(filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", size, t.name}, ".")), h.buf)
 		if err != nil {
 			return nil, err
 		}

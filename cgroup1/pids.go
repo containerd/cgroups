@@ -17,6 +17,7 @@
 package cgroup1
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -29,11 +30,13 @@ import (
 func NewPids(root string) *pidsController {
 	return &pidsController{
 		root: filepath.Join(root, string(Pids)),
+		buf:  bytes.NewBuffer(make([]byte, 0, 32)),
 	}
 }
 
 type pidsController struct {
 	root string
+	buf  *bytes.Buffer
 }
 
 func (p *pidsController) Name() Name {
@@ -63,7 +66,7 @@ func (p *pidsController) Update(path string, resources *specs.LinuxResources) er
 }
 
 func (p *pidsController) Stat(path string, stats *v1.Metrics) error {
-	current, err := readUint(filepath.Join(p.Path(path), "pids.current"))
+	current, err := readUint(filepath.Join(p.Path(path), "pids.current"), p.buf)
 	if err != nil {
 		return err
 	}

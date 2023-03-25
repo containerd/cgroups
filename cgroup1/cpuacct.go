@@ -18,6 +18,7 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -34,11 +35,13 @@ var clockTicks = getClockTicks()
 func NewCpuacct(root string) *cpuacctController {
 	return &cpuacctController{
 		root: filepath.Join(root, string(Cpuacct)),
+		buf:  bytes.NewBuffer(make([]byte, 0, 32)),
 	}
 }
 
 type cpuacctController struct {
 	root string
+	buf  *bytes.Buffer
 }
 
 func (c *cpuacctController) Name() Name {
@@ -54,7 +57,7 @@ func (c *cpuacctController) Stat(path string, stats *v1.Metrics) error {
 	if err != nil {
 		return err
 	}
-	total, err := readUint(filepath.Join(c.Path(path), "cpuacct.usage"))
+	total, err := readUint(filepath.Join(c.Path(path), "cpuacct.usage"), c.buf)
 	if err != nil {
 		return err
 	}

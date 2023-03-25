@@ -18,6 +18,7 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -158,6 +159,7 @@ func NewMemory(root string, options ...func(*memoryController)) *memoryControlle
 	mc := &memoryController{
 		root:    filepath.Join(root, string(Memory)),
 		ignored: map[string]struct{}{},
+		buf:     bytes.NewBuffer(make([]byte, 0, 32)),
 	}
 	for _, opt := range options {
 		opt(mc)
@@ -189,6 +191,7 @@ func OptionalSwap() func(*memoryController) {
 type memoryController struct {
 	root    string
 	ignored map[string]struct{}
+	buf     *bytes.Buffer
 }
 
 func (m *memoryController) Name() Name {
@@ -220,7 +223,7 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 	if g(resources.Memory.Limit) && g(resources.Memory.Swap) {
 		// if the updated swap value is larger than the current memory limit set the swap changes first
 		// then set the memory limit as swap must always be larger than the current limit
-		current, err := readUint(filepath.Join(m.Path(path), "memory.limit_in_bytes"))
+		current, err := readUint(filepath.Join(m.Path(path), "memory.limit_in_bytes"), m.buf)
 		if err != nil {
 			return err
 		}
@@ -306,7 +309,7 @@ func (m *memoryController) Stat(path string, stats *v1.Metrics) error {
 				parts = append(parts, t.module)
 			}
 			parts = append(parts, tt.name)
-			v, err := readUint(filepath.Join(m.Path(path), strings.Join(parts, ".")))
+			v, err := readUint(filepath.Join(m.Path(path), strings.Join(parts, ".")), m.buf)
 			if err != nil {
 				return err
 			}
