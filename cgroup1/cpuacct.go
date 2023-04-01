@@ -18,11 +18,13 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 )
@@ -34,11 +36,17 @@ var clockTicks = getClockTicks()
 func NewCpuacct(root string) *cpuacctController {
 	return &cpuacctController{
 		root: filepath.Join(root, string(Cpuacct)),
+		bufPool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			},
+		},
 	}
 }
 
 type cpuacctController struct {
-	root string
+	root    string
+	bufPool sync.Pool
 }
 
 func (c *cpuacctController) Name() Name {
@@ -50,11 +58,14 @@ func (c *cpuacctController) Path(path string) string {
 }
 
 func (c *cpuacctController) Stat(path string, stats *v1.Metrics) error {
+	b := c.bufPool.Get().(*bytes.Buffer)
+	defer c.bufPool.Put(b)
+	b.Reset()
 	user, kernel, err := c.getUsage(path)
 	if err != nil {
 		return err
 	}
-	total, err := readUint(filepath.Join(c.Path(path), "cpuacct.usage"))
+	total, err := readUint(filepath.Join(c.Path(path), "cpuacct.usage"), b)
 	if err != nil {
 		return err
 	}

@@ -17,10 +17,12 @@
 package cgroup1
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -29,11 +31,17 @@ import (
 func NewPids(root string) *pidsController {
 	return &pidsController{
 		root: filepath.Join(root, string(Pids)),
+		bufPool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			},
+		},
 	}
 }
 
 type pidsController struct {
-	root string
+	root    string
+	bufPool sync.Pool
 }
 
 func (p *pidsController) Name() Name {
@@ -63,10 +71,14 @@ func (p *pidsController) Update(path string, resources *specs.LinuxResources) er
 }
 
 func (p *pidsController) Stat(path string, stats *v1.Metrics) error {
-	current, err := readUint(filepath.Join(p.Path(path), "pids.current"))
+	b := p.bufPool.Get().(*bytes.Buffer)
+	defer p.bufPool.Put(b)
+	b.Reset()
+	current, err := readUint(filepath.Join(p.Path(path), "pids.current"), b)
 	if err != nil {
 		return err
 	}
+
 	var max uint64
 	maxData, err := os.ReadFile(filepath.Join(p.Path(path), "pids.max"))
 	if err != nil {

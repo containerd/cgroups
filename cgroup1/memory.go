@@ -18,12 +18,14 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -158,6 +160,11 @@ func NewMemory(root string, options ...func(*memoryController)) *memoryControlle
 	mc := &memoryController{
 		root:    filepath.Join(root, string(Memory)),
 		ignored: map[string]struct{}{},
+		bufPool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			},
+		},
 	}
 	for _, opt := range options {
 		opt(mc)
@@ -189,6 +196,7 @@ func OptionalSwap() func(*memoryController) {
 type memoryController struct {
 	root    string
 	ignored map[string]struct{}
+	bufPool sync.Pool
 }
 
 func (m *memoryController) Name() Name {
@@ -220,7 +228,10 @@ func (m *memoryController) Update(path string, resources *specs.LinuxResources) 
 	if g(resources.Memory.Limit) && g(resources.Memory.Swap) {
 		// if the updated swap value is larger than the current memory limit set the swap changes first
 		// then set the memory limit as swap must always be larger than the current limit
-		current, err := readUint(filepath.Join(m.Path(path), "memory.limit_in_bytes"))
+		b := m.bufPool.Get().(*bytes.Buffer)
+		defer m.bufPool.Put(b)
+		b.Reset()
+		current, err := readUint(filepath.Join(m.Path(path), "memory.limit_in_bytes"), b)
 		if err != nil {
 			return err
 		}
@@ -306,7 +317,10 @@ func (m *memoryController) Stat(path string, stats *v1.Metrics) error {
 				parts = append(parts, t.module)
 			}
 			parts = append(parts, tt.name)
-			v, err := readUint(filepath.Join(m.Path(path), strings.Join(parts, ".")))
+			b := m.bufPool.Get().(*bytes.Buffer)
+			defer m.bufPool.Get()
+			b.Reset()
+			v, err := readUint(filepath.Join(m.Path(path), strings.Join(parts, ".")), b)
 			if err != nil {
 				return err
 			}

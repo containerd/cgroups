@@ -17,10 +17,12 @@
 package cgroup1
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -35,12 +37,18 @@ func NewHugetlb(root string) (*hugetlbController, error) {
 	return &hugetlbController{
 		root:  filepath.Join(root, string(Hugetlb)),
 		sizes: sizes,
+		bufPool: sync.Pool{
+			New: func() interface{} {
+				return new(bytes.Buffer)
+			},
+		},
 	}, nil
 }
 
 type hugetlbController struct {
-	root  string
-	sizes []string
+	root    string
+	sizes   []string
+	bufPool sync.Pool
 }
 
 func (h *hugetlbController) Name() Name {
@@ -99,7 +107,10 @@ func (h *hugetlbController) readSizeStat(path, size string) (*v1.HugetlbStat, er
 			value: &s.Failcnt,
 		},
 	} {
-		v, err := readUint(filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", size, t.name}, ".")))
+		b := h.bufPool.Get().(*bytes.Buffer)
+		defer h.bufPool.Put(b)
+		b.Reset()
+		v, err := readUint(filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", size, t.name}, ".")), b)
 		if err != nil {
 			return nil, err
 		}
