@@ -131,11 +131,19 @@ func hugePageSizes() ([]string, error) {
 }
 
 func readUint(path string) (uint64, error) {
-	v, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return 0, err
 	}
-	return parseUint(strings.TrimSpace(string(v)), 10, 64)
+	defer f.Close()
+
+	b := make([]byte, 128) // Chose 128 as some files have leading/trailing whitespaces and alignment
+	n, err := f.Read(b)
+	if err != nil {
+		return 0, err
+	}
+
+	return parseUint(strings.TrimSpace(string(b[:n])), 10, 64)
 }
 
 func parseUint(s string, base, bitSize int) (uint64, error) {
