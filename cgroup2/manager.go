@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -519,11 +518,6 @@ func (c *Manager) MoveTo(destination *Manager) error {
 	return nil
 }
 
-var singleValueFiles = []string{
-	"pids.current",
-	"pids.max",
-}
-
 func (c *Manager) Stat() (*stats.Metrics, error) {
 	controllers, err := c.Controllers()
 	if err != nil {
@@ -541,14 +535,6 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 			}
 		}
 	}
-	for _, name := range singleValueFiles {
-		if err := readSingleFile(c.path, name, out); err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, err
-		}
-	}
 	memoryEvents := make(map[string]interface{})
 	if err := readKVStatsFile(c.path, "memory.events", memoryEvents); err != nil {
 		if !os.IsNotExist(err) {
@@ -558,8 +544,8 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	var metrics stats.Metrics
 
 	metrics.Pids = &stats.PidsStat{
-		Current: getPidValue("pids.current", out),
-		Limit:   getPidValue("pids.max", out),
+		Current: getStatFileContentUint64(filepath.Join(c.path, "pids.current")),
+		Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
 	}
 	metrics.CPU = &stats.CPUStat{
 		UsageUsec:     getUint64Value("usage_usec", out),
@@ -635,43 +621,6 @@ func getUint64Value(key string, out map[string]interface{}) uint64 {
 		return t
 	}
 	return 0
-}
-
-func getPidValue(key string, out map[string]interface{}) uint64 {
-	v, ok := out[key]
-	if !ok {
-		return 0
-	}
-	switch t := v.(type) {
-	case uint64:
-		return t
-	case string:
-		if t == "max" {
-			return math.MaxUint64
-		}
-	}
-	return 0
-}
-
-func readSingleFile(path string, file string, out map[string]interface{}) error {
-	f, err := os.Open(filepath.Join(path, file))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	data, err := io.ReadAll(f)
-	if err != nil {
-		return err
-	}
-	s := strings.TrimSpace(string(data))
-	v, err := parseUint(s, 10, 64)
-	if err != nil {
-		// if we cannot parse as a uint, parse as a string
-		out[file] = s
-		return nil
-	}
-	out[file] = v
-	return nil
 }
 
 func readKVStatsFile(path string, file string, out map[string]interface{}) error {
