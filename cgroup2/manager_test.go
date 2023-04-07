@@ -223,3 +223,20 @@ func TestCgroupType(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, cgType, Threaded)
 }
+
+func BenchmarkStat(b *testing.B) {
+	checkCgroupMode(b)
+	group := "/stat-test-cg"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	c, err := NewManager(defaultCgroup2Path, groupPath, &Resources{})
+	require.NoErrorf(b, err, "failed to init new cgroup manager")
+	b.Cleanup(func() {
+		_ = c.Delete()
+	})
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		_, err := c.Stat()
+		require.NoError(b, err)
+	}
+}

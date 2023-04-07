@@ -236,18 +236,28 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 
 // Gets uint64 parsed content of single value cgroup stat file
 func getStatFileContentUint64(filePath string) uint64 {
-	contents, err := os.ReadFile(filePath)
+	f, err := os.Open(filePath)
 	if err != nil {
 		return 0
 	}
-	trimmed := strings.TrimSpace(string(contents))
+	defer f.Close()
+
+	// We expect an unsigned 64 bit integer, or a "max" string
+	// in some cases.
+	buf := make([]byte, 32)
+	n, err := f.Read(buf)
+	if err != nil {
+		return 0
+	}
+
+	trimmed := strings.TrimSpace(string(buf[:n]))
 	if trimmed == "max" {
 		return math.MaxUint64
 	}
 
 	res, err := parseUint(trimmed, 10, 64)
 	if err != nil {
-		logrus.Errorf("unable to parse %q as a uint from Cgroup file %q", string(contents), filePath)
+		logrus.Errorf("unable to parse %q as a uint from Cgroup file %q", trimmed, filePath)
 		return res
 	}
 

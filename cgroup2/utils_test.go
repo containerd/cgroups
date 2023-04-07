@@ -58,3 +58,11 @@ func TestToResources(t *testing.T) {
 	v2resources2 := ToResources(&res2)
 	assert.Equal(t, CPUMax("max 10000"), v2resources2.CPU.Max)
 }
+
+func BenchmarkGetStatFileContentUint64(b *testing.B) {
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_ = getStatFileContentUint64("/proc/self/loginuid")
+	}
+}
