@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"testing"
 	"time"
 
@@ -140,6 +141,9 @@ func TestKill(t *testing.T) {
 	checkCgroupMode(t)
 	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = manager.Delete()
+	})
 
 	var (
 		procs    []*exec.Cmd
@@ -182,17 +186,35 @@ func TestKill(t *testing.T) {
 
 func TestMoveTo(t *testing.T) {
 	checkCgroupMode(t)
-	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
+
+	src, err := NewManager(defaultCgroup2Path, "/test-moveto-src", ToResources(&specs.LinuxResources{}))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = src.Kill()
+		_ = src.Delete()
+	})
+
+	cmd := exec.Command("sleep", "infinity")
+	// Don't leak the process if we fail to join the cg,
+	// send sigkill after tests over.
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGKILL,
+	}
+	err = cmd.Start()
 	require.NoError(t, err)
 
-	proc := os.Getpid()
-	err = manager.AddProc(uint64(proc))
+	proc := cmd.Process.Pid
+	err = src.AddProc(uint64(proc))
 	require.NoError(t, err)
 
-	destination, err := NewManager(defaultCgroup2Path, "/test2", ToResources(&specs.LinuxResources{}))
+	destination, err := NewManager(defaultCgroup2Path, "/test-moveto-dest", ToResources(&specs.LinuxResources{}))
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = destination.Kill()
+		_ = destination.Delete()
+	})
 
-	err = manager.MoveTo(destination)
+	err = src.MoveTo(destination)
 	require.NoError(t, err)
 
 	desProcs, err := destination.Procs(true)
@@ -209,8 +231,11 @@ func TestMoveTo(t *testing.T) {
 
 func TestCgroupType(t *testing.T) {
 	checkCgroupMode(t)
-	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
+	manager, err := NewManager(defaultCgroup2Path, "/test-type", ToResources(&specs.LinuxResources{}))
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		os.RemoveAll(manager.path)
+	})
 
 	cgType, err := manager.GetType()
 	require.NoError(t, err)
