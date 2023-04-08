@@ -523,7 +523,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[string]interface{})
+	out := make(map[string]uint64)
 	for _, controller := range controllers {
 		switch controller {
 		case "cpu", "memory":
@@ -535,7 +535,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 			}
 		}
 	}
-	memoryEvents := make(map[string]interface{})
+	memoryEvents := make(map[string]uint64)
 	if err := readKVStatsFile(c.path, "memory.events", memoryEvents); err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -548,45 +548,45 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
 	}
 	metrics.CPU = &stats.CPUStat{
-		UsageUsec:     getUint64Value("usage_usec", out),
-		UserUsec:      getUint64Value("user_usec", out),
-		SystemUsec:    getUint64Value("system_usec", out),
-		NrPeriods:     getUint64Value("nr_periods", out),
-		NrThrottled:   getUint64Value("nr_throttled", out),
-		ThrottledUsec: getUint64Value("throttled_usec", out),
+		UsageUsec:     out["usage_usec"],
+		UserUsec:      out["user_usec"],
+		SystemUsec:    out["system_usec"],
+		NrPeriods:     out["nr_periods"],
+		NrThrottled:   out["nr_throttled"],
+		ThrottledUsec: out["throttled_usec"],
 	}
 	metrics.Memory = &stats.MemoryStat{
-		Anon:                  getUint64Value("anon", out),
-		File:                  getUint64Value("file", out),
-		KernelStack:           getUint64Value("kernel_stack", out),
-		Slab:                  getUint64Value("slab", out),
-		Sock:                  getUint64Value("sock", out),
-		Shmem:                 getUint64Value("shmem", out),
-		FileMapped:            getUint64Value("file_mapped", out),
-		FileDirty:             getUint64Value("file_dirty", out),
-		FileWriteback:         getUint64Value("file_writeback", out),
-		AnonThp:               getUint64Value("anon_thp", out),
-		InactiveAnon:          getUint64Value("inactive_anon", out),
-		ActiveAnon:            getUint64Value("active_anon", out),
-		InactiveFile:          getUint64Value("inactive_file", out),
-		ActiveFile:            getUint64Value("active_file", out),
-		Unevictable:           getUint64Value("unevictable", out),
-		SlabReclaimable:       getUint64Value("slab_reclaimable", out),
-		SlabUnreclaimable:     getUint64Value("slab_unreclaimable", out),
-		Pgfault:               getUint64Value("pgfault", out),
-		Pgmajfault:            getUint64Value("pgmajfault", out),
-		WorkingsetRefault:     getUint64Value("workingset_refault", out),
-		WorkingsetActivate:    getUint64Value("workingset_activate", out),
-		WorkingsetNodereclaim: getUint64Value("workingset_nodereclaim", out),
-		Pgrefill:              getUint64Value("pgrefill", out),
-		Pgscan:                getUint64Value("pgscan", out),
-		Pgsteal:               getUint64Value("pgsteal", out),
-		Pgactivate:            getUint64Value("pgactivate", out),
-		Pgdeactivate:          getUint64Value("pgdeactivate", out),
-		Pglazyfree:            getUint64Value("pglazyfree", out),
-		Pglazyfreed:           getUint64Value("pglazyfreed", out),
-		ThpFaultAlloc:         getUint64Value("thp_fault_alloc", out),
-		ThpCollapseAlloc:      getUint64Value("thp_collapse_alloc", out),
+		Anon:                  out["anon"],
+		File:                  out["file"],
+		KernelStack:           out["kernel_stack"],
+		Slab:                  out["slab"],
+		Sock:                  out["sock"],
+		Shmem:                 out["shmem"],
+		FileMapped:            out["file_mapped"],
+		FileDirty:             out["file_dirty"],
+		FileWriteback:         out["file_writeback"],
+		AnonThp:               out["anon_thp"],
+		InactiveAnon:          out["inactive_anon"],
+		ActiveAnon:            out["active_anon"],
+		InactiveFile:          out["inactive_file"],
+		ActiveFile:            out["active_file"],
+		Unevictable:           out["unevictable"],
+		SlabReclaimable:       out["slab_reclaimable"],
+		SlabUnreclaimable:     out["slab_unreclaimable"],
+		Pgfault:               out["pgfault"],
+		Pgmajfault:            out["pgmajfault"],
+		WorkingsetRefault:     out["workingset_refault"],
+		WorkingsetActivate:    out["workingset_activate"],
+		WorkingsetNodereclaim: out["workingset_nodereclaim"],
+		Pgrefill:              out["pgrefill"],
+		Pgscan:                out["pgscan"],
+		Pgsteal:               out["pgsteal"],
+		Pgactivate:            out["pgactivate"],
+		Pgdeactivate:          out["pgdeactivate"],
+		Pglazyfree:            out["pglazyfree"],
+		Pglazyfreed:           out["pglazyfreed"],
+		ThpFaultAlloc:         out["thp_fault_alloc"],
+		ThpCollapseAlloc:      out["thp_collapse_alloc"],
 		Usage:                 getStatFileContentUint64(filepath.Join(c.path, "memory.current")),
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
@@ -594,11 +594,11 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	}
 	if len(memoryEvents) > 0 {
 		metrics.MemoryEvents = &stats.MemoryEvents{
-			Low:     getUint64Value("low", memoryEvents),
-			High:    getUint64Value("high", memoryEvents),
-			Max:     getUint64Value("max", memoryEvents),
-			Oom:     getUint64Value("oom", memoryEvents),
-			OomKill: getUint64Value("oom_kill", memoryEvents),
+			Low:     memoryEvents["low"],
+			High:    memoryEvents["high"],
+			Max:     memoryEvents["max"],
+			Oom:     memoryEvents["oom"],
+			OomKill: memoryEvents["oom_kill"],
 		}
 	}
 	metrics.Io = &stats.IOStat{Usage: readIoStats(c.path)}
@@ -611,19 +611,7 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	return &metrics, nil
 }
 
-func getUint64Value(key string, out map[string]interface{}) uint64 {
-	v, ok := out[key]
-	if !ok {
-		return 0
-	}
-	switch t := v.(type) {
-	case uint64:
-		return t
-	}
-	return 0
-}
-
-func readKVStatsFile(path string, file string, out map[string]interface{}) error {
+func readKVStatsFile(path string, file string, out map[string]uint64) error {
 	f, err := os.Open(filepath.Join(path, file))
 	if err != nil {
 		return err
@@ -668,16 +656,12 @@ func (c *Manager) freeze(path string, state State) error {
 
 func (c *Manager) isCgroupEmpty() bool {
 	// In case of any error we return true so that we exit and don't leak resources
-	out := make(map[string]interface{})
+	out := make(map[string]uint64)
 	if err := readKVStatsFile(c.path, "cgroup.events", out); err != nil {
 		return true
 	}
 	if v, ok := out["populated"]; ok {
-		populated, ok := v.(uint64)
-		if !ok {
-			return true
-		}
-		return populated == 0
+		return v == 0
 	}
 	return true
 }
@@ -712,41 +696,6 @@ func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 	return ec, errCh
 }
 
-func parseMemoryEvents(out map[string]interface{}) (Event, error) {
-	e := Event{}
-	if v, ok := out["high"]; ok {
-		e.High, ok = v.(uint64)
-		if !ok {
-			return Event{}, fmt.Errorf("cannot convert high to uint64: %+v", v)
-		}
-	}
-	if v, ok := out["low"]; ok {
-		e.Low, ok = v.(uint64)
-		if !ok {
-			return Event{}, fmt.Errorf("cannot convert low to uint64: %+v", v)
-		}
-	}
-	if v, ok := out["max"]; ok {
-		e.Max, ok = v.(uint64)
-		if !ok {
-			return Event{}, fmt.Errorf("cannot convert max to uint64: %+v", v)
-		}
-	}
-	if v, ok := out["oom"]; ok {
-		e.OOM, ok = v.(uint64)
-		if !ok {
-			return Event{}, fmt.Errorf("cannot convert oom to uint64: %+v", v)
-		}
-	}
-	if v, ok := out["oom_kill"]; ok {
-		e.OOMKill, ok = v.(uint64)
-		if !ok {
-			return Event{}, fmt.Errorf("cannot convert oom_kill to uint64: %+v", v)
-		}
-	}
-	return e, nil
-}
-
 func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 	defer close(errCh)
 
@@ -765,7 +714,7 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 			return
 		}
 		if bytesRead >= unix.SizeofInotifyEvent {
-			out := make(map[string]interface{})
+			out := make(map[string]uint64)
 			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
 				// When cgroup is deleted read may return -ENODEV instead of -ENOENT from open.
 				if _, statErr := os.Lstat(filepath.Join(c.path, "memory.events")); !os.IsNotExist(statErr) {
@@ -773,12 +722,13 @@ func (c *Manager) waitForEvents(ec chan<- Event, errCh chan<- error) {
 				}
 				return
 			}
-			e, err := parseMemoryEvents(out)
-			if err != nil {
-				errCh <- err
-				return
+			ec <- Event{
+				Low:     out["low"],
+				High:    out["high"],
+				Max:     out["max"],
+				OOM:     out["oom"],
+				OOMKill: out["oom_kill"],
 			}
-			ec <- e
 			if c.isCgroupEmpty() {
 				return
 			}
