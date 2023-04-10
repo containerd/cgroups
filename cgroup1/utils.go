@@ -137,7 +137,9 @@ func readUint(path string) (uint64, error) {
 	}
 	defer f.Close()
 
-	b := make([]byte, 128) // Chose 128 as some files have leading/trailing whitespaces and alignment
+	// We should only need 20 bytes for the max uint64, but for a nice power of 2
+	// lets use 32.
+	b := make([]byte, 32)
 	n, err := f.Read(b)
 	if err != nil {
 		return 0, err
