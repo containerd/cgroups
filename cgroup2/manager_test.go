@@ -35,43 +35,35 @@ func TestEventChanCleanupOnCgroupRemoval(t *testing.T) {
 
 	cmd := exec.Command("cat")
 	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		t.Fatalf("Failed to create cat process: %v", err)
-	}
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("Failed to start cat process: %v", err)
-	}
+	require.NoError(t, err, "failed to create cat process")
+
+	err = cmd.Start()
+	require.NoError(t, err, "failed to start cat process")
+
 	proc := cmd.Process
-	if proc == nil {
-		t.Fatal("Process is nil")
-	}
+	require.NotNil(t, proc, "process was nil")
 
 	group := fmt.Sprintf("testing-watcher-%d.scope", proc.Pid)
 	c, err := NewSystemd("", group, proc.Pid, &Resources{})
-	if err != nil {
-		t.Fatalf("Failed to init new cgroup manager: %v", err)
-	}
+	require.NoError(t, err, "failed to init new cgroup manager")
 
 	evCh, errCh := c.EventChan()
 
 	// give event goroutine a chance to start
 	time.Sleep(500 * time.Millisecond)
 
-	if err := stdin.Close(); err != nil {
-		t.Fatalf("Failed closing stdin: %v", err)
-	}
-	if err := cmd.Wait(); err != nil {
-		t.Fatalf("Failed waiting for cmd: %v", err)
-	}
+	err = stdin.Close()
+	require.NoError(t, err, "failed closing stdin")
+
+	err = cmd.Wait()
+	require.NoError(t, err, "failed waiting for cmd")
 
 	done := false
 	for !done {
 		select {
 		case <-evCh:
 		case err := <-errCh:
-			if err != nil {
-				t.Fatalf("Unexpected error on error channel: %v", err)
-			}
+			require.NoError(t, err, "unexpected error on error channel")
 			done = true
 		case <-time.After(5 * time.Second):
 			t.Fatal("Timed out")
@@ -147,35 +139,31 @@ func TestSystemdFullPath(t *testing.T) {
 func TestKill(t *testing.T) {
 	checkCgroupMode(t)
 	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var procs []*exec.Cmd
-	for i := 0; i < 5; i++ {
+	require.NoError(t, err)
+
+	var (
+		procs    []*exec.Cmd
+		numProcs = 5
+	)
+	for i := 0; i < numProcs; i++ {
 		cmd := exec.Command("sleep", "infinity")
-		if err := cmd.Start(); err != nil {
-			t.Fatal(err)
-		}
-		if cmd.Process == nil {
-			t.Fatal("Process is nil")
-		}
-		if err := manager.AddProc(uint64(cmd.Process.Pid)); err != nil {
-			t.Fatal(err)
-		}
+		err = cmd.Start()
+		require.NoError(t, err)
+		require.NotNil(t, cmd.Process, "process is nil")
+
+		err = manager.AddProc(uint64(cmd.Process.Pid))
+		require.NoError(t, err)
+
 		procs = append(procs, cmd)
 	}
 	// Verify we have 5 pids before beginning Kill below.
 	pids, err := manager.Procs(true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(pids) != 5 {
-		t.Fatalf("expected 5 pids, got %d", len(pids))
-	}
+	require.NoError(t, err)
+	require.Len(t, pids, numProcs, "pid count unexpected")
+
 	// Now run kill, and check that nothing is running after.
-	if err := manager.Kill(); err != nil {
-		t.Fatal(err)
-	}
+	err = manager.Kill()
+	require.NoError(t, err)
 
 	done := make(chan struct{})
 	go func() {
@@ -195,36 +183,27 @@ func TestKill(t *testing.T) {
 func TestMoveTo(t *testing.T) {
 	checkCgroupMode(t)
 	manager, err := NewManager(defaultCgroup2Path, "/test1", ToResources(&specs.LinuxResources{}))
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
 	proc := os.Getpid()
-	if err := manager.AddProc(uint64(proc)); err != nil {
-		t.Error(err)
-		return
-	}
+	err = manager.AddProc(uint64(proc))
+	require.NoError(t, err)
+
 	destination, err := NewManager(defaultCgroup2Path, "/test2", ToResources(&specs.LinuxResources{}))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := manager.MoveTo(destination); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
+	err = manager.MoveTo(destination)
+	require.NoError(t, err)
+
 	desProcs, err := destination.Procs(true)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
+
 	desMap := make(map[int]bool)
 	for _, p := range desProcs {
 		desMap[int(p)] = true
 	}
 	if !desMap[proc] {
-		t.Errorf("process %v not in destination cgroup", proc)
-		return
+		t.Fatalf("process %v not in destination cgroup", proc)
 	}
 }
 

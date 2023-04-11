@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCgroupv2IOController(t *testing.T) {
@@ -39,10 +41,10 @@ func TestCgroupv2IOController(t *testing.T) {
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup manager: ", err)
-	}
-	defer os.Remove(c.path)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
 
 	checkFileContent(t, c.path, "io.max", "8:0 rbps=max wbps=max riops=120 wiops=max")
 }

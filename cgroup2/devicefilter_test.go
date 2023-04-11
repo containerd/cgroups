@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/stretchr/testify/require"
 )
 
 func hash(s, comm string) string {
@@ -37,17 +38,14 @@ func hash(s, comm string) string {
 
 func testDeviceFilter(t testing.TB, devices []specs.LinuxDeviceCgroup, expectedStr string) {
 	insts, _, err := DeviceFilter(devices)
-	if err != nil {
-		t.Fatalf("%s: %v (devices: %+v)", t.Name(), err, devices)
-	}
+	require.NoErrorf(t, err, "%s: (devices: %+v)", t.Name(), devices)
+
 	s := insts.String()
 	t.Logf("%s: devices: %+v\n%s", t.Name(), devices, s)
 	if expectedStr != "" {
 		hashed := hash(s, "//")
 		expectedHashed := hash(expectedStr, "//")
-		if expectedHashed != hashed {
-			t.Fatalf("expected:\n%q\ngot\n%q", expectedHashed, hashed)
-		}
+		require.Equal(t, expectedHashed, hashed)
 	}
 }
 

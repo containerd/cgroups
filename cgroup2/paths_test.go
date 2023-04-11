@@ -18,6 +18,8 @@ package cgroup2
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVerifyGroupPath(t *testing.T) {
@@ -34,13 +36,9 @@ func TestVerifyGroupPath(t *testing.T) {
 	for s, valid := range valids {
 		err := VerifyGroupPath(s)
 		if valid {
-			if err != nil {
-				t.Error(err)
-			}
+			assert.NoError(t, err)
 		} else {
-			if err == nil {
-				t.Error("error is expected")
-			}
+			assert.Error(t, err)
 		}
 	}
 }

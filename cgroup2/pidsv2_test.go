@@ -21,6 +21,8 @@ import (
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCgroupv2PidsStats(t *testing.T) {
@@ -34,10 +36,10 @@ func TestCgroupv2PidsStats(t *testing.T) {
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup manager: ", err)
-	}
-	defer os.Remove(c.path)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
 
 	checkFileContent(t, c.path, "pids.max", strconv.Itoa(int(max)))
 }
@@ -48,8 +50,7 @@ func TestSystemdCgroupPidsController(t *testing.T) {
 	pid := os.Getpid()
 	res := Resources{}
 	c, err := NewSystemd("", group, pid, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup systemd manager: ", err)
-	}
+	require.NoError(t, err, "failed to init new cgroup systemd manager")
+
 	checkFileContent(t, c.path, "cgroup.procs", strconv.Itoa(pid))
 }
