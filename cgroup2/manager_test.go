@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"testing"
 	"time"
 
@@ -147,9 +148,13 @@ func TestKill(t *testing.T) {
 	)
 	for i := 0; i < numProcs; i++ {
 		cmd := exec.Command("sleep", "infinity")
+		// Don't leak the process if we fail to join the cg,
+		// send sigkill after tests over.
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
 		err = cmd.Start()
 		require.NoError(t, err)
-		require.NotNil(t, cmd.Process, "process is nil")
 
 		err = manager.AddProc(uint64(cmd.Process.Pid))
 		require.NoError(t, err)
