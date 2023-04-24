@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCgroupv2CpuStats(t *testing.T) {
@@ -45,10 +46,10 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup manager: ", err)
-	}
-	defer os.Remove(c.path)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 	checkFileContent(t, c.path, "cpu.max", max)
@@ -62,9 +63,8 @@ func TestSystemdCgroupCpuController(t *testing.T) {
 	var weight uint64 = 100
 	res := Resources{CPU: &CPU{Weight: &weight}}
 	c, err := NewSystemd("", group, os.Getpid(), &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup systemd manager: ", err)
-	}
+	require.NoError(t, err, "failed to init new cgroup systemd manager")
+
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 }
 
@@ -82,9 +82,7 @@ func TestSystemdCgroupCpuController_NilWeight(t *testing.T) {
 		},
 	}
 	_, err := NewSystemd("/", group, -1, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup systemd manager: ", err)
-	}
+	require.NoError(t, err, "failed to init new cgroup systemd manager")
 }
 
 func TestExtractQuotaAndPeriod(t *testing.T) {

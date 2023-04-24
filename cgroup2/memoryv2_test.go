@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCgroupv2MemoryStats(t *testing.T) {
@@ -36,14 +37,13 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 		},
 	}
 	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup manager: ", err)
-	}
-	defer os.Remove(c.path)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
+
 	stats, err := c.Stat()
-	if err != nil {
-		t.Fatal("failed to get cgroups stats: ", err)
-	}
+	require.NoError(t, err, "failed to get cgroup stats")
 
 	assert.Equal(t, uint64(314572800), stats.Memory.SwapLimit)
 	assert.Equal(t, uint64(629145600), stats.Memory.UsageLimit)
@@ -61,9 +61,8 @@ func TestSystemdCgroupMemoryController(t *testing.T) {
 		},
 	}
 	c, err := NewSystemd("", group, os.Getpid(), &res)
-	if err != nil {
-		t.Fatal("failed to init new cgroup systemd manager: ", err)
-	}
+	require.NoError(t, err, "failed to init new cgroup systemd manager")
+
 	checkFileContent(t, c.path, "memory.min", "16384")
 	checkFileContent(t, c.path, "memory.max", "629145600")
 }
