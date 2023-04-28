@@ -18,6 +18,7 @@ package cgroup1
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -137,13 +138,19 @@ func readUint(path string) (uint64, error) {
 	}
 	defer f.Close()
 
-	b := make([]byte, 128) // Chose 128 as some files have leading/trailing whitespaces and alignment
+	// We should only need 20 bytes for the max uint64, but for a nice power of 2
+	// lets use 32.
+	b := make([]byte, 32)
 	n, err := f.Read(b)
 	if err != nil {
 		return 0, err
 	}
-
-	return parseUint(strings.TrimSpace(string(b[:n])), 10, 64)
+	s := string(bytes.TrimSpace(b[:n]))
+	if s == "max" {
+		// Return 0 for the max value to maintain backward compatibility.
+		return 0, nil
+	}
+	return parseUint(s, 10, 64)
 }
 
 func parseUint(s string, base, bitSize int) (uint64, error) {

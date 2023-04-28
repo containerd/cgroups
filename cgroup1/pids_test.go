@@ -186,3 +186,50 @@ func TestPidsOverflowMax(t *testing.T) {
 		t.Fatal("expected not nil err")
 	}
 }
+
+func BenchmarkTestPids(b *testing.B) {
+
+	mock, err := newMock(b)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := mock.delete(); err != nil {
+			b.Errorf("failed delete: %v", err)
+		}
+	}()
+
+	pids := NewPids(mock.root)
+	if pids == nil {
+		b.Fatal("pids is nil")
+	}
+	resources := specs.LinuxResources{
+		Pids: &specs.LinuxPids{
+			Limit: 10,
+		},
+	}
+
+	err = pids.Create("test", &resources)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	current := filepath.Join(mock.root, "pids", "test", "pids.current")
+	if err = os.WriteFile(
+		current,
+		[]byte(strconv.Itoa(5)),
+		defaultFilePerm,
+	); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		metrics := v1.Metrics{}
+		err = pids.Stat("test", &metrics)
+		if err != nil {
+			b.Fatal(err)
+		}
+	}
+}

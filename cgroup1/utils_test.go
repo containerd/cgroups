@@ -17,6 +17,8 @@
 package cgroup1
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -28,5 +30,22 @@ func BenchmarkReaduint64(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+func TestReadUint(t *testing.T) {
+	tDir := t.TempDir()
+	pidsmax := filepath.Join(tDir, "pids.max")
+	err := os.WriteFile(pidsmax, []byte("max"), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	max, err := readUint(pidsmax)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// test for backwards compatibility
+	if max != 0 {
+		t.Fail()
 	}
 }
