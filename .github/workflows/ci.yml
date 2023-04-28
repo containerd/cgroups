@@ -20,20 +20,6 @@ jobs:
 
     steps:
       #
-      # Install Go
-      #
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.20.x'
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      #
       # Checkout repos
       #
       - name: Checkout cgroups
@@ -41,6 +27,15 @@ jobs:
         with:
           path: src/github.com/containerd/cgroups
           fetch-depth: 25
+
+      #
+      # Install Go
+      #
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20.x'
+          cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Project checks
         uses: containerd/project-checks@v1.1.0
@@ -58,15 +53,16 @@ jobs:
         go-version: [1.19.x, 1.20.x]
 
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ matrix.go }}
-
       - name: Checkout cgroups
         uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/cgroups
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -88,21 +84,17 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ matrix.go }}
-
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
       - name: Checkout cgroups
         uses: actions/checkout@v3
         with:
           path: src/github.com/containerd/cgroups
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go }}
+          # Disable Go caching feature when compiling across Linux distributions due to collisions until https://github.com/actions/setup-go/issues/368 is resolved.
+          cache: false
 
       - name: Run cgroup tests
         run: |
@@ -118,21 +110,22 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Checkout cgroups
+        uses: actions/checkout@v3
+        with:
+          path: src/github.com/containerd/cgroups
+
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: '1.19.x'
+          cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Set env
         shell: bash
         run: |
           echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
           echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
-
-      - name: Checkout cgroups
-        uses: actions/checkout@v3
-        with:
-          path: src/github.com/containerd/cgroups
 
       - name: Install protoc
         run: |
