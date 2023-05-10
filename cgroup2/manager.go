@@ -525,7 +525,10 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[string]uint64)
+	// Sizing this avoids an allocation to increase the map at runtime;
+	// currently the default bucket size is 8 and we put 40+ elements
+	// in it so we'd always end up allocating.
+	out := make(map[string]uint64, 50)
 	for _, controller := range controllers {
 		switch controller {
 		case "cpu", "memory":
@@ -543,8 +546,8 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 			return nil, err
 		}
 	}
-	var metrics stats.Metrics
 
+	var metrics stats.Metrics
 	metrics.Pids = &stats.PidsStat{
 		Current: getStatFileContentUint64(filepath.Join(c.path, "pids.current")),
 		Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
