@@ -870,20 +870,67 @@ func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, e
 			newSystemdProperty("TasksMax", uint64(resources.Pids.Max)))
 	}
 
-	statusChan := make(chan string, 1)
-	if _, err := conn.StartTransientUnitContext(ctx, group, "replace", properties, statusChan); err == nil {
-		select {
-		case <-statusChan:
-		case <-time.After(time.Second):
-			logrus.Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", group)
-		}
-	} else if !isUnitExists(err) {
+	if err := startUnit(conn, group, properties, pid == -1); err != nil {
 		return &Manager{}, err
 	}
 
 	return &Manager{
 		path: path,
 	}, nil
+}
+
+func startUnit(conn *systemdDbus.Conn, group string, properties []systemdDbus.Property, ignoreExists bool) error {
+	ctx := context.TODO()
+
+	statusChan := make(chan string, 1)
+	defer close(statusChan)
+
+	retry := true
+	started := false
+
+	for !started {
+		if _, err := conn.StartTransientUnitContext(ctx, group, "replace", properties, statusChan); err != nil {
+			if !isUnitExists(err) {
+				return err
+			}
+
+			if ignoreExists {
+				return nil
+			}
+
+			if retry {
+				retry = false
+				// When a unit of the same name already exists, it may be a leftover failed unit.
+				// If we reset it once, systemd can try to remove it.
+				attemptFailedUnitReset(conn, group)
+				continue
+			}
+
+			return err
+		} else {
+			started = true
+		}
+	}
+
+	select {
+	case s := <-statusChan:
+		if s != "done" {
+			attemptFailedUnitReset(conn, group)
+			return fmt.Errorf("error creating systemd unit `%s`: got `%s`", group, s)
+		}
+	case <-time.After(30 * time.Second):
+		logrus.Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", group)
+	}
+
+	return nil
+}
+
+func attemptFailedUnitReset(conn *systemdDbus.Conn, group string) {
+	err := conn.ResetFailedUnitContext(context.TODO(), group)
+
+	if err != nil {
+		logrus.Warnf("Unable to reset failed unit: %v", err)
+	}
 }
 
 func LoadSystemd(slice, group string) (*Manager, error) {
