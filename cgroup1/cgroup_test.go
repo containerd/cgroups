@@ -459,6 +459,13 @@ func TestDelete(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
+	err = mock.symLink()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	if err := control.Delete(); err != nil {
 		t.Error(err)
 	}
