@@ -41,7 +41,7 @@ func New(path Path, resources *specs.LinuxResources, opts ...InitOpts) (Cgroup, 
 			return nil, err
 		}
 	}
-	subsystems, err := config.hiearchy()
+	subsystems, err := config.hierarchy()
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func Load(path Path, opts ...InitOpts) (Cgroup, error) {
 		}
 	}
 	var activeSubsystems []Subsystem
-	subsystems, err := config.hiearchy()
+	subsystems, err := config.hierarchy()
 	if err != nil {
 		return nil, err
 	}
