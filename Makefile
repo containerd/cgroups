@@ -18,7 +18,7 @@ all: cgutil
 	go build -v
 
 cgutil:
-	cd cmd/cgctl && go build -v
+	cd cmd/cgctl && GOOS=linux go build -v
 
 proto:
 	protobuild --quiet ${PACKAGES}
