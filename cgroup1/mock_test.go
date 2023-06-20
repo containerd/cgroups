@@ -73,3 +73,21 @@ func (m *mockCgroup) delete() error {
 func (m *mockCgroup) hierarchy() ([]Subsystem, error) {
 	return m.subsystems, nil
 }
+
+// symLink() creates a symlink between net_cls and net_prio for testing
+// On certain Linux systems, there's a symlink from both net_cls and net_prio to "net_cls,net_prio"
+// Since we don't have a subsystem defined for "net_cls,net_prio",
+// we mock this behavior by creating a symlink directly between net_cls and net_prio
+func (m *mockCgroup) symLink() error {
+	netCLS := filepath.Join(m.root, string(NetCLS))
+	netPrio := filepath.Join(m.root, string(NetPrio))
+	// remove netCLS before creating a symlink
+	if err := os.RemoveAll(netCLS); err != nil {
+		return err
+	}
+	// create symlink between net_cls and net_prio
+	if err := os.Symlink(netPrio, netCLS); err != nil {
+		return err
+	}
+	return nil
+}
