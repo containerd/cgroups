@@ -30,6 +30,49 @@ import (
 	"go.uber.org/goleak"
 )
 
+func setupForNewSystemd(t *testing.T) (cmd *exec.Cmd, group string) {
+	cmd = exec.Command("cat")
+	err := cmd.Start()
+	require.NoError(t, err, "failed to start cat process")
+	proc := cmd.Process
+	require.NotNil(t, proc, "process was nil")
+
+	group = fmt.Sprintf("testing-watcher-%d.scope", proc.Pid)
+
+	return
+}
+
+func TestErrorsWhenUnitAlreadyExists(t *testing.T) {
+	checkCgroupMode(t)
+
+	cmd, group := setupForNewSystemd(t)
+	proc := cmd.Process
+
+	_, err := NewSystemd("", group, proc.Pid, &Resources{})
+	require.NoError(t, err, "Failed to init new cgroup manager")
+
+	_, err = NewSystemd("", group, proc.Pid, &Resources{})
+	if err == nil {
+		t.Fatal("Expected recreating cgroup manager should fail")
+	} else if !isUnitExists(err) {
+		t.Fatalf("Failed to init cgroup manager with unexpected error: %s", err)
+	}
+}
+
+// kubelet relies on this behavior to make sure a slice exists
+func TestIgnoreUnitExistsWhenPidNegativeOne(t *testing.T) {
+	checkCgroupMode(t)
+
+	cmd, group := setupForNewSystemd(t)
+	proc := cmd.Process
+
+	_, err := NewSystemd("", group, proc.Pid, &Resources{})
+	require.NoError(t, err, "Failed to init new cgroup manager")
+
+	_, err = NewSystemd("", group, -1, &Resources{})
+	require.NoError(t, err, "Expected to be able to recreate cgroup manager")
+}
+
 //nolint:staticcheck // Staticcheck false positives for nil pointer deference after t.Fatal
 func TestEventChanCleanupOnCgroupRemoval(t *testing.T) {
 	checkCgroupMode(t)
