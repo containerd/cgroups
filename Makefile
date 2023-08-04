@@ -14,12 +14,13 @@
 
 PACKAGES=$(shell go list ./... | grep -v /vendor/)
 GO_TAGS=$(if $(GO_BUILDTAGS),-tags "$(strip $(GO_BUILDTAGS))",)
+GO ?= go
 
 all: cgutil
-	go build -v $(GO_TAGS)
+	$(GO) build -v $(GO_TAGS)
 
 cgutil:
-	cd cmd/cgctl && go build -v $(GO_TAGS)
+	cd cmd/cgctl && $(GO) build -v $(GO_TAGS)
 
 proto:
 	protobuild --quiet ${PACKAGES}
