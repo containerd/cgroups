@@ -210,9 +210,10 @@ func (m *memoryController) Create(path string, resources *specs.LinuxResources) 
 }
 
 func (m *memoryController) Update(path string, resources *specs.LinuxResources) error {
-	if resources.Memory == nil {
+	if resources == nil || resources.Memory == nil {
 		return nil
 	}
+
 	g := func(v *int64) bool {
 		return v != nil && *v > 0
 	}
