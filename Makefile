@@ -13,12 +13,15 @@
 #   limitations under the License.
 
 PACKAGES=$(shell go list ./... | grep -v /vendor/)
+GO_TAGS=$(if $(GO_BUILDTAGS),-tags "$(strip $(GO_BUILDTAGS))",)
+GO ?= go
+GO_BUILD_FLAGS ?=
 
 all: cgutil
-	go build -v
+	$(GO) build -v $(GO_TAGS)
 
 cgutil:
-	cd cmd/cgctl && go build -v
+	cd cmd/cgctl && $(GO) build $(GO_BUILD_FLAGS) -v $(GO_TAGS)
 
 proto:
 	protobuild --quiet ${PACKAGES}
