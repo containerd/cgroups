@@ -369,6 +369,20 @@ file {
       type: TYPE_UINT64
       json_name: "swapLimit"
     }
+    field {
+      name: "max_usage"
+      number: 36
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "maxUsage"
+    }
+    field {
+      name: "swap_max_usage"
+      number: 37
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "swapMaxUsage"
+    }
   }
   message_type {
     name: "MemoryEvents"

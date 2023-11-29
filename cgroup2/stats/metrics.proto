@@ -64,6 +64,8 @@ message MemoryStat {
 	uint64 usage_limit = 33;
 	uint64 swap_usage = 34;
 	uint64 swap_limit = 35;
+	uint64 max_usage = 36;
+	uint64 swap_max_usage = 37;
 }
 
 message MemoryEvents {

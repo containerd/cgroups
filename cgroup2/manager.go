@@ -594,8 +594,10 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		ThpCollapseAlloc:      out["thp_collapse_alloc"],
 		Usage:                 getStatFileContentUint64(filepath.Join(c.path, "memory.current")),
 		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
+		MaxUsage:              getStatFileContentUint64(filepath.Join(c.path, "memory.peak")),
 		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
 		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
+		SwapMaxUsage:          getStatFileContentUint64(filepath.Join(c.path, "memory.swap.peak")),
 	}
 	if len(memoryEvents) > 0 {
 		metrics.MemoryEvents = &stats.MemoryEvents{
