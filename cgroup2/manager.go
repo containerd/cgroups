@@ -504,6 +504,32 @@ func (c *Manager) Procs(recursive bool) ([]uint64, error) {
 	return processes, err
 }
 
+func (c *Manager) Threads(recursive bool) ([]uint64, error) {
+	var threads []uint64
+	err := filepath.Walk(c.path, func(p string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !recursive && info.IsDir() {
+			if p == c.path {
+				return nil
+			}
+			return filepath.SkipDir
+		}
+		_, name := filepath.Split(p)
+		if name != cgroupThreads {
+			return nil
+		}
+		procs, err := parseCgroupProcsFile(p)
+		if err != nil {
+			return err
+		}
+		threads = append(threads, procs...)
+		return nil
+	})
+	return threads, err
+}
+
 func (c *Manager) MoveTo(destination *Manager) error {
 	processes, err := c.Procs(true)
 	if err != nil {

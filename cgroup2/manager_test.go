@@ -211,6 +211,9 @@ func TestKill(t *testing.T) {
 	pids, err := manager.Procs(true)
 	require.NoError(t, err)
 	require.Len(t, pids, numProcs, "pid count unexpected")
+	threads, err := manager.Threads(true)
+	require.NoError(t, err)
+	require.Len(t, threads, numProcs, "pid count unexpected")
 
 	// Now run kill, and check that nothing is running after.
 	err = manager.Kill()
