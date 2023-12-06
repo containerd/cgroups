@@ -68,8 +68,9 @@ func remove(path string) error {
 	return fmt.Errorf("cgroups: unable to remove path %q: %w", path, err)
 }
 
-// parseCgroupProcsFile parses /sys/fs/cgroup/$GROUPPATH/cgroup.procs
-func parseCgroupProcsFile(path string) ([]uint64, error) {
+// parseCgroupTasksFile parses /sys/fs/cgroup/$GROUPPATH/cgroup.procs or
+// /sys/fs/cgroup/$GROUPPATH/cgroup.threads
+func parseCgroupTasksFile(path string) ([]uint64, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
