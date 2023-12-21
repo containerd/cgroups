@@ -296,6 +296,39 @@ func TestCgroupType(t *testing.T) {
 	require.Equal(t, cgType, Threaded)
 }
 
+func TestCgroupv2PSIStats(t *testing.T) {
+	checkCgroupMode(t)
+	group := "/psi-test-cg"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	res := Resources{}
+	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
+
+	stats, err := c.Stat()
+	require.NoError(t, err, "failed to get cgroup stats")
+	if stats.CPU.PSI == nil || stats.Memory.PSI == nil || stats.Io.PSI == nil {
+		t.Error("expected psi not nil but got nil")
+	}
+}
+
+func TestSystemdCgroupPSIController(t *testing.T) {
+	checkCgroupMode(t)
+	group := fmt.Sprintf("testing-psi-%d.scope", os.Getpid())
+	pid := os.Getpid()
+	res := Resources{}
+	c, err := NewSystemd("", group, pid, &res)
+	require.NoError(t, err, "failed to init new cgroup systemd manager")
+
+	stats, err := c.Stat()
+	require.NoError(t, err, "failed to get cgroup stats")
+	if stats.CPU.PSI == nil || stats.Memory.PSI == nil || stats.Io.PSI == nil {
+		t.Error("expected psi not nil but got nil")
+	}
+}
+
 func BenchmarkStat(b *testing.B) {
 	checkCgroupMode(b)
 	group := "/stat-test-cg"
