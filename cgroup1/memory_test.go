@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	v1 "github.com/containerd/cgroups/v3/cgroup1/stats"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
 const memoryData = `cache 1
@@ -285,4 +286,60 @@ func buildMemoryMetrics(t *testing.T, modules []string, metrics []string) string
 		}
 	}
 	return tmpRoot
+}
+
+func Test_getOomControlValue(t *testing.T) {
+	var (
+		oneInt64  int64 = 1
+		zeroInt64 int64 = 0
+		trueBool  bool  = true
+		falseBool bool  = false
+	)
+
+	type args struct {
+		mem *specs.LinuxMemory
+	}
+	tests := []struct {
+		name string
+		args args
+		want *int64
+	}{
+		{
+			name: "enable",
+			args: args{
+				mem: &specs.LinuxMemory{
+					DisableOOMKiller: &falseBool,
+				},
+			},
+			want: &zeroInt64,
+		},
+		{
+			name: "disable",
+			args: args{
+				mem: &specs.LinuxMemory{
+					DisableOOMKiller: &trueBool,
+				},
+			},
+			want: &oneInt64,
+		},
+		{
+			name: "nil",
+			args: args{
+				mem: &specs.LinuxMemory{},
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getOomControlValue(tt.args.mem)
+			if (got == nil || tt.want == nil) && got != tt.want {
+				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
+				return
+			}
+			if !(got == nil || tt.want == nil) && *got != *tt.want {
+				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
