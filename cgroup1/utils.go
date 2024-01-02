@@ -236,9 +236,9 @@ func getCgroupDestination(subsystem string) (string, error) {
 	return "", ErrNoCgroupMountDestination
 }
 
-func pathers(subystems []Subsystem) []pather {
+func pathers(subsystems []Subsystem) []pather {
 	var out []pather
-	for _, s := range subystems {
+	for _, s := range subsystems {
 		if p, ok := s.(pather); ok {
 			out = append(out, p)
 		}
