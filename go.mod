@@ -7,7 +7,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/docker/go-units v0.4.0
 	github.com/godbus/dbus/v5 v5.0.4
-	github.com/opencontainers/runtime-spec v1.0.2
+	github.com/opencontainers/runtime-spec v1.1.1-0.20230823135140-4fec88fd00a4
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/goleak v1.1.12

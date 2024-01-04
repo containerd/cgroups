@@ -34,6 +34,8 @@ func NewCPUMax(quota *int64, period *uint64) CPUMax {
 
 type CPU struct {
 	Weight *uint64
+	Idle   *uint64
+	Burst  *uint64
 	Max    CPUMax
 	Cpus   string
 	Mems   string
@@ -61,10 +63,22 @@ func (r *CPU) Values() (o []Value) {
 			value:    *r.Weight,
 		})
 	}
+	if r.Idle != nil {
+		o = append(o, Value{
+			filename: "cpu.idle",
+			value:    *r.Idle,
+		})
+	}
 	if r.Max != "" {
 		o = append(o, Value{
 			filename: "cpu.max",
 			value:    r.Max,
+		})
+	}
+	if r.Burst != nil {
+		o = append(o, Value{
+			filename: "cpu.max.burst",
+			value:    *r.Burst,
 		})
 	}
 	if r.Cpus != "" {
