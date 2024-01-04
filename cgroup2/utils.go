@@ -514,7 +514,9 @@ func getStatPSIFromFile(path string) *stats.PSIStats {
 	}
 
 	if err := sc.Err(); err != nil {
-		logrus.Errorf("unable to parse PSI data: %v", err)
+		if !errors.Is(err, unix.ENOTSUP) {
+			logrus.Errorf("unable to parse PSI data: %v", err)
+		}
 		return nil
 	}
 	return psistats
