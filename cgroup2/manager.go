@@ -468,13 +468,33 @@ func (c *Manager) fallbackKill() error {
 }
 
 func (c *Manager) Delete() error {
-	// kernel prevents cgroups with running process from being removed, check the tree is empty
-	processes, err := c.Procs(true)
+	var (
+		tasks    []uint64
+		threaded bool
+	)
+	// Kernel prevents cgroups with running process from being removed,
+	// check the tree is empty.
+	//
+	// Pick the right file to read based on the cgs type.
+	cgType, err := c.GetType()
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	} else {
+		threaded = cgType == Threaded
+	}
+
+	if threaded {
+		tasks, err = c.Threads(true)
+	} else {
+		tasks, err = c.Procs(true)
+	}
 	if err != nil {
 		return err
 	}
-	if len(processes) > 0 {
-		return fmt.Errorf("cgroups: unable to remove path %q: still contains running processes", c.path)
+	if len(tasks) > 0 {
+		return fmt.Errorf("cgroups: unable to remove path %q: still contains running tasks", c.path)
 	}
 	return remove(c.path)
 }

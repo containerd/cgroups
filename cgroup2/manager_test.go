@@ -284,7 +284,7 @@ func TestCgroupType(t *testing.T) {
 	manager, err := NewManager(defaultCgroup2Path, "/test-type", ToResources(&specs.LinuxResources{}))
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		os.RemoveAll(manager.path)
+		_ = manager.Delete()
 	})
 
 	cgType, err := manager.GetType()
