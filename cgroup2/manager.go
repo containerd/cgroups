@@ -242,8 +242,10 @@ func setResources(path string, resources *Resources) error {
 type CgroupType string
 
 const (
-	Domain   CgroupType = "domain"
-	Threaded CgroupType = "threaded"
+	Domain         CgroupType = "domain"
+	DomainThreaded CgroupType = "domain threaded"
+	DomainInvalid  CgroupType = "domain invalid"
+	Threaded       CgroupType = "threaded"
 )
 
 func (c *Manager) GetType() (CgroupType, error) {
