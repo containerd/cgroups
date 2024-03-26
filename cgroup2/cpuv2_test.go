@@ -35,11 +35,14 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		quota  int64  = 10000
 		period uint64 = 8000
 		weight uint64 = 100
+		// The burst in the range [0, $quota].
+		burst uint64 = 1000
 	)
 	max := "10000 8000"
 	res := Resources{
 		CPU: &CPU{
 			Weight: &weight,
+			Burst:  &burst,
 			Max:    NewCPUMax(&quota, &period),
 			Cpus:   "0",
 			Mems:   "0",
@@ -53,8 +56,31 @@ func TestCgroupv2CpuStats(t *testing.T) {
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
 	checkFileContent(t, c.path, "cpu.max", max)
+	checkFileContent(t, c.path, "cpu.max.burst", strconv.FormatUint(burst, 10))
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
+}
+
+func TestCgroupv2CpuIdle(t *testing.T) {
+	checkCgroupMode(t)
+	group := "/cpu-test-cg-idle"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	var (
+		idle uint64 = 1
+	)
+	res := Resources{
+		CPU: &CPU{
+			Idle: &idle,
+		},
+	}
+	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		os.Remove(c.path)
+	})
+
+	checkFileContent(t, c.path, "cpu.weight", "0")
+	checkFileContent(t, c.path, "cpu.idle", "1")
 }
 
 func TestSystemdCgroupCpuController(t *testing.T) {
