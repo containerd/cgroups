@@ -43,8 +43,9 @@ func (e Entry) String() string {
 }
 
 type IO struct {
-	BFQ BFQ
-	Max []Entry
+	BFQ     BFQ
+	Max     []Entry
+	Latency []Entry
 }
 
 func (i *IO) Values() (o []Value) {
