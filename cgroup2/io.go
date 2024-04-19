@@ -61,5 +61,11 @@ func (i *IO) Values() (o []Value) {
 			value:    e.String(),
 		})
 	}
+	for _, e := range i.Latency {
+		o = append(o, Value{
+			filename: "io.latency",
+			value:    e.String(),
+		})
+	}
 	return o
 }
