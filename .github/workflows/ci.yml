@@ -32,7 +32,7 @@ jobs:
       # Install Go
       #
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.20.x'
           cache-dependency-path: src/github.com/containerd/cgroups
@@ -59,7 +59,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
           cache-dependency-path: src/github.com/containerd/cgroups
@@ -90,7 +90,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
           # Disable Go caching feature when compiling across Linux distributions due to collisions until https://github.com/actions/setup-go/issues/368 is resolved.
@@ -116,7 +116,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: '1.19.x'
           cache-dependency-path: src/github.com/containerd/cgroups
