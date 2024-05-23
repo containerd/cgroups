@@ -23,7 +23,7 @@ jobs:
       # Checkout repos
       #
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
           fetch-depth: 25
@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
@@ -85,7 +85,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
@@ -111,7 +111,7 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
