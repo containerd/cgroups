@@ -24,7 +24,7 @@ import (
 
 	"github.com/containerd/cgroups/v3"
 	"github.com/containerd/cgroups/v3/cgroup2"
-	"github.com/sirupsen/logrus"
+	"github.com/containerd/log"
 	"github.com/urfave/cli"
 )
 
@@ -56,7 +56,7 @@ func main() {
 	}
 	app.Before = func(clix *cli.Context) error {
 		if clix.GlobalBool("debug") {
-			logrus.SetLevel(logrus.DebugLevel)
+			_ = log.SetLevel("debug")
 		}
 		return nil
 	}
