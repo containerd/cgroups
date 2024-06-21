@@ -1,6 +1,6 @@
 module github.com/containerd/cgroups/cmd
 
-go 1.18
+go 1.19
 
 replace github.com/containerd/cgroups/v3 => ../
 
