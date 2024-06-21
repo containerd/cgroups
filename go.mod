@@ -6,7 +6,7 @@ require (
 	github.com/cilium/ebpf v0.11.0
 	github.com/containerd/log v0.1.0
 	github.com/coreos/go-systemd/v22 v22.3.2
-	github.com/docker/go-units v0.4.0
+	github.com/docker/go-units v0.5.0
 	github.com/godbus/dbus/v5 v5.0.4
 	github.com/opencontainers/runtime-spec v1.0.2
 	github.com/stretchr/testify v1.8.4
