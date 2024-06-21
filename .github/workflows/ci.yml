@@ -34,7 +34,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.20.x'
+          go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Project checks
@@ -50,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.19.x, 1.21.x, 1.22.x]
 
     steps:
       - name: Checkout cgroups
@@ -78,7 +78,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.19.x, 1.21.x, 1.22.x]
         # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
         os: [ubuntu-20.04, ubuntu-22.04]
 
