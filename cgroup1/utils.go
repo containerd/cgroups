@@ -196,7 +196,7 @@ func parseKV(raw string) (string, uint64, error) {
 // The resulting map does not have an element for cgroup v2 unified hierarchy.
 // Use [cgroups.ParseCgroupFileUnified] to get the unified path.
 func ParseCgroupFile(path string) (map[string]string, error) {
-	x, _, err := ParseCgroupFileUnified(path)
+	x, _, err := cgroups.ParseCgroupFileUnified(path)
 	return x, err
 }
 
