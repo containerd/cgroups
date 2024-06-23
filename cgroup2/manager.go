@@ -830,7 +830,7 @@ func dashesToPath(in string) string {
 	return path
 }
 
-func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, error) {
+func NewSystemd(slice, group string, pid int, resources *Resources, properties []systemdDbus.Property) (*Manager, error) {
 	if slice == "" {
 		slice = defaultSlice
 	}
@@ -842,12 +842,14 @@ func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, e
 	}
 	defer conn.Close()
 
-	properties := []systemdDbus.Property{
-		systemdDbus.PropDescription("cgroup " + group),
-		newSystemdProperty("DefaultDependencies", false),
-		newSystemdProperty("MemoryAccounting", true),
-		newSystemdProperty("CPUAccounting", true),
-		newSystemdProperty("IOAccounting", true),
+	if len(properties) == 0 {
+		properties = []systemdDbus.Property{
+			systemdDbus.PropDescription("cgroup " + group),
+			newSystemdProperty("DefaultDependencies", false),
+			newSystemdProperty("MemoryAccounting", true),
+			newSystemdProperty("CPUAccounting", true),
+			newSystemdProperty("IOAccounting", true),
+		}
 	}
 
 	// if we create a slice, the parent is defined via a Wants=
