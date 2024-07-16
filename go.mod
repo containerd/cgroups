@@ -1,6 +1,6 @@
 module github.com/containerd/cgroups/v3
 
-go 1.19
+go 1.21
 
 require (
 	github.com/cilium/ebpf v0.11.0
