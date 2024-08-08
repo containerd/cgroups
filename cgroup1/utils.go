@@ -28,6 +28,7 @@ import (
 
 	"github.com/containerd/cgroups/v3"
 	units "github.com/docker/go-units"
+	"github.com/moby/sys/userns"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -53,7 +54,7 @@ func defaults(root string) ([]Subsystem, error) {
 	}
 	// only add the devices cgroup if we are not in a user namespace
 	// because modifications are not allowed
-	if !cgroups.RunningInUserNS() {
+	if !userns.RunningInUserNS() {
 		s = append(s, NewDevices(root))
 	}
 	// add the hugetlb cgroup if error wasn't due to missing hugetlb
