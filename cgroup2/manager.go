@@ -952,14 +952,16 @@ func startUnit(conn *systemdDbus.Conn, group string, properties []systemdDbus.Pr
 		}
 	}
 
+	systemdStartUnitTimeout := 30 * time.Second
 	select {
 	case s := <-statusChan:
 		if s != "done" {
 			attemptFailedUnitReset(conn, group)
 			return fmt.Errorf("error creating systemd unit `%s`: got `%s`", group, s)
 		}
-	case <-time.After(30 * time.Second):
-		log.G(ctx).Warnf("Timed out while waiting for StartTransientUnit(%s) completion signal from dbus. Continuing...", group)
+	case <-time.After(systemdStartUnitTimeout):
+		attemptFailedUnitReset(conn, group)
+		return fmt.Errorf("timed out while waiting for StartTransientUnit(%s) completion signal from dbus after %v", group, systemdStartUnitTimeout)
 	}
 
 	return nil
