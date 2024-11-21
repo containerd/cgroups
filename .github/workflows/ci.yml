@@ -50,7 +50,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.21.x, 1.22.x]
+        go-version: [1.22.x, 1.23.x]
 
     steps:
       - name: Checkout cgroups
@@ -67,7 +67,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.57.1
+          version: v1.62.0
           args: --verbose
           working-directory: src/github.com/containerd/cgroups
 
@@ -78,7 +78,7 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.21.x, 1.22.x]
+        go-version: [1.22.x, 1.23.x]
         # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
         os: [ubuntu-20.04, ubuntu-22.04]
 
@@ -118,7 +118,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.19.x'
+          go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Set env
