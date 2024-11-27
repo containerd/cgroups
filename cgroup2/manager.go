@@ -716,7 +716,7 @@ func (c *Manager) MemoryEventFD() (int, uint32, error) {
 	fpath := filepath.Join(c.path, "memory.events")
 	fd, err := unix.InotifyInit()
 	if err != nil {
-		return 0, 0, errors.New("failed to create inotify fd")
+		return 0, 0, fmt.Errorf("failed to create inotify fd: %w", err)
 	}
 	wd, err := unix.InotifyAddWatch(fd, fpath, unix.IN_MODIFY)
 	if err != nil {
