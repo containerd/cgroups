@@ -23,7 +23,7 @@ jobs:
       # Checkout repos
       #
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
           fetch-depth: 25
@@ -32,9 +32,9 @@ jobs:
       # Install Go
       #
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.20.x'
+          go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Project checks
@@ -50,24 +50,24 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.22.x, 1.23.x]
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: ${{ matrix.go-version }}
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.51.1
+          version: v1.62.0
           args: --verbose
           working-directory: src/github.com/containerd/cgroups
 
@@ -78,21 +78,21 @@ jobs:
 
     strategy:
       matrix:
-        go-version: [1.19.x, 1.20.x]
+        go-version: [1.22.x, 1.23.x]
         # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
         os: [ubuntu-20.04, ubuntu-22.04]
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: ${{ matrix.go-version }}
           # Disable Go caching feature when compiling across Linux distributions due to collisions until https://github.com/actions/setup-go/issues/368 is resolved.
           cache: false
 
@@ -111,14 +111,14 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.19.x'
+          go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Set env

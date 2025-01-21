@@ -38,8 +38,8 @@ func TestCgroupv2CpuStats(t *testing.T) {
 		// The burst in the range [0, $quota].
 		burst uint64 = 1000
 	)
-	max := "10000 8000"
-	res := Resources{
+
+	c, err := NewManager(defaultCgroup2Path, groupPath, &Resources{
 		CPU: &CPU{
 			Weight: &weight,
 			Burst:  &burst,
@@ -47,16 +47,15 @@ func TestCgroupv2CpuStats(t *testing.T) {
 			Cpus:   "0",
 			Mems:   "0",
 		},
-	}
-	c, err := NewManager(defaultCgroup2Path, groupPath, &res)
+	})
 	require.NoError(t, err, "failed to init new cgroup manager")
 	t.Cleanup(func() {
-		os.Remove(c.path)
+		_ = os.Remove(c.path)
 	})
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
-	checkFileContent(t, c.path, "cpu.max", max)
 	checkFileContent(t, c.path, "cpu.max.burst", strconv.FormatUint(burst, 10))
+	checkFileContent(t, c.path, "cpu.max", "10000 8000")
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
 }
@@ -87,8 +86,7 @@ func TestSystemdCgroupCpuController(t *testing.T) {
 	checkCgroupMode(t)
 	group := fmt.Sprintf("testing-cpu-%d.scope", os.Getpid())
 	var weight uint64 = 100
-	res := Resources{CPU: &CPU{Weight: &weight}}
-	c, err := NewSystemd("", group, os.Getpid(), &res)
+	c, err := NewSystemd("", group, os.Getpid(), &Resources{CPU: &CPU{Weight: &weight}})
 	require.NoError(t, err, "failed to init new cgroup systemd manager")
 
 	checkFileContent(t, c.path, "cpu.weight", strconv.FormatUint(weight, 10))
@@ -101,13 +99,12 @@ func TestSystemdCgroupCpuController_NilWeight(t *testing.T) {
 	var quota int64 = 10000
 	var period uint64 = 8000
 	cpuMax := NewCPUMax(&quota, &period)
-	res := Resources{
+	_, err := NewSystemd("/", group, -1, &Resources{
 		CPU: &CPU{
 			Weight: nil,
 			Max:    cpuMax,
 		},
-	}
-	_, err := NewSystemd("/", group, -1, &res)
+	})
 	require.NoError(t, err, "failed to init new cgroup systemd manager")
 }
 

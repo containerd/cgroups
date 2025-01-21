@@ -54,12 +54,12 @@ func TestDeviceFilter_Nil(t *testing.T) {
 // load parameters into registers
         0: LdXMemH dst: r2 src: r1 off: 0 imm: 0
         1: LdXMemW dst: r3 src: r1 off: 0 imm: 0
-        2: RSh32Imm dst: r3 imm: 16
+        2: RShImm32 dst: r3 imm: 16
         3: LdXMemW dst: r4 src: r1 off: 4 imm: 0
         4: LdXMemW dst: r5 src: r1 off: 8 imm: 0
 block-0:
 // return 0 (reject)
-        5: Mov32Imm dst: r0 imm: 0
+        5: MovImm32 dst: r0 imm: 0
         6: Exit
 	`
 	testDeviceFilter(t, nil, expected)
@@ -79,12 +79,12 @@ func TestDeviceFilter_Privileged(t *testing.T) {
 // load parameters into registers
         0: LdXMemH dst: r2 src: r1 off: 0 imm: 0
         1: LdXMemW dst: r3 src: r1 off: 0 imm: 0
-        2: RSh32Imm dst: r3 imm: 16
+        2: RShImm32 dst: r3 imm: 16
         3: LdXMemW dst: r4 src: r1 off: 4 imm: 0
         4: LdXMemW dst: r5 src: r1 off: 8 imm: 0
 block-0:
 // return 1 (accept)
-        5: Mov32Imm dst: r0 imm: 1
+        5: MovImm32 dst: r0 imm: 1
         6: Exit
 	`
 	testDeviceFilter(t, devices, expected)
@@ -111,7 +111,7 @@ func TestDeviceFilter_PrivilegedExceptSingleDevice(t *testing.T) {
 // load parameters into registers
          0: LdXMemH dst: r2 src: r1 off: 0 imm: 0
          1: LdXMemW dst: r3 src: r1 off: 0 imm: 0
-         2: RSh32Imm dst: r3 imm: 16
+         2: RShImm32 dst: r3 imm: 16
          3: LdXMemW dst: r4 src: r1 off: 4 imm: 0
          4: LdXMemW dst: r5 src: r1 off: 8 imm: 0
 block-0:
@@ -119,11 +119,11 @@ block-0:
          5: JNEImm dst: r2 off: -1 imm: 1 <block-1>
          6: JNEImm dst: r4 off: -1 imm: 8 <block-1>
          7: JNEImm dst: r5 off: -1 imm: 0 <block-1>
-         8: Mov32Imm dst: r0 imm: 0
+         8: MovImm32 dst: r0 imm: 0
          9: Exit
 block-1:
 // return 1 (accept)
-        10: Mov32Imm dst: r0 imm: 1
+        10: MovImm32 dst: r0 imm: 1
         11: Exit
 `
 	testDeviceFilter(t, devices, expected)
@@ -159,7 +159,7 @@ func TestDeviceFilter_Weird(t *testing.T) {
 // load parameters into registers
          0: LdXMemH dst: r2 src: r1 off: 0 imm: 0
          1: LdXMemW dst: r3 src: r1 off: 0 imm: 0
-         2: RSh32Imm dst: r3 imm: 16
+         2: RShImm32 dst: r3 imm: 16
          3: LdXMemW dst: r4 src: r1 off: 4 imm: 0
          4: LdXMemW dst: r5 src: r1 off: 8 imm: 0
 block-0:
@@ -167,11 +167,11 @@ block-0:
          5: JNEImm dst: r2 off: -1 imm: 1 <block-1>
          6: JNEImm dst: r4 off: -1 imm: 8 <block-1>
          7: JNEImm dst: r5 off: -1 imm: 2 <block-1>
-         8: Mov32Imm dst: r0 imm: 0
+         8: MovImm32 dst: r0 imm: 0
          9: Exit
 block-1:
 // return 1 (accept)
-        10: Mov32Imm dst: r0 imm: 1
+        10: MovImm32 dst: r0 imm: 1
         11: Exit
 `
 	testDeviceFilter(t, devices, expected)

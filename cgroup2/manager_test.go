@@ -283,20 +283,31 @@ func TestCgroupType(t *testing.T) {
 	checkCgroupMode(t)
 	manager, err := NewManager(defaultCgroup2Path, "/test-type", ToResources(&specs.LinuxResources{}))
 	require.NoError(t, err)
+	submanager, err := NewManager(defaultCgroup2Path, "/test-type/sub", ToResources(&specs.LinuxResources{}))
+	require.NoError(t, err)
+
 	t.Cleanup(func() {
-		os.RemoveAll(manager.path)
+		_ = submanager.Delete()
+		_ = manager.Delete()
 	})
 
+	// Check initial type is domain
 	cgType, err := manager.GetType()
 	require.NoError(t, err)
 	require.Equal(t, cgType, Domain)
 
-	// Swap to threaded
-	require.NoError(t, manager.SetType(Threaded))
+	// Swap sub cgroup to threaded
+	require.NoError(t, submanager.SetType(Threaded))
 
-	cgType, err = manager.GetType()
+	// Check sub cgroup type is threaded
+	cgType, err = submanager.GetType()
 	require.NoError(t, err)
 	require.Equal(t, cgType, Threaded)
+
+	// Check parent cgroup type is domain threaded
+	cgType, err = manager.GetType()
+	require.NoError(t, err)
+	require.Equal(t, cgType, DomainThreaded)
 }
 
 func TestCgroupv2PSIStats(t *testing.T) {
