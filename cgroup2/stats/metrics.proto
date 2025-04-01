@@ -40,6 +40,8 @@ message CPUStat {
 	uint64 nr_throttled = 5;
 	uint64 throttled_usec = 6;
 	PSIStats psi = 7;
+	uint64 nr_bursts = 8;
+	uint64 burst_usec = 9;
 }
 
 message MemoryStat {
