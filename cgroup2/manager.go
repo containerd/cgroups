@@ -590,6 +590,12 @@ func (c *Manager) Stat() (*stats.Metrics, error) {
 		ThrottledUsec: out["throttled_usec"],
 		PSI:           getStatPSIFromFile(filepath.Join(c.path, "cpu.pressure")),
 	}
+	if nr_bursts, ok := out["nr_bursts"]; ok {
+		metrics.CPU.NrBursts = nr_bursts
+	}
+	if burst_usec, ok := out["burst_usec"]; ok {
+		metrics.CPU.BurstUsec = burst_usec
+	}
 	metrics.Memory = &stats.MemoryStat{
 		Anon:                  out["anon"],
 		File:                  out["file"],
