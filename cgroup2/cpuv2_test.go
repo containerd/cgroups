@@ -83,22 +83,72 @@ func TestSystemdCgroupCpuController_NilWeight(t *testing.T) {
 }
 
 func TestExtractQuotaAndPeriod(t *testing.T) {
-	var (
-		period uint64
-		quota  int64
+	const (
+		defaultQuota  int64  = math.MaxInt64
+		defaultPeriod uint64 = 100000
 	)
-	quota = 10000
-	period = 8000
-	cpuMax := NewCPUMax(&quota, &period)
-	tquota, tPeriod := cpuMax.extractQuotaAndPeriod()
 
-	assert.Equal(t, quota, tquota)
-	assert.Equal(t, period, tPeriod)
+	require.Equal(t, defaultCPUMaxPeriodStr, strconv.Itoa(defaultCPUMaxPeriod), "Constant for default period does not match its string type constant.")
 
-	// case with nil quota which makes it "max" - max int val
-	cpuMax2 := NewCPUMax(nil, &period)
-	tquota2, tPeriod2 := cpuMax2.extractQuotaAndPeriod()
+	// Default "max 100000"
+	cpuMax := NewCPUMax(nil, nil)
+	assert.Equal(t, CPUMax("max 100000"), cpuMax)
+	quota, period, err := cpuMax.extractQuotaAndPeriod()
+	assert.NoError(t, err)
+	assert.Equal(t, defaultQuota, quota)
+	assert.Equal(t, defaultPeriod, period)
 
-	assert.Equal(t, int64(math.MaxInt64), tquota2)
-	assert.Equal(t, period, tPeriod2)
+	// Only specifing limit is valid.
+	cpuMax = CPUMax("max")
+	quota, period, err = cpuMax.extractQuotaAndPeriod()
+	assert.NoError(t, err)
+	assert.Equal(t, defaultQuota, quota)
+	assert.Equal(t, defaultPeriod, period)
+
+	tests := []struct {
+		cpuMax string
+		quota  int64
+		period uint64
+	}{
+		{
+			cpuMax: "0 0",
+			quota:  0,
+			period: 0,
+		},
+		{
+			cpuMax: "10000 8000",
+			quota:  10000,
+			period: 8000,
+		},
+		{
+			cpuMax: "42000 4200",
+			quota:  42000,
+			period: 4200,
+		},
+		{
+			cpuMax: "9223372036854775807 18446744073709551615",
+			quota:  9223372036854775807,
+			period: 18446744073709551615,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.cpuMax, func(t *testing.T) {
+			cpuMax := NewCPUMax(&test.quota, &test.period)
+			assert.Equal(t, CPUMax(test.cpuMax), cpuMax)
+
+			tquota, tPeriod, err := cpuMax.extractQuotaAndPeriod()
+			assert.NoError(t, err)
+			assert.Equal(t, test.quota, tquota)
+			assert.Equal(t, test.period, tPeriod)
+		})
+	}
+
+	// Negative test cases result in errors.
+	for i, cpuMax := range []string{"", " ", "max 100000 100000"} {
+		t.Run(fmt.Sprintf("negative-test-%d", i+1), func(t *testing.T) {
+			_, _, err = CPUMax(cpuMax).extractQuotaAndPeriod()
+			assert.Error(t, err)
+		})
+	}
 }
