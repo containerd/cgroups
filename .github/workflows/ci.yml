@@ -15,7 +15,7 @@ jobs:
   #
   project:
     name: Project Checks
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
@@ -46,7 +46,7 @@ jobs:
     name: Lint
     timeout-minutes: 10
     needs: [project]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
@@ -73,7 +73,7 @@ jobs:
 
   cgroupV1:
     name: Cgroup V1 tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [project]
 
@@ -147,7 +147,7 @@ jobs:
 
   cgroupV2:
     name: Cgroup V2 tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [project]
 
@@ -178,7 +178,7 @@ jobs:
 
   proto:
     name: Compare auto-generated Go files
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout cgroups
