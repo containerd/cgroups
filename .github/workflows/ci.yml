@@ -62,9 +62,9 @@ jobs:
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
-          version: v1.62.0
+          version: v2.1.6
           args: --verbose
           working-directory: src/github.com/containerd/cgroups
 
