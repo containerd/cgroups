@@ -96,10 +96,13 @@ func parseRdmaKV(raw string, entry *v1.RdmaEntry) {
 				return
 			}
 		}
-		if parts[0] == "hca_handle" {
+		switch parts[0] {
+		case "hca_handle":
 			entry.HcaHandles = uint32(value)
-		} else if parts[0] == "hca_object" {
+		case "hca_object":
 			entry.HcaObjects = uint32(value)
+		default:
+			// Ignore unknown keys
 		}
 	}
 }

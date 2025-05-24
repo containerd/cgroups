@@ -292,8 +292,8 @@ func Test_getOomControlValue(t *testing.T) {
 	var (
 		oneInt64  int64 = 1
 		zeroInt64 int64 = 0
-		trueBool  bool  = true
-		falseBool bool  = false
+		trueBool        = true
+		falseBool       = false
 	)
 
 	type args struct {
@@ -337,7 +337,7 @@ func Test_getOomControlValue(t *testing.T) {
 				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
 				return
 			}
-			if !(got == nil || tt.want == nil) && *got != *tt.want {
+			if got != nil && tt.want != nil && *got != *tt.want {
 				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
 			}
 		})
