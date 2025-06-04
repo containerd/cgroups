@@ -15,7 +15,7 @@ jobs:
   #
   project:
     name: Project Checks
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
@@ -46,7 +46,7 @@ jobs:
     name: Lint
     timeout-minutes: 10
     needs: [project]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
@@ -71,18 +71,91 @@ jobs:
           args: --verbose
           working-directory: src/github.com/containerd/cgroups
 
-  test:
-    name: Test cgroups
+  cgroupV1:
+    name: Cgroup V1 tests
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [project]
 
     strategy:
+      fail-fast: false
       matrix:
         go-version: [1.22.x, 1.23.x]
-        # Ubuntu-20.04 has cgroups v1 default; Ubuntu-22.04 has cgroups v2 default.
-        os: [ubuntu-20.04, ubuntu-22.04]
 
-    runs-on: ${{ matrix.os }}
+    env:
+      BOX: almalinux/8
+      GO_VERSION: ${{ matrix.go-version }}
+
+    steps:
+      - name: Show the host info
+        run: |
+          set -x
+          uname -a
+          cat /etc/os-release
+          cat /proc/cpuinfo
+          free -mt
+
+      - name: Checkout cgroups
+        uses: actions/checkout@v4
+        with:
+          path: src/github.com/containerd/cgroups
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set Go version
+        run: |
+          go_version=$(go version | grep -oP 'go\d+\.\d+\.\d+' | sed -E 's/go([0-9]+)\.([0-9]+)\.([0-9]+)/\1\.\2\.\3/')
+          echo "GO_VERSION=$go_version" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        with:
+          path: /root/.vagrant.d
+          key: vagrant-${{ env.BOX }}
+
+      - name: Set up vagrant
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          sudo apt-get install -y libvirt-daemon libvirt-daemon-system vagrant ovmf
+
+          # https://github.com/vagrant-libvirt/vagrant-libvirt/issues/1725#issuecomment-1454058646
+          sudo cp /usr/share/OVMF/OVMF_VARS_4M.fd /var/lib/libvirt/qemu/nvram/
+          sudo systemctl enable --now libvirtd
+          sudo apt-get build-dep -y ruby-libvirt
+          sudo apt-get install -y --no-install-recommends libxslt-dev libxml2-dev libvirt-dev ruby-bundler ruby-dev zlib1g-dev
+
+          if ! vagrant plugin list | grep -q vagrant-libvirt; then
+            sudo env VAGRANT_DISABLE_STRICT_DEPENDENCY_ENFORCEMENT=1 vagrant plugin install vagrant-libvirt
+          fi
+
+      - name: Boot VM
+        working-directory: src/github.com/containerd/cgroups
+        run: sudo BOX=$BOX GO_VERSION=$GO_VERSION vagrant up --provision-with=install-packages,setup-etc-environment,install-golang,setup-gopath
+
+      - name: Run cgroup tests
+        working-directory: src/github.com/containerd/cgroups
+        run: sudo BOX=$BOX GO_VERSION=$GO_VERSION vagrant up --provision-with=test
+
+      - name: Build cgctl
+        working-directory: src/github.com/containerd/cgroups
+        run: sudo BOX=$BOX GO_VERSION=$GO_VERSION vagrant up --provision-with=build-cgctl
+
+  cgroupV2:
+    name: Cgroup V2 tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    needs: [project]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [1.22.x, 1.23.x]
+
     steps:
       - name: Checkout cgroups
         uses: actions/checkout@v4
@@ -93,8 +166,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-          # Disable Go caching feature when compiling across Linux distributions due to collisions until https://github.com/actions/setup-go/issues/368 is resolved.
-          cache: false
 
       - name: Run cgroup tests
         run: |
@@ -107,7 +178,7 @@ jobs:
 
   proto:
     name: Compare auto-generated Go files
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout cgroups
