@@ -17,6 +17,7 @@
 package cgroup2
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -340,6 +342,51 @@ func TestSystemdCgroupPSIController(t *testing.T) {
 	require.NoError(t, err, "failed to get cgroup stats")
 	if stats.CPU.PSI == nil || stats.Memory.PSI == nil || stats.Io.PSI == nil {
 		t.Error("expected psi not nil but got nil")
+	}
+}
+
+func TestCPUQuotaPeriodUSec(t *testing.T) {
+	checkCgroupMode(t)
+	requireSystemdVersion(t, cpuQuotaPeriodUSecSupportedVersion)
+
+	pid := os.Getpid()
+	group := fmt.Sprintf("testing-cpu-period-%d.scope", pid)
+
+	tests := []struct {
+		name           string
+		cpuMax         CPUMax
+		expectedCPUMax string
+		expectedPeriod uint64
+	}{
+		{
+			name:           "default cpu.max",
+			cpuMax:         "max 100000",
+			expectedCPUMax: "max 100000",
+			expectedPeriod: 100000,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			c, err := NewSystemd("", group, pid, &Resources{
+				CPU: &CPU{
+					Max: test.cpuMax,
+				},
+			})
+			require.NoError(t, err, "failed to init new cgroup systemd manager")
+
+			conn, err := systemdDbus.NewWithContext(context.TODO())
+			require.NoError(t, err, "failed to connect to systemd")
+			defer conn.Close()
+
+			unitName := systemdUnitFromPath(c.path)
+			props, err := conn.GetAllPropertiesContext(context.TODO(), unitName)
+			require.NoError(t, err, "failed to get unit properties")
+
+			periodUSec, ok := props["CPUQuotaPeriodUSec"]
+			require.True(t, ok, "CPUQuotaPeriodUSec property not found")
+			require.Equal(t, test.expectedPeriod, periodUSec.(uint64), "CPUQuotaPeriodUSec value doesn't match expected period")
+		})
 	}
 }
 
