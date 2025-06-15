@@ -640,6 +640,13 @@ file {
       type: TYPE_STRING
       json_name: "pagesize"
     }
+    field {
+      name: "failcnt"
+      number: 4
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "failcnt"
+    }
   }
   message_type {
     name: "NetworkStat"
