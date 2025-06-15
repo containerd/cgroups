@@ -1105,6 +1105,7 @@ type HugeTlbStat struct {
 	Current  uint64 `protobuf:"varint,1,opt,name=current,proto3" json:"current,omitempty"`
 	Max      uint64 `protobuf:"varint,2,opt,name=max,proto3" json:"max,omitempty"`
 	Pagesize string `protobuf:"bytes,3,opt,name=pagesize,proto3" json:"pagesize,omitempty"`
+	Failcnt  uint64 `protobuf:"varint,4,opt,name=failcnt,proto3" json:"failcnt,omitempty"`
 }
 
 func (x *HugeTlbStat) Reset() {
