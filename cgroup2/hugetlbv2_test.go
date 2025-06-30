@@ -19,6 +19,7 @@ package cgroup2
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,6 +47,8 @@ func TestCgroupv2HugetlbStats(t *testing.T) {
 	for _, entry := range stats.Hugetlb {
 		if entry.Pagesize == "2MB" {
 			assert.Equal(t, uint64(1073741824), entry.Max)
+			checkFileContent(t, c.path, "hugetlb."+entry.Pagesize+".current", strconv.FormatUint(entry.Current, 10))
+			checkFileContent(t, c.path, "hugetlb."+entry.Pagesize+".events", "max "+strconv.FormatUint(entry.Failcnt, 10))
 			break
 		}
 	}
