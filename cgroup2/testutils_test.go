@@ -17,11 +17,13 @@
 package cgroup2
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
@@ -35,6 +37,16 @@ func checkCgroupMode(tb testing.TB) {
 	isUnified := st.Type == unix.CGROUP2_SUPER_MAGIC
 	if !isUnified {
 		tb.Skip("System running in hybrid or cgroupv1 mode")
+	}
+}
+
+func requireSystemdVersion(tb testing.TB, requiredMinVersion int) {
+	conn, err := systemdDbus.NewWithContext(context.TODO())
+	require.NoError(tb, err, "failed to connect to systemd")
+	defer conn.Close()
+
+	if sdVer := systemdVersion(conn); sdVer < requiredMinVersion {
+		tb.Skipf("Skipping test; systemd version %d < required version %d", sdVer, requiredMinVersion)
 	}
 }
 
