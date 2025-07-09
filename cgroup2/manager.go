@@ -559,112 +559,132 @@ func (c *Manager) MoveTo(destination *Manager) error {
 }
 
 func (c *Manager) Stat() (*stats.Metrics, error) {
-	controllers, err := c.Controllers()
-	if err != nil {
-		return nil, err
-	}
-	// Sizing this avoids an allocation to increase the map at runtime;
-	// currently the default bucket size is 8 and we put 40+ elements
-	// in it so we'd always end up allocating.
-	out := make(map[string]uint64, 50)
-	for _, controller := range controllers {
-		switch controller {
-		case "cpu", "memory":
-			if err := readKVStatsFile(c.path, controller+".stat", out); err != nil {
-				if os.IsNotExist(err) {
-					continue
-				}
-				return nil, err
-			}
-		}
-	}
-	memoryEvents := make(map[string]uint64)
-	if err := readKVStatsFile(c.path, "memory.events", memoryEvents); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-
 	var metrics stats.Metrics
+	var err error
+
 	metrics.Pids = &stats.PidsStat{
 		Current: getStatFileContentUint64(filepath.Join(c.path, "pids.current")),
 		Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
 	}
-	metrics.CPU = &stats.CPUStat{
-		UsageUsec:     out["usage_usec"],
-		UserUsec:      out["user_usec"],
-		SystemUsec:    out["system_usec"],
-		NrPeriods:     out["nr_periods"],
-		NrThrottled:   out["nr_throttled"],
-		ThrottledUsec: out["throttled_usec"],
-		PSI:           getStatPSIFromFile(filepath.Join(c.path, "cpu.pressure")),
+
+	metrics.CPU, err = readCPUStats(c.path)
+	if err != nil {
+		return nil, err
 	}
-	if nr_bursts, ok := out["nr_bursts"]; ok {
-		metrics.CPU.NrBursts = nr_bursts
+
+	metrics.Memory, err = readMemoryStats(c.path)
+	if err != nil {
+		return nil, err
 	}
-	if burst_usec, ok := out["burst_usec"]; ok {
-		metrics.CPU.BurstUsec = burst_usec
+
+	metrics.MemoryEvents, err = readMemoryEvents(c.path)
+	if err != nil {
+		return nil, err
 	}
-	metrics.Memory = &stats.MemoryStat{
-		Anon:                  out["anon"],
-		File:                  out["file"],
-		KernelStack:           out["kernel_stack"],
-		Slab:                  out["slab"],
-		Sock:                  out["sock"],
-		Shmem:                 out["shmem"],
-		FileMapped:            out["file_mapped"],
-		FileDirty:             out["file_dirty"],
-		FileWriteback:         out["file_writeback"],
-		AnonThp:               out["anon_thp"],
-		InactiveAnon:          out["inactive_anon"],
-		ActiveAnon:            out["active_anon"],
-		InactiveFile:          out["inactive_file"],
-		ActiveFile:            out["active_file"],
-		Unevictable:           out["unevictable"],
-		SlabReclaimable:       out["slab_reclaimable"],
-		SlabUnreclaimable:     out["slab_unreclaimable"],
-		Pgfault:               out["pgfault"],
-		Pgmajfault:            out["pgmajfault"],
-		WorkingsetRefault:     out["workingset_refault"],
-		WorkingsetActivate:    out["workingset_activate"],
-		WorkingsetNodereclaim: out["workingset_nodereclaim"],
-		Pgrefill:              out["pgrefill"],
-		Pgscan:                out["pgscan"],
-		Pgsteal:               out["pgsteal"],
-		Pgactivate:            out["pgactivate"],
-		Pgdeactivate:          out["pgdeactivate"],
-		Pglazyfree:            out["pglazyfree"],
-		Pglazyfreed:           out["pglazyfreed"],
-		ThpFaultAlloc:         out["thp_fault_alloc"],
-		ThpCollapseAlloc:      out["thp_collapse_alloc"],
-		Usage:                 getStatFileContentUint64(filepath.Join(c.path, "memory.current")),
-		UsageLimit:            getStatFileContentUint64(filepath.Join(c.path, "memory.max")),
-		MaxUsage:              getStatFileContentUint64(filepath.Join(c.path, "memory.peak")),
-		SwapUsage:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.current")),
-		SwapLimit:             getStatFileContentUint64(filepath.Join(c.path, "memory.swap.max")),
-		SwapMaxUsage:          getStatFileContentUint64(filepath.Join(c.path, "memory.swap.peak")),
-		PSI:                   getStatPSIFromFile(filepath.Join(c.path, "memory.pressure")),
-	}
-	if len(memoryEvents) > 0 {
-		metrics.MemoryEvents = &stats.MemoryEvents{
-			Low:     memoryEvents["low"],
-			High:    memoryEvents["high"],
-			Max:     memoryEvents["max"],
-			Oom:     memoryEvents["oom"],
-			OomKill: memoryEvents["oom_kill"],
-		}
-	}
+
 	metrics.Io = &stats.IOStat{
 		Usage: readIoStats(c.path),
 		PSI:   getStatPSIFromFile(filepath.Join(c.path, "io.pressure")),
 	}
+
 	metrics.Rdma = &stats.RdmaStat{
 		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
 		Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),
 	}
+
 	metrics.Hugetlb = readHugeTlbStats(c.path)
 
 	return &metrics, nil
+}
+
+func readCPUStats(cgroupPath string) (*stats.CPUStat, error) {
+	cpuStat := make(map[string]uint64)
+	if err := readKVStatsFile(cgroupPath, "cpu.stat", cpuStat); err != nil {
+		if os.IsNotExist(err) {
+			return &stats.CPUStat{}, nil
+		}
+		return nil, err
+	}
+	return &stats.CPUStat{
+		UsageUsec:     cpuStat["usage_usec"],
+		UserUsec:      cpuStat["user_usec"],
+		SystemUsec:    cpuStat["system_usec"],
+		NrPeriods:     cpuStat["nr_periods"],
+		NrThrottled:   cpuStat["nr_throttled"],
+		ThrottledUsec: cpuStat["throttled_usec"],
+		NrBursts:      cpuStat["nr_bursts"],
+		BurstUsec:     cpuStat["burst_usec"],
+		PSI:           getStatPSIFromFile(filepath.Join(cgroupPath, "cpu.pressure")),
+	}, nil
+}
+
+func readMemoryStats(cgroupPath string) (*stats.MemoryStat, error) {
+	memoryStat := make(map[string]uint64, 40)
+	if err := readKVStatsFile(cgroupPath, "memory.stat", memoryStat); err != nil {
+		if os.IsNotExist(err) {
+			return &stats.MemoryStat{}, nil
+		}
+		return nil, err
+	}
+	return &stats.MemoryStat{
+		Anon:                  memoryStat["anon"],
+		File:                  memoryStat["file"],
+		KernelStack:           memoryStat["kernel_stack"],
+		Slab:                  memoryStat["slab"],
+		Sock:                  memoryStat["sock"],
+		Shmem:                 memoryStat["shmem"],
+		FileMapped:            memoryStat["file_mapped"],
+		FileDirty:             memoryStat["file_dirty"],
+		FileWriteback:         memoryStat["file_writeback"],
+		AnonThp:               memoryStat["anon_thp"],
+		InactiveAnon:          memoryStat["inactive_anon"],
+		ActiveAnon:            memoryStat["active_anon"],
+		InactiveFile:          memoryStat["inactive_file"],
+		ActiveFile:            memoryStat["active_file"],
+		Unevictable:           memoryStat["unevictable"],
+		SlabReclaimable:       memoryStat["slab_reclaimable"],
+		SlabUnreclaimable:     memoryStat["slab_unreclaimable"],
+		Pgfault:               memoryStat["pgfault"],
+		Pgmajfault:            memoryStat["pgmajfault"],
+		WorkingsetRefault:     memoryStat["workingset_refault"],
+		WorkingsetActivate:    memoryStat["workingset_activate"],
+		WorkingsetNodereclaim: memoryStat["workingset_nodereclaim"],
+		Pgrefill:              memoryStat["pgrefill"],
+		Pgscan:                memoryStat["pgscan"],
+		Pgsteal:               memoryStat["pgsteal"],
+		Pgactivate:            memoryStat["pgactivate"],
+		Pgdeactivate:          memoryStat["pgdeactivate"],
+		Pglazyfree:            memoryStat["pglazyfree"],
+		Pglazyfreed:           memoryStat["pglazyfreed"],
+		ThpFaultAlloc:         memoryStat["thp_fault_alloc"],
+		ThpCollapseAlloc:      memoryStat["thp_collapse_alloc"],
+		Usage:                 getStatFileContentUint64(filepath.Join(cgroupPath, "memory.current")),
+		UsageLimit:            getStatFileContentUint64(filepath.Join(cgroupPath, "memory.max")),
+		MaxUsage:              getStatFileContentUint64(filepath.Join(cgroupPath, "memory.peak")),
+		SwapUsage:             getStatFileContentUint64(filepath.Join(cgroupPath, "memory.swap.current")),
+		SwapLimit:             getStatFileContentUint64(filepath.Join(cgroupPath, "memory.swap.max")),
+		SwapMaxUsage:          getStatFileContentUint64(filepath.Join(cgroupPath, "memory.swap.peak")),
+		PSI:                   getStatPSIFromFile(filepath.Join(cgroupPath, "memory.pressure")),
+	}, nil
+}
+
+func readMemoryEvents(cgroupPath string) (*stats.MemoryEvents, error) {
+	memoryEvents := make(map[string]uint64)
+	if err := readKVStatsFile(cgroupPath, "memory.events", memoryEvents); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+	if len(memoryEvents) == 0 {
+		return nil, nil
+	}
+	return &stats.MemoryEvents{
+		Low:     memoryEvents["low"],
+		High:    memoryEvents["high"],
+		Max:     memoryEvents["max"],
+		Oom:     memoryEvents["oom"],
+		OomKill: memoryEvents["oom_kill"],
+	}, nil
 }
 
 func readKVStatsFile(path string, file string, out map[string]uint64) error {
