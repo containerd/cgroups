@@ -122,6 +122,7 @@ message HugeTlbStat {
 	uint64 current = 1;
 	uint64 max = 2;
 	string pagesize = 3;
+	uint64 failcnt = 4;
 }
 
 message NetworkStat {

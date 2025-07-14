@@ -394,6 +394,7 @@ func readHugeTlbStats(path string) []*stats.HugeTlbStat {
 			Max:      getStatFileContentUint64(filepath.Join(path, "hugetlb."+pagesize+".max")),
 			Current:  getStatFileContentUint64(filepath.Join(path, "hugetlb."+pagesize+".current")),
 			Pagesize: pagesize,
+			Failcnt:  getStatFileContentUint64(filepath.Join(path, "hugetlb."+pagesize+".events")),
 		}
 	}
 	return usage
