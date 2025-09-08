@@ -32,7 +32,7 @@ jobs:
       # Install Go
       #
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
@@ -59,7 +59,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
           cache-dependency-path: src/github.com/containerd/cgroups
@@ -101,7 +101,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -163,7 +163,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -187,7 +187,7 @@ jobs:
           path: src/github.com/containerd/cgroups
 
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
