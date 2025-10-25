@@ -745,7 +745,7 @@ func (c *Manager) isCgroupEmpty() bool {
 // MemoryEventFD returns inotify file descriptor and 'memory.events' inotify watch descriptor
 func (c *Manager) MemoryEventFD() (int, uint32, error) {
 	fpath := filepath.Join(c.path, "memory.events")
-	fd, err := unix.InotifyInit()
+	fd, err := unix.InotifyInit1(unix.IN_CLOEXEC)
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to create inotify fd: %w", err)
 	}
