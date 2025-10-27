@@ -75,6 +75,38 @@ full avg10=1.00 avg60=1.01 avg300=1.00 total=157622356`
 	assert.Equal(t, &st.Full, &expected.Full)
 }
 
+// TestConvertCPUSharesToCgroupV2Value tests the ConvertCPUSharesToCgroupV2Value function.
+// Taken from https://github.com/opencontainers/cgroups/blob/v0.0.5/utils_test.go#L537-L564
+// (Apache License 2.0)
+func TestConvertCPUSharesToCgroupV2Value(t *testing.T) {
+	const (
+		sharesMin = 2
+		sharesMax = 262144
+		sharesDef = 1024
+		weightMin = 1
+		weightMax = 10000
+		weightDef = 100
+		unset     = 0
+	)
+	cases := map[uint64]uint64{
+		unset: unset,
+
+		sharesMin - 1: weightMin,     // Below the minimum (out of range).
+		sharesMin:     weightMin,     // Minimum.
+		sharesMin + 1: weightMin + 1, // Just above the minimum.
+		sharesDef:     weightDef,     // Default.
+		sharesMax - 1: weightMax,     // Just below the maximum.
+		sharesMax:     weightMax,     // Maximum.
+		sharesMax + 1: weightMax,     // Above the maximum (out of range).
+	}
+	for shares, want := range cases {
+		got := ConvertCPUSharesToCgroupV2Value(shares)
+		if got != want {
+			t.Errorf("ConvertCPUSharesToCgroupV2Value(%d): got %d, want %d", shares, got, want)
+		}
+	}
+}
+
 func TestToResources(t *testing.T) {
 	var (
 		quota  int64  = 8000
@@ -84,7 +116,7 @@ func TestToResources(t *testing.T) {
 		mem  int64 = 300
 		swap int64 = 500
 	)
-	weight := 1 + ((shares-2)*9999)/262142
+	weight := ConvertCPUSharesToCgroupV2Value(shares)
 	res := specs.LinuxResources{
 		CPU:    &specs.LinuxCPU{Quota: &quota, Period: &period, Shares: &shares},
 		Memory: &specs.LinuxMemory{Limit: &mem, Swap: &swap},
