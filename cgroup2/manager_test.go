@@ -118,6 +118,62 @@ func TestEventChanCleanupOnCgroupRemoval(t *testing.T) {
 	goleak.VerifyNone(t)
 }
 
+func TestEventChanCleanupAfterOOMKill(t *testing.T) {
+	checkCgroupMode(t)
+
+	groupPath := fmt.Sprintf("/testing-oom-watcher-%d", time.Now().UnixNano())
+	c, err := NewManager(defaultCgroup2Path, groupPath,
+		&Resources{
+			Memory: &Memory{
+				Max:  toPtr(int64(15 * 1024 * 1024)), // 15MB
+				Swap: toPtr(int64(15 * 1024 * 1024)), // 15MB
+			},
+		},
+	)
+	require.NoError(t, err, "failed to init new cgroup manager")
+	defer func() {
+		require.NoError(t, c.Delete())
+	}()
+
+	cgroupFD, err := os.Open(c.path)
+	require.NoError(t, err, "failed to open cgroup path")
+	defer cgroupFD.Close()
+
+	evCh, errCh := c.EventChan()
+
+	cmd := exec.Command("dd", "if=/dev/zero", "of=/dev/null", "bs=64M")
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig:   syscall.SIGKILL,
+		UseCgroupFD: true,
+		CgroupFD:    int(cgroupFD.Fd()),
+	}
+
+	err = cmd.Start()
+	require.NoError(t, err, "failed to start dd process")
+
+	err = cmd.Wait()
+	require.Error(t, err)
+
+	for ev := range evCh {
+		t.Logf("Received memory event: %+v", ev)
+		if ev.OOMKill > 0 {
+			break
+		}
+	}
+
+	done := false
+	for !done {
+		select {
+		case err := <-errCh:
+			require.NoError(t, err, "unexpected error on error channel")
+			done = true
+		case <-time.After(5 * time.Second):
+			t.Fatal("Timed out")
+		}
+	}
+	goleak.VerifyNone(t)
+}
+
 func TestSystemdFullPath(t *testing.T) {
 	tests := []struct {
 		inputSlice  string
@@ -405,4 +461,8 @@ func BenchmarkStat(b *testing.B) {
 		_, err := c.Stat()
 		require.NoError(b, err)
 	}
+}
+
+func toPtr[T any](v T) *T {
+	return &v
 }
