@@ -9,7 +9,7 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/godbus/dbus/v5 v5.1.0
 	github.com/moby/sys/userns v0.1.0
-	github.com/opencontainers/runtime-spec v1.2.0
+	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/goleak v1.1.12
 	golang.org/x/sys v0.27.0
