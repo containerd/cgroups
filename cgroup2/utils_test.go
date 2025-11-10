@@ -139,3 +139,101 @@ func BenchmarkGetStatFileContentUint64(b *testing.B) {
 		_ = getStatFileContentUint64("/proc/self/loginuid")
 	}
 }
+
+func TestGetKVStatsFileContentUint64(t *testing.T) {
+	testCases := []struct {
+		name         string
+		fileContent  string
+		propertyName string
+		expected     uint64
+	}{
+		{
+			name: "valid property found",
+			fileContent: `some_key 123
+another_key 456
+third_key 789`,
+			propertyName: "another_key",
+			expected:     456,
+		},
+		{
+			name: "property at beginning",
+			fileContent: `first_key 999
+second_key 888`,
+			propertyName: "first_key",
+			expected:     999,
+		},
+		{
+			name: "property at end",
+			fileContent: `first_key 111
+second_key 222
+third_key 333`,
+			propertyName: "third_key",
+			expected:     333,
+		},
+		{
+			name: "property not found",
+			fileContent: `key1 100
+key2 200`,
+			propertyName: "missing_key",
+			expected:     0,
+		},
+		{
+			name: "invalid format - single field",
+			fileContent: `invalid_line
+valid_key 42`,
+			propertyName: "valid_key",
+			expected:     42,
+		},
+		{
+			name: "invalid format - three fields",
+			fileContent: `invalid key 1 2
+valid_key 100`,
+			propertyName: "valid_key",
+			expected:     100,
+		},
+		{
+			name: "invalid number format",
+			fileContent: `key1 not_a_number
+key2 500`,
+			propertyName: "key1",
+			expected:     0,
+		},
+		{
+			name:         "empty file",
+			fileContent:  "",
+			propertyName: "any_key",
+			expected:     0,
+		},
+		{
+			name:         "large number",
+			fileContent:  `max 18446744073709551615`,
+			propertyName: "max",
+			expected:     18446744073709551615,
+		},
+		{
+			name: "zero value",
+			fileContent: `zero 0
+non_zero 1`,
+			propertyName: "zero",
+			expected:     0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			filePath := filepath.Join(tmpDir, "test.stat")
+
+			err := os.WriteFile(filePath, []byte(tc.fileContent), 0o644)
+			assert.NoError(t, err)
+
+			result := getKVStatsFileContentUint64(filePath, tc.propertyName)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+
+	t.Run("file not found", func(t *testing.T) {
+		result := getKVStatsFileContentUint64("/nonexistent/path/file.stat", "any_key")
+		assert.Equal(t, uint64(0), result)
+	})
+}
