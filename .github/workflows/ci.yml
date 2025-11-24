@@ -23,7 +23,7 @@ jobs:
       # Checkout repos
       #
       - name: Checkout cgroups
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: src/github.com/containerd/cgroups
           fetch-depth: 25
@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: src/github.com/containerd/cgroups
 
@@ -96,7 +96,7 @@ jobs:
           free -mt
 
       - name: Checkout cgroups
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: src/github.com/containerd/cgroups
 
@@ -158,7 +158,7 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: src/github.com/containerd/cgroups
 
@@ -182,7 +182,7 @@ jobs:
 
     steps:
       - name: Checkout cgroups
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           path: src/github.com/containerd/cgroups
 
