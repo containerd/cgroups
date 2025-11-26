@@ -292,8 +292,8 @@ func Test_getOomControlValue(t *testing.T) {
 	var (
 		oneInt64  int64 = 1
 		zeroInt64 int64 = 0
-		trueBool  bool  = true
-		falseBool bool  = false
+		trueBool        = true
+		falseBool       = false
 	)
 
 	type args struct {
