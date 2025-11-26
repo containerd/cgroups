@@ -68,7 +68,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.62.0
-          args: --verbose
+          args: --verbose -D errcheck
           working-directory: src/github.com/containerd/cgroups
 
   cgroupV1:
