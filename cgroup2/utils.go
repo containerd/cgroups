@@ -475,8 +475,8 @@ func hugePageSizes() []string {
 		if err != nil {
 			return
 		}
+		defer dir.Close()
 		files, err := dir.Readdirnames(0)
-		dir.Close()
 		if err != nil {
 			return
 		}
