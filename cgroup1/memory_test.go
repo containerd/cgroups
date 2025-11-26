@@ -337,7 +337,7 @@ func Test_getOomControlValue(t *testing.T) {
 				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
 				return
 			}
-			if !(got == nil || tt.want == nil) && *got != *tt.want {
+			if got != nil && tt.want != nil && *got != *tt.want {
 				t.Errorf("getOomControlValue() = %v, want %v", got, tt.want)
 			}
 		})
