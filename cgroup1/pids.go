@@ -59,6 +59,10 @@ func (p *pidsController) Create(path string, resources *specs.LinuxResources) er
 }
 
 func (p *pidsController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.Pids == nil {
+		return nil
+	}
+
 	return p.Create(path, resources)
 }
 

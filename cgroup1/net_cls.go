@@ -57,5 +57,9 @@ func (n *netclsController) Create(path string, resources *specs.LinuxResources) 
 }
 
 func (n *netclsController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.Network == nil {
+		return nil
+	}
+
 	return n.Create(path, resources)
 }
