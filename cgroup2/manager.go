@@ -224,6 +224,10 @@ func Load(group string, opts ...InitOpts) (*Manager, error) {
 		return nil, err
 	}
 	path := filepath.Join(c.mountpoint, group)
+	_, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
 	return &Manager{
 		unifiedMountpoint: c.mountpoint,
 		path:              path,

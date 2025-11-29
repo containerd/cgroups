@@ -19,6 +19,7 @@ package cgroup2
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"syscall"
@@ -476,4 +477,12 @@ func TestLoadOKWhenExistent(t *testing.T) {
 
 	_, err = Load(group)
 	require.NoError(t, err)
+}
+
+func TestLoadErrorsWhenNonExistent(t *testing.T) {
+	checkCgroupMode(t)
+	group := "/nonexistent"
+
+	_, err := Load(group)
+	require.ErrorIs(t, err, fs.ErrNotExist)
 }
