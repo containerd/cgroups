@@ -944,9 +944,20 @@ func NewSystemd(slice, group string, pid int, resources *Resources) (*Manager, e
 			newSystemdProperty("MemoryMax", uint64(*resources.Memory.Max)))
 	}
 
-	if resources.CPU != nil && resources.CPU.Weight != nil && *resources.CPU.Weight != 0 {
-		properties = append(properties,
-			newSystemdProperty("CPUWeight", *resources.CPU.Weight))
+	if resources.CPU != nil {
+		// Systemd v252 added support for setting cgroup v2 cpu.idle in systemd/systemd#23299
+		// The way it works is
+		// if CPUWeight == 0, cpu.idle is set to 1;
+		// if CPUWeight != 0, cpu.idle is set to 0.
+		// Do not add duplicate CPUWeight property
+		if resources.CPU.Idle != nil && resources.CPU.Weight != nil && *resources.CPU.Weight != 0 {
+			properties = append(properties,
+				newSystemdProperty("CPUWeight", uint64(0)))
+		}
+		if resources.CPU.Weight != nil && *resources.CPU.Weight != 0 {
+			properties = append(properties,
+				newSystemdProperty("CPUWeight", *resources.CPU.Weight))
+		}
 	}
 
 	if resources.CPU != nil && resources.CPU.Max != "" {
