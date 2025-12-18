@@ -111,7 +111,7 @@ jobs:
           go_version=$(go version | grep -oP 'go\d+\.\d+\.\d+' | sed -E 's/go([0-9]+)\.([0-9]+)\.([0-9]+)/\1\.\2\.\3/')
           echo "GO_VERSION=$go_version" >> $GITHUB_ENV
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: /root/.vagrant.d
           key: vagrant-${{ env.BOX }}
