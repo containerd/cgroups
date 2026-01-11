@@ -51,6 +51,22 @@ const (
 	cpuQuotaPeriodUSecSupportedVersion = 242
 )
 
+// StatMask represents which controller stats to collect.
+type StatMask uint64
+
+const (
+	StatPids StatMask = 1 << iota
+	StatCPU
+	StatMemory
+	StatMemoryEvents
+	StatIO
+	StatRdma
+	StatHugetlb
+
+	// StatAll collects all available stats (default behavior of Stat).
+	StatAll = StatPids | StatCPU | StatMemory | StatMemoryEvents | StatIO | StatRdma | StatHugetlb
+)
+
 var (
 	canDelegate bool
 
@@ -558,41 +574,62 @@ func (c *Manager) MoveTo(destination *Manager) error {
 	return nil
 }
 
+// Stat returns all cgroup stats.
+// This is equivalent to calling StatFiltered(StatAll).
 func (c *Manager) Stat() (*stats.Metrics, error) {
+	return c.StatFiltered(StatAll)
+}
+
+// StatFiltered returns cgroup stats for the specified controllers.
+func (c *Manager) StatFiltered(mask StatMask) (*stats.Metrics, error) {
 	var metrics stats.Metrics
 	var err error
 
-	metrics.Pids = &stats.PidsStat{
-		Current: getStatFileContentUint64(filepath.Join(c.path, "pids.current")),
-		Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
+	if mask&StatPids != 0 {
+		metrics.Pids = &stats.PidsStat{
+			Current: getStatFileContentUint64(filepath.Join(c.path, "pids.current")),
+			Limit:   getStatFileContentUint64(filepath.Join(c.path, "pids.max")),
+		}
 	}
 
-	metrics.CPU, err = readCPUStats(c.path)
-	if err != nil {
-		return nil, err
+	if mask&StatCPU != 0 {
+		metrics.CPU, err = readCPUStats(c.path)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	metrics.Memory, err = readMemoryStats(c.path)
-	if err != nil {
-		return nil, err
+	if mask&StatMemory != 0 {
+		metrics.Memory, err = readMemoryStats(c.path)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	metrics.MemoryEvents, err = readMemoryEvents(c.path)
-	if err != nil {
-		return nil, err
+	if mask&StatMemoryEvents != 0 {
+		metrics.MemoryEvents, err = readMemoryEvents(c.path)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	metrics.Io = &stats.IOStat{
-		Usage: readIoStats(c.path),
-		PSI:   getStatPSIFromFile(filepath.Join(c.path, "io.pressure")),
+	if mask&StatIO != 0 {
+		metrics.Io = &stats.IOStat{
+			Usage: readIoStats(c.path),
+			PSI:   getStatPSIFromFile(filepath.Join(c.path, "io.pressure")),
+		}
 	}
 
-	metrics.Rdma = &stats.RdmaStat{
-		Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
-		Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),
+	if mask&StatRdma != 0 {
+		metrics.Rdma = &stats.RdmaStat{
+			Current: rdmaStats(filepath.Join(c.path, "rdma.current")),
+			Limit:   rdmaStats(filepath.Join(c.path, "rdma.max")),
+		}
 	}
 
-	metrics.Hugetlb = readHugeTlbStats(c.path)
+	if mask&StatHugetlb != 0 {
+		metrics.Hugetlb = readHugeTlbStats(c.path)
+	}
 
 	return &metrics, nil
 }
