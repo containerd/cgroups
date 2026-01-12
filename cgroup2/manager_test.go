@@ -463,6 +463,146 @@ func BenchmarkStat(b *testing.B) {
 	}
 }
 
+func TestStatFiltered(t *testing.T) {
+	checkCgroupMode(t)
+	group := "/stat-filtered-test-cg"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	c, err := NewManager(defaultCgroup2Path, groupPath, &Resources{})
+	require.NoError(t, err, "failed to init new cgroup manager")
+	t.Cleanup(func() {
+		_ = c.Delete()
+	})
+
+	t.Run("StatAll", func(t *testing.T) {
+		statAll, err := c.StatFiltered(StatAll)
+		require.NoError(t, err)
+
+		assert.NotNil(t, statAll.Pids)
+		assert.NotNil(t, statAll.CPU)
+		assert.NotNil(t, statAll.Memory)
+		assert.NotNil(t, statAll.Io)
+		assert.NotNil(t, statAll.Rdma)
+	})
+
+	t.Run("CPUOnly", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatCPU)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.CPU, "CPU stats should be populated")
+		assert.Nil(t, stats.Pids, "Pids stats should be nil")
+		assert.Nil(t, stats.Memory, "Memory stats should be nil")
+		assert.Nil(t, stats.MemoryEvents, "MemoryEvents should be nil")
+		assert.Nil(t, stats.Io, "IO stats should be nil")
+		assert.Nil(t, stats.Rdma, "RDMA stats should be nil")
+		assert.Nil(t, stats.Hugetlb, "Hugetlb stats should be nil")
+	})
+
+	t.Run("MemoryOnly", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatMemory)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.Memory, "Memory stats should be populated")
+		assert.Nil(t, stats.Pids, "Pids stats should be nil")
+		assert.Nil(t, stats.CPU, "CPU stats should be nil")
+		assert.Nil(t, stats.MemoryEvents, "MemoryEvents should be nil")
+		assert.Nil(t, stats.Io, "IO stats should be nil")
+	})
+
+	t.Run("MemoryEventsOnly", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatMemoryEvents)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.MemoryEvents, "MemoryEvents should be populated")
+		assert.Nil(t, stats.Memory, "Memory stats should be nil")
+		assert.Nil(t, stats.CPU, "CPU stats should be nil")
+	})
+
+	t.Run("CPUAndMemory", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatCPU | StatMemory)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.CPU, "CPU stats should be populated")
+		assert.NotNil(t, stats.Memory, "Memory stats should be populated")
+		assert.Nil(t, stats.Pids, "Pids stats should be nil")
+		assert.Nil(t, stats.MemoryEvents, "MemoryEvents should be nil")
+		assert.Nil(t, stats.Io, "IO stats should be nil")
+	})
+
+	t.Run("PidsOnly", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatPids)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.Pids, "Pids stats should be populated")
+		assert.Nil(t, stats.CPU, "CPU stats should be nil")
+		assert.Nil(t, stats.Memory, "Memory stats should be nil")
+	})
+
+	t.Run("IOOnly", func(t *testing.T) {
+		stats, err := c.StatFiltered(StatIO)
+		require.NoError(t, err)
+
+		assert.NotNil(t, stats.Io, "IO stats should be populated")
+		assert.Nil(t, stats.CPU, "CPU stats should be nil")
+		assert.Nil(t, stats.Memory, "Memory stats should be nil")
+	})
+
+	t.Run("ZeroMask", func(t *testing.T) {
+		stats, err := c.StatFiltered(0)
+		require.NoError(t, err)
+
+		assert.Nil(t, stats.Pids, "Pids stats should be nil")
+		assert.Nil(t, stats.CPU, "CPU stats should be nil")
+		assert.Nil(t, stats.Memory, "Memory stats should be nil")
+		assert.Nil(t, stats.MemoryEvents, "MemoryEvents should be nil")
+		assert.Nil(t, stats.Io, "IO stats should be nil")
+		assert.Nil(t, stats.Rdma, "RDMA stats should be nil")
+		assert.Nil(t, stats.Hugetlb, "Hugetlb stats should be nil")
+	})
+}
+
+func BenchmarkStatFiltered(b *testing.B) {
+	checkCgroupMode(b)
+	group := "/stat-filtered-bench-cg"
+	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
+	c, err := NewManager(defaultCgroup2Path, groupPath, &Resources{})
+	require.NoErrorf(b, err, "failed to init new cgroup manager")
+	b.Cleanup(func() {
+		_ = c.Delete()
+	})
+
+	b.Run("StatAll", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, err := c.StatFiltered(StatAll)
+			require.NoError(b, err)
+		}
+	})
+
+	b.Run("CPUOnly", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, err := c.StatFiltered(StatCPU)
+			require.NoError(b, err)
+		}
+	})
+
+	b.Run("MemoryOnly", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, err := c.StatFiltered(StatMemory)
+			require.NoError(b, err)
+		}
+	})
+
+	b.Run("CPUAndMemory", func(b *testing.B) {
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			_, err := c.StatFiltered(StatCPU | StatMemory)
+			require.NoError(b, err)
+		}
+	})
+}
+
 func toPtr[T any](v T) *T {
 	return &v
 }
