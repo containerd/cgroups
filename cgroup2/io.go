@@ -43,8 +43,9 @@ func (e Entry) String() string {
 }
 
 type IO struct {
-	BFQ BFQ
-	Max []Entry
+	BFQ     BFQ
+	Max     []Entry
+	Latency []Entry
 }
 
 func (i *IO) Values() (o []Value) {
@@ -57,6 +58,12 @@ func (i *IO) Values() (o []Value) {
 	for _, e := range i.Max {
 		o = append(o, Value{
 			filename: "io.max",
+			value:    e.String(),
+		})
+	}
+	for _, e := range i.Latency {
+		o = append(o, Value{
+			filename: "io.latency",
 			value:    e.String(),
 		})
 	}
