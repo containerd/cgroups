@@ -193,26 +193,17 @@ jobs:
           go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
-      - name: Set env
-        shell: bash
-        run: |
-          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+      - name: Install buf
+        uses: bufbuild/buf-action@v1
+        with:
+          # We use the action to install buf.
+          setup_only: true
 
-      - name: Install protoc
-        run: |
-          curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protoc-21.5-linux-x86_64.zip
-          # /usr/local is not writable from GitHub Actions' user
-          sudo unzip protoc-21.5-linux-x86_64.zip -d /usr/local
-
-      - name: Install proto-related tools for Go
-        run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
-          go install github.com/containerd/protobuild@v0.3.0
-          go install github.com/containerd/protobuild/cmd/go-fix-acronym@v0.3.0
+      - name: Install go-fix-acronym
+        run: go install github.com/containerd/protobuild/cmd/go-fix-acronym@v0.3.0
 
       - name: Compare auto-generated Go files
         run: |
-          make proto
+          make maintainer-clean proto
           git diff --exit-code
         working-directory: src/github.com/containerd/cgroups

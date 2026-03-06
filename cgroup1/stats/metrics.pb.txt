@@ -1,9 +1,9 @@
-file {
-  name: "github.com/containerd/cgroups/cgroup1/stats/metrics.proto"
+file: {
+  name: "cgroup1/stats/metrics.proto"
   package: "io.containerd.cgroups.v1"
-  message_type {
+  message_type: {
     name: "Metrics"
-    field {
+    field: {
       name: "hugetlb"
       number: 1
       label: LABEL_REPEATED
@@ -11,7 +11,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.HugetlbStat"
       json_name: "hugetlb"
     }
-    field {
+    field: {
       name: "pids"
       number: 2
       label: LABEL_OPTIONAL
@@ -19,7 +19,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.PidsStat"
       json_name: "pids"
     }
-    field {
+    field: {
       name: "cpu"
       number: 3
       label: LABEL_OPTIONAL
@@ -27,7 +27,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.CPUStat"
       json_name: "cpu"
     }
-    field {
+    field: {
       name: "memory"
       number: 4
       label: LABEL_OPTIONAL
@@ -35,7 +35,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.MemoryStat"
       json_name: "memory"
     }
-    field {
+    field: {
       name: "blkio"
       number: 5
       label: LABEL_OPTIONAL
@@ -43,7 +43,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOStat"
       json_name: "blkio"
     }
-    field {
+    field: {
       name: "rdma"
       number: 6
       label: LABEL_OPTIONAL
@@ -51,7 +51,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.RdmaStat"
       json_name: "rdma"
     }
-    field {
+    field: {
       name: "network"
       number: 7
       label: LABEL_REPEATED
@@ -59,7 +59,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.NetworkStat"
       json_name: "network"
     }
-    field {
+    field: {
       name: "cgroup_stats"
       number: 8
       label: LABEL_OPTIONAL
@@ -67,7 +67,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.CgroupStats"
       json_name: "cgroupStats"
     }
-    field {
+    field: {
       name: "memory_oom_control"
       number: 9
       label: LABEL_OPTIONAL
@@ -76,30 +76,30 @@ file {
       json_name: "memoryOomControl"
     }
   }
-  message_type {
+  message_type: {
     name: "HugetlbStat"
-    field {
+    field: {
       name: "usage"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "usage"
     }
-    field {
+    field: {
       name: "max"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "max"
     }
-    field {
+    field: {
       name: "failcnt"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "failcnt"
     }
-    field {
+    field: {
       name: "pagesize"
       number: 4
       label: LABEL_OPTIONAL
@@ -107,16 +107,16 @@ file {
       json_name: "pagesize"
     }
   }
-  message_type {
+  message_type: {
     name: "PidsStat"
-    field {
+    field: {
       name: "current"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "current"
     }
-    field {
+    field: {
       name: "limit"
       number: 2
       label: LABEL_OPTIONAL
@@ -124,9 +124,9 @@ file {
       json_name: "limit"
     }
   }
-  message_type {
+  message_type: {
     name: "CPUStat"
-    field {
+    field: {
       name: "usage"
       number: 1
       label: LABEL_OPTIONAL
@@ -134,7 +134,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.CPUUsage"
       json_name: "usage"
     }
-    field {
+    field: {
       name: "throttling"
       number: 2
       label: LABEL_OPTIONAL
@@ -143,30 +143,30 @@ file {
       json_name: "throttling"
     }
   }
-  message_type {
+  message_type: {
     name: "CPUUsage"
-    field {
+    field: {
       name: "total"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "total"
     }
-    field {
+    field: {
       name: "kernel"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "kernel"
     }
-    field {
+    field: {
       name: "user"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "user"
     }
-    field {
+    field: {
       name: "per_cpu"
       number: 4
       label: LABEL_REPEATED
@@ -174,23 +174,23 @@ file {
       json_name: "perCpu"
     }
   }
-  message_type {
+  message_type: {
     name: "Throttle"
-    field {
+    field: {
       name: "periods"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "periods"
     }
-    field {
+    field: {
       name: "throttled_periods"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "throttledPeriods"
     }
-    field {
+    field: {
       name: "throttled_time"
       number: 3
       label: LABEL_OPTIONAL
@@ -198,233 +198,233 @@ file {
       json_name: "throttledTime"
     }
   }
-  message_type {
+  message_type: {
     name: "MemoryStat"
-    field {
+    field: {
       name: "cache"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "cache"
     }
-    field {
+    field: {
       name: "rss"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rss"
     }
-    field {
+    field: {
       name: "rss_huge"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rssHuge"
     }
-    field {
+    field: {
       name: "mapped_file"
       number: 4
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "mappedFile"
     }
-    field {
+    field: {
       name: "dirty"
       number: 5
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "dirty"
     }
-    field {
+    field: {
       name: "writeback"
       number: 6
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "writeback"
     }
-    field {
+    field: {
       name: "pg_pg_in"
       number: 7
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "pgPgIn"
     }
-    field {
+    field: {
       name: "pg_pg_out"
       number: 8
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "pgPgOut"
     }
-    field {
+    field: {
       name: "pg_fault"
       number: 9
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "pgFault"
     }
-    field {
+    field: {
       name: "pg_maj_fault"
       number: 10
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "pgMajFault"
     }
-    field {
+    field: {
       name: "inactive_anon"
       number: 11
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "inactiveAnon"
     }
-    field {
+    field: {
       name: "active_anon"
       number: 12
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "activeAnon"
     }
-    field {
+    field: {
       name: "inactive_file"
       number: 13
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "inactiveFile"
     }
-    field {
+    field: {
       name: "active_file"
       number: 14
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "activeFile"
     }
-    field {
+    field: {
       name: "unevictable"
       number: 15
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "unevictable"
     }
-    field {
+    field: {
       name: "hierarchical_memory_limit"
       number: 16
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "hierarchicalMemoryLimit"
     }
-    field {
+    field: {
       name: "hierarchical_swap_limit"
       number: 17
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "hierarchicalSwapLimit"
     }
-    field {
+    field: {
       name: "total_cache"
       number: 18
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalCache"
     }
-    field {
+    field: {
       name: "total_rss"
       number: 19
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalRss"
     }
-    field {
+    field: {
       name: "total_rss_huge"
       number: 20
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalRssHuge"
     }
-    field {
+    field: {
       name: "total_mapped_file"
       number: 21
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalMappedFile"
     }
-    field {
+    field: {
       name: "total_dirty"
       number: 22
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalDirty"
     }
-    field {
+    field: {
       name: "total_writeback"
       number: 23
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalWriteback"
     }
-    field {
+    field: {
       name: "total_pg_pg_in"
       number: 24
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalPgPgIn"
     }
-    field {
+    field: {
       name: "total_pg_pg_out"
       number: 25
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalPgPgOut"
     }
-    field {
+    field: {
       name: "total_pg_fault"
       number: 26
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalPgFault"
     }
-    field {
+    field: {
       name: "total_pg_maj_fault"
       number: 27
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalPgMajFault"
     }
-    field {
+    field: {
       name: "total_inactive_anon"
       number: 28
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalInactiveAnon"
     }
-    field {
+    field: {
       name: "total_active_anon"
       number: 29
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalActiveAnon"
     }
-    field {
+    field: {
       name: "total_inactive_file"
       number: 30
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalInactiveFile"
     }
-    field {
+    field: {
       name: "total_active_file"
       number: 31
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalActiveFile"
     }
-    field {
+    field: {
       name: "total_unevictable"
       number: 32
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "totalUnevictable"
     }
-    field {
+    field: {
       name: "usage"
       number: 33
       label: LABEL_OPTIONAL
@@ -432,7 +432,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.MemoryEntry"
       json_name: "usage"
     }
-    field {
+    field: {
       name: "swap"
       number: 34
       label: LABEL_OPTIONAL
@@ -440,7 +440,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.MemoryEntry"
       json_name: "swap"
     }
-    field {
+    field: {
       name: "kernel"
       number: 35
       label: LABEL_OPTIONAL
@@ -448,7 +448,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.MemoryEntry"
       json_name: "kernel"
     }
-    field {
+    field: {
       name: "kernel_tcp"
       number: 36
       label: LABEL_OPTIONAL
@@ -457,30 +457,30 @@ file {
       json_name: "kernelTcp"
     }
   }
-  message_type {
+  message_type: {
     name: "MemoryEntry"
-    field {
+    field: {
       name: "limit"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "limit"
     }
-    field {
+    field: {
       name: "usage"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "usage"
     }
-    field {
+    field: {
       name: "max"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "max"
     }
-    field {
+    field: {
       name: "failcnt"
       number: 4
       label: LABEL_OPTIONAL
@@ -488,23 +488,23 @@ file {
       json_name: "failcnt"
     }
   }
-  message_type {
+  message_type: {
     name: "MemoryOomControl"
-    field {
+    field: {
       name: "oom_kill_disable"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "oomKillDisable"
     }
-    field {
+    field: {
       name: "under_oom"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "underOom"
     }
-    field {
+    field: {
       name: "oom_kill"
       number: 3
       label: LABEL_OPTIONAL
@@ -512,9 +512,9 @@ file {
       json_name: "oomKill"
     }
   }
-  message_type {
+  message_type: {
     name: "BlkIOStat"
-    field {
+    field: {
       name: "io_service_bytes_recursive"
       number: 1
       label: LABEL_REPEATED
@@ -522,7 +522,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioServiceBytesRecursive"
     }
-    field {
+    field: {
       name: "io_serviced_recursive"
       number: 2
       label: LABEL_REPEATED
@@ -530,7 +530,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioServicedRecursive"
     }
-    field {
+    field: {
       name: "io_queued_recursive"
       number: 3
       label: LABEL_REPEATED
@@ -538,7 +538,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioQueuedRecursive"
     }
-    field {
+    field: {
       name: "io_service_time_recursive"
       number: 4
       label: LABEL_REPEATED
@@ -546,7 +546,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioServiceTimeRecursive"
     }
-    field {
+    field: {
       name: "io_wait_time_recursive"
       number: 5
       label: LABEL_REPEATED
@@ -554,7 +554,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioWaitTimeRecursive"
     }
-    field {
+    field: {
       name: "io_merged_recursive"
       number: 6
       label: LABEL_REPEATED
@@ -562,7 +562,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioMergedRecursive"
     }
-    field {
+    field: {
       name: "io_time_recursive"
       number: 7
       label: LABEL_REPEATED
@@ -570,7 +570,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.BlkIOEntry"
       json_name: "ioTimeRecursive"
     }
-    field {
+    field: {
       name: "sectors_recursive"
       number: 8
       label: LABEL_REPEATED
@@ -579,37 +579,37 @@ file {
       json_name: "sectorsRecursive"
     }
   }
-  message_type {
+  message_type: {
     name: "BlkIOEntry"
-    field {
+    field: {
       name: "op"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "op"
     }
-    field {
+    field: {
       name: "device"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "device"
     }
-    field {
+    field: {
       name: "major"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "major"
     }
-    field {
+    field: {
       name: "minor"
       number: 4
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "minor"
     }
-    field {
+    field: {
       name: "value"
       number: 5
       label: LABEL_OPTIONAL
@@ -617,9 +617,9 @@ file {
       json_name: "value"
     }
   }
-  message_type {
+  message_type: {
     name: "RdmaStat"
-    field {
+    field: {
       name: "current"
       number: 1
       label: LABEL_REPEATED
@@ -627,7 +627,7 @@ file {
       type_name: ".io.containerd.cgroups.v1.RdmaEntry"
       json_name: "current"
     }
-    field {
+    field: {
       name: "limit"
       number: 2
       label: LABEL_REPEATED
@@ -636,23 +636,23 @@ file {
       json_name: "limit"
     }
   }
-  message_type {
+  message_type: {
     name: "RdmaEntry"
-    field {
+    field: {
       name: "device"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "device"
     }
-    field {
+    field: {
       name: "hca_handles"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT32
       json_name: "hcaHandles"
     }
-    field {
+    field: {
       name: "hca_objects"
       number: 3
       label: LABEL_OPTIONAL
@@ -660,65 +660,65 @@ file {
       json_name: "hcaObjects"
     }
   }
-  message_type {
+  message_type: {
     name: "NetworkStat"
-    field {
+    field: {
       name: "name"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_STRING
       json_name: "name"
     }
-    field {
+    field: {
       name: "rx_bytes"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rxBytes"
     }
-    field {
+    field: {
       name: "rx_packets"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rxPackets"
     }
-    field {
+    field: {
       name: "rx_errors"
       number: 4
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rxErrors"
     }
-    field {
+    field: {
       name: "rx_dropped"
       number: 5
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "rxDropped"
     }
-    field {
+    field: {
       name: "tx_bytes"
       number: 6
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "txBytes"
     }
-    field {
+    field: {
       name: "tx_packets"
       number: 7
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "txPackets"
     }
-    field {
+    field: {
       name: "tx_errors"
       number: 8
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "txErrors"
     }
-    field {
+    field: {
       name: "tx_dropped"
       number: 9
       label: LABEL_OPTIONAL
@@ -726,37 +726,37 @@ file {
       json_name: "txDropped"
     }
   }
-  message_type {
+  message_type: {
     name: "CgroupStats"
-    field {
+    field: {
       name: "nr_sleeping"
       number: 1
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "nrSleeping"
     }
-    field {
+    field: {
       name: "nr_running"
       number: 2
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "nrRunning"
     }
-    field {
+    field: {
       name: "nr_stopped"
       number: 3
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "nrStopped"
     }
-    field {
+    field: {
       name: "nr_uninterruptible"
       number: 4
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "nrUninterruptible"
     }
-    field {
+    field: {
       name: "nr_io_wait"
       number: 5
       label: LABEL_OPTIONAL
@@ -764,8 +764,12 @@ file {
       json_name: "nrIoWait"
     }
   }
-  options {
+  options: {
     go_package: "github.com/containerd/cgroups/cgroup1/stats"
   }
   syntax: "proto3"
+  buf_extension: {
+    is_import: false
+    is_syntax_unspecified: false
+  }
 }

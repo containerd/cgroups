@@ -23,7 +23,16 @@ all: cgutil
 cgutil:
 	cd cmd/cgctl && $(GO) build $(GO_BUILD_FLAGS) -v $(GO_TAGS)
 
+# Follow GNU's standards
+# https://www.gnu.org/prep/standards/html_node/Standard-Targets.html
+maintainer-clean:
+	find cgroup1 cgroup2 \( -name '*.pb.go' -o -name '*.pb.txt' \) -delete
+
 proto:
-	protobuild --quiet ${PACKAGES}
-	# Keep them Go-idiomatic and backward-compatible with the gogo/protobuf era.
-	go-fix-acronym -w -a '(Cpu|Tcp|Rss|Psi)' $(shell find cgroup1/stats/ cgroup2/stats/ -name '*.pb.go')
+	buf generate
+	@# Keep them Go-idiomatic and backward-compatible with the gogo/protobuf era.
+	go-fix-acronym -w -a '(Cpu|Tcp|Rss|Psi)' cgroup1/stats/metrics.pb.go cgroup2/stats/metrics.pb.go
+	buf build --exclude-source-info --path cgroup1/stats/metrics.proto -o cgroup1/stats/metrics.pb.txt#format=txtpb
+	buf build --exclude-source-info --path cgroup2/stats/metrics.proto -o cgroup2/stats/metrics.pb.txt#format=txtpb
+
+.PHONY: all cgutil maintainer-clean proto
