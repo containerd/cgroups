@@ -835,7 +835,7 @@ func (c *Manager) memoryEventNonBlockFD() (_ *os.File, retErr error) {
 }
 
 func (c *Manager) EventChan() (<-chan Event, <-chan error) {
-	ec := make(chan Event, 1)
+	ec := make(chan Event, 16)
 	errCh := make(chan error, 1)
 
 	fd, err := c.memoryEventNonBlockFD()
@@ -860,12 +860,6 @@ func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 				continue
 			}
 
-			// Check cgroup.events first
-			shouldExit := false
-			if c.isCgroupEmpty() {
-				shouldExit = true
-			}
-
 			out := make(map[string]uint64)
 			if err := readKVStatsFile(c.path, "memory.events", out); err != nil {
 				// When cgroup is deleted read may return -ENODEV instead of -ENOENT from open.
@@ -884,7 +878,7 @@ func (c *Manager) EventChan() (<-chan Event, <-chan error) {
 				OOMGroupKill: out["oom_group_kill"],
 			}
 
-			if shouldExit {
+			if c.isCgroupEmpty() {
 				return
 			}
 		}
