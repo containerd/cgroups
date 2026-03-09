@@ -82,6 +82,10 @@ func (c *cpusetController) Create(path string, resources *specs.LinuxResources) 
 }
 
 func (c *cpusetController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.CPU == nil || (resources.CPU.Cpus == "" && resources.CPU.Mems == "") {
+		return nil
+	}
+
 	return c.Create(path, resources)
 }
 
