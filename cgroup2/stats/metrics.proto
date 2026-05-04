@@ -64,8 +64,14 @@ message MemoryStat {
 	uint64 slab_unreclaimable = 17;
 	uint64 pgfault = 18;
 	uint64 pgmajfault = 19;
-	uint64 workingset_refault = 20;
-	uint64 workingset_activate = 21;
+	// Deprecated: Linux v5.9 split this memory.stat counter into
+	// workingset_refault_anon and workingset_refault_file.
+	// See https://github.com/torvalds/linux/commit/170b04b7ae49634df103810dad67b22cf8a99aa6
+	uint64 workingset_refault = 20 [deprecated = true];
+	// Deprecated: Linux v5.9 split this memory.stat counter into
+	// workingset_activate_anon and workingset_activate_file.
+	// See https://github.com/torvalds/linux/commit/170b04b7ae49634df103810dad67b22cf8a99aa6
+	uint64 workingset_activate = 21 [deprecated = true];
 	uint64 workingset_nodereclaim = 22;
 	uint64 pgrefill = 23;
 	uint64 pgscan = 24;
@@ -83,6 +89,10 @@ message MemoryStat {
 	uint64 max_usage = 36;
 	uint64 swap_max_usage = 37;
 	PSIStats psi = 38;
+	uint64 workingset_refault_anon = 39;
+	uint64 workingset_refault_file = 40;
+	uint64 workingset_activate_anon = 41;
+	uint64 workingset_activate_file = 42;
 }
 
 message MemoryEvents {

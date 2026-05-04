@@ -51,6 +51,24 @@ func TestCgroupv2MemoryStats(t *testing.T) {
 	checkFileContent(t, c.path, "memory.max", "629145600")
 }
 
+func TestReadMemoryStatsWorkingsetBreakdown(t *testing.T) {
+	cgroupPath := t.TempDir()
+	err := os.WriteFile(
+		fmt.Sprintf("%s/memory.stat", cgroupPath),
+		[]byte("workingset_refault_anon 1\nworkingset_refault_file 2\nworkingset_activate_anon 3\nworkingset_activate_file 4\n"),
+		0o644,
+	)
+	require.NoError(t, err)
+
+	stats, err := readMemoryStats(cgroupPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, uint64(1), stats.WorkingsetRefaultAnon)
+	assert.Equal(t, uint64(2), stats.WorkingsetRefaultFile)
+	assert.Equal(t, uint64(3), stats.WorkingsetActivateAnon)
+	assert.Equal(t, uint64(4), stats.WorkingsetActivateFile)
+}
+
 func TestSystemdCgroupMemoryController(t *testing.T) {
 	checkCgroupMode(t)
 	group := fmt.Sprintf("testing-memory-%d.scope", os.Getpid())

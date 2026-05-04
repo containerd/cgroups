@@ -193,11 +193,17 @@ jobs:
           go-version: '1.22.x'
           cache-dependency-path: src/github.com/containerd/cgroups
 
+      - name: Read buf version
+        id: buf-version
+        working-directory: src/github.com/containerd/cgroups
+        run: echo "version=$(cat script/buf-version)" >> $GITHUB_OUTPUT
+
       - name: Install buf
         uses: bufbuild/buf-action@v1
         with:
           # We use the action to install buf.
           setup_only: true
+          version: ${{ steps.buf-version.outputs.version }}
 
       - name: Install go-fix-acronym
         run: go install github.com/containerd/protobuild/cmd/go-fix-acronym@v0.3.0
