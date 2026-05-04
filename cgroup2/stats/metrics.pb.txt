@@ -343,6 +343,9 @@ file: {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "workingsetRefault"
+      options: {
+        deprecated: true
+      }
     }
     field: {
       name: "workingset_activate"
@@ -350,6 +353,9 @@ file: {
       label: LABEL_OPTIONAL
       type: TYPE_UINT64
       json_name: "workingsetActivate"
+      options: {
+        deprecated: true
+      }
     }
     field: {
       name: "workingset_nodereclaim"
@@ -470,6 +476,34 @@ file: {
       type: TYPE_MESSAGE
       type_name: ".io.containerd.cgroups.v2.PSIStats"
       json_name: "psi"
+    }
+    field: {
+      name: "workingset_refault_anon"
+      number: 39
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetRefaultAnon"
+    }
+    field: {
+      name: "workingset_refault_file"
+      number: 40
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetRefaultFile"
+    }
+    field: {
+      name: "workingset_activate_anon"
+      number: 41
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetActivateAnon"
+    }
+    field: {
+      name: "workingset_activate_file"
+      number: 42
+      label: LABEL_OPTIONAL
+      type: TYPE_UINT64
+      json_name: "workingsetActivateFile"
     }
   }
   message_type: {
