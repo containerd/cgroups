@@ -78,6 +78,10 @@ func (p *rdmaController) Create(path string, resources *specs.LinuxResources) er
 }
 
 func (p *rdmaController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.Rdma == nil {
+		return nil
+	}
+
 	return p.Create(path, resources)
 }
 

@@ -85,6 +85,10 @@ func (b *blkioController) Create(path string, resources *specs.LinuxResources) e
 }
 
 func (b *blkioController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.BlockIO == nil {
+		return nil
+	}
+
 	return b.Create(path, resources)
 }
 
