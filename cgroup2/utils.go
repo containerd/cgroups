@@ -194,6 +194,9 @@ func ToResources(spec *specs.LinuxResources) *Resources {
 		if period := cpu.Period; period != nil {
 			resources.CPU.Max = NewCPUMax(cpu.Quota, period)
 		}
+		if burst := cpu.Burst; burst != nil {
+			resources.CPU.MaxBurst = NewCPUMaxBurst(*burst)
+		}
 	}
 	if mem := spec.Memory; mem != nil {
 		resources.Memory = &Memory{}
