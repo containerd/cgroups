@@ -153,6 +153,9 @@ type Value struct {
 
 // write the value to the full, absolute path, of a unified hierarchy
 func (c *Value) write(path string, perm os.FileMode) error {
+	if filepath.Base(c.filename) != c.filename {
+		return fmt.Errorf("invalid cgroup filename: %q", c.filename)
+	}
 	var data []byte
 	switch t := c.value.(type) {
 	case uint64:
