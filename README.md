@@ -175,6 +175,30 @@ if err != nil {
 }
 ```
 
+### Inspect the CPU quota and period
+
+`CPUQuota` reads the current cgroup's `cpu.max` and returns the quota and period
+in microseconds. A quota of `math.MaxInt64` means no limit is configured for this
+cgroup. Ancestor cgroups can impose additional limits; these are not included.
+An absent `cpu.max` (for example, at the hierarchy root or with the CPU controller
+disabled) returns an error, rather than an unlimited quota.
+
+```go
+m, err := cgroup2.Load("/my-group")
+if err != nil {
+    return err
+}
+quota, period, err := m.CPUQuota()
+if err != nil {
+    return err
+}
+if quota == math.MaxInt64 {
+    fmt.Println("No CPU quota configured for this cgroup")
+} else {
+    fmt.Printf("CPU quota: %d microseconds per %d microseconds\n", quota, period)
+}
+```
+
 ### Delete a cgroup
 
 ```go
