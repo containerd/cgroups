@@ -134,6 +134,10 @@ jobs:
           sudo apt-get build-dep -y ruby-libvirt
           sudo apt-get install -y --no-install-recommends libxslt-dev libxml2-dev libvirt-dev ruby-bundler ruby-dev zlib1g-dev
 
+          # Keep fog-json compatible with Vagrant's embedded json gem.
+          sudo env VAGRANT_DISABLE_STRICT_DEPENDENCY_ENFORCEMENT=1 vagrant plugin uninstall fog-json || true
+          sudo env VAGRANT_DISABLE_STRICT_DEPENDENCY_ENFORCEMENT=1 vagrant plugin install fog-json --plugin-version 1.2.0
+
           if ! vagrant plugin list | grep -q vagrant-libvirt; then
             sudo env VAGRANT_DISABLE_STRICT_DEPENDENCY_ENFORCEMENT=1 vagrant plugin install vagrant-libvirt
           fi

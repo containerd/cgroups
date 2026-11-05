@@ -300,6 +300,12 @@ func (c *cgroup) Delete() error {
 
 // Stat returns the current metrics for the cgroup
 func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
+	return c.StatFiltered(nil, handlers...)
+}
+
+// StatFiltered returns metrics for the selected active subsystems.
+// An empty list selects all subsystems, as in Stat.
+func (c *cgroup) StatFiltered(subsystems []Name, handlers ...ErrorHandler) (*v1.Metrics, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.err != nil {
@@ -318,7 +324,7 @@ func (c *cgroup) Stat(handlers ...ErrorHandler) (*v1.Metrics, error) {
 		wg   = &sync.WaitGroup{}
 		errs = make(chan error, len(c.subsystems))
 	)
-	for _, s := range c.subsystems {
+	for _, s := range c.subsystemsFilter(subsystems...) {
 		if ss, ok := s.(stater); ok {
 			sp, err := c.path(s.Name())
 			if err != nil {

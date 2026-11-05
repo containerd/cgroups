@@ -98,6 +98,21 @@ By adding `cgroups.IgnoreNotExist` all non-existent files will be ignored, e.g. 
 stats, err := control.Stat(cgroup1.IgnoreNotExist)
 ```
 
+To collect only CPU and memory metrics, use `control.StatFiltered`. Include
+`Cpu` for throttling statistics and `Cpuacct` for CPU usage. Other subsystems
+are skipped entirely, including blkio's reads of `/proc/partitions`.
+
+```go
+stats, err := control.StatFiltered(
+    []cgroup1.Name{cgroup1.Cpu, cgroup1.Cpuacct, cgroup1.Memory},
+    cgroup1.IgnoreNotExist,
+)
+```
+
+An empty subsystem list collects all metrics, just like `Stat()`. Duplicate and
+inactive subsystem names are ignored. Custom implementations of `Cgroup` must
+also provide the `StatFiltered` method.
+
 ### Move process across cgroups
 
 This allows you to take processes from one cgroup and move them to another.
