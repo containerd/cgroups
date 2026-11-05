@@ -92,7 +92,7 @@ func TestStatFiltered(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := StatFiltered(control, tt.subsystems)
+			got, err := control.StatFiltered(tt.subsystems)
 			require.NoError(t, err)
 			require.True(t, proto.Equal(tt.want, got), "want %v, got %v", tt.want, got)
 		})
@@ -107,14 +107,14 @@ func TestStatFilteredSkipsBlkio(t *testing.T) {
 	control, root := newStatFixture(t)
 	require.NoError(t, os.Remove(filepath.Join(root, "proc", "partitions")))
 
-	got, err := StatFiltered(control, []Name{Cpu, Cpuacct, Memory})
+	got, err := control.StatFiltered([]Name{Cpu, Cpuacct, Memory})
 	require.NoError(t, err)
 	require.Equal(t, uint64(1500000000), got.CPU.Usage.Total)
 	require.Equal(t, uint64(10), got.CPU.Throttling.Periods)
 	require.Equal(t, uint64(1024), got.Memory.Usage.Usage)
 	require.Nil(t, got.Blkio)
 
-	_, err = StatFiltered(control, []Name{Blkio})
+	_, err = control.StatFiltered([]Name{Blkio})
 	require.ErrorIs(t, err, os.ErrNotExist)
 	_, err = control.Stat()
 	require.ErrorIs(t, err, os.ErrNotExist)
@@ -132,22 +132,22 @@ func TestStatFilteredPaths(t *testing.T) {
 		}
 		return "test", nil
 	}
-	_, err := StatFiltered(control, []Name{Cpu, Cpu, Cpuacct})
+	_, err := control.StatFiltered([]Name{Cpu, Cpu, Cpuacct})
 	require.NoError(t, err)
 	require.Equal(t, map[Name]int{Cpu: 1, Cpuacct: 1}, calls)
-	_, err = StatFiltered(control, []Name{Blkio})
+	_, err = control.StatFiltered([]Name{Blkio})
 	require.ErrorIs(t, err, pathErr)
 }
 
 func TestStatFilteredErrors(t *testing.T) {
 	control, root := newStatFixture(t)
 	require.NoError(t, os.Remove(filepath.Join(root, "pids", "test", "pids.current")))
-	_, err := StatFiltered(control, []Name{Pids})
+	_, err := control.StatFiltered([]Name{Pids})
 	require.ErrorIs(t, err, os.ErrNotExist)
-	_, err = StatFiltered(control, []Name{Pids}, IgnoreNotExist)
+	_, err = control.StatFiltered([]Name{Pids}, IgnoreNotExist)
 	require.NoError(t, err)
 	handlerErr := errors.New("handled stat error")
-	_, err = StatFiltered(control, []Name{Pids}, func(err error) error {
+	_, err = control.StatFiltered([]Name{Pids}, func(err error) error {
 		if errors.Is(err, os.ErrNotExist) {
 			return handlerErr
 		}
@@ -162,45 +162,17 @@ func TestStatFilteredLoadAndChild(t *testing.T) {
 		return control.Subsystems(), nil
 	}))
 	require.NoError(t, err)
-	got, err := StatFiltered(loaded, []Name{Pids})
+	got, err := loaded.StatFiltered([]Name{Pids})
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), got.Pids.Current)
 
 	child, err := loaded.New("child", &specs.LinuxResources{})
 	require.NoError(t, err)
-	_, err = StatFiltered(child, []Name{Pids}, IgnoreNotExist)
+	_, err = child.StatFiltered([]Name{Pids}, IgnoreNotExist)
 	require.NoError(t, err)
 	require.NoError(t, child.Delete())
-	_, err = StatFiltered(child, []Name{Pids}, IgnoreNotExist)
+	_, err = child.StatFiltered([]Name{Pids}, IgnoreNotExist)
 	require.ErrorIs(t, err, ErrCgroupDeleted)
-}
-
-// An implementation of the original interface need not support filtered stats.
-type unfilteredCgroup struct{ Cgroup }
-
-type customFilteredCgroup struct {
-	Cgroup
-	stat func([]Name, ...ErrorHandler) (*v1.Metrics, error)
-}
-
-func (c customFilteredCgroup) StatFiltered(names []Name, handlers ...ErrorHandler) (*v1.Metrics, error) {
-	return c.stat(names, handlers...)
-}
-
-func TestStatFilteredCustomCgroup(t *testing.T) {
-	_, err := StatFiltered(unfilteredCgroup{}, []Name{Memory})
-	require.ErrorIs(t, err, errors.ErrUnsupported)
-
-	want := &v1.Metrics{Pids: &v1.PidsStat{Current: 42}}
-	c := customFilteredCgroup{stat: func(names []Name, handlers ...ErrorHandler) (*v1.Metrics, error) {
-		require.Equal(t, []Name{Pids}, names)
-		require.Len(t, handlers, 1)
-		require.NoError(t, handlers[0](os.ErrNotExist))
-		return want, nil
-	}}
-	got, err := StatFiltered(c, []Name{Pids}, IgnoreNotExist)
-	require.NoError(t, err)
-	require.Same(t, want, got)
 }
 
 func BenchmarkStatFiltered(b *testing.B) {
@@ -217,7 +189,7 @@ func BenchmarkStatFiltered(b *testing.B) {
 		b.Run(tt.name, func(b *testing.B) {
 			b.ReportAllocs()
 			for i := 0; i < b.N; i++ {
-				if _, err := StatFiltered(control, tt.subsystems); err != nil {
+				if _, err := control.StatFiltered(tt.subsystems); err != nil {
 					b.Fatal(err)
 				}
 			}
