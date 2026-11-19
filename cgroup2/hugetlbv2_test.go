@@ -19,6 +19,7 @@ package cgroup2
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -52,4 +53,18 @@ func TestCgroupv2HugetlbStats(t *testing.T) {
 			break
 		}
 	}
+}
+
+func TestCgroupv2HugetlbInvalidPageSize(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "hugetlb-test-cg")
+	require.NoError(t, os.Mkdir(path, defaultDirPerm))
+	res := Resources{
+		// resolves to <parent of path>/escaped.max
+		HugeTlb: &HugeTlb{HugeTlbEntry{HugePageSize: "/../../escaped", Limit: 1337}},
+	}
+	err := setResources(path, &res)
+	require.Error(t, err)
+
+	_, err = os.Stat(filepath.Join(filepath.Dir(path), "escaped.max"))
+	assert.True(t, os.IsNotExist(err), "file written outside of cgroup path")
 }

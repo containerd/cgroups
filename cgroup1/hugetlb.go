@@ -17,6 +17,7 @@
 package cgroup1
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -56,8 +57,12 @@ func (h *hugetlbController) Create(path string, resources *specs.LinuxResources)
 		return err
 	}
 	for _, limit := range resources.HugepageLimits {
+		filename := strings.Join([]string{"hugetlb", limit.Pagesize, "limit_in_bytes"}, ".")
+		if filepath.Base(filename) != filename {
+			return fmt.Errorf("invalid hugepage size %q", limit.Pagesize)
+		}
 		if err := os.WriteFile(
-			filepath.Join(h.Path(path), strings.Join([]string{"hugetlb", limit.Pagesize, "limit_in_bytes"}, ".")),
+			filepath.Join(h.Path(path), filename),
 			[]byte(strconv.FormatUint(limit.Limit, 10)),
 			defaultFilePerm,
 		); err != nil {
