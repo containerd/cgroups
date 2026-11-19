@@ -18,6 +18,7 @@ package cgroup1
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -106,5 +107,33 @@ func TestNewBlkio_Proc(t *testing.T) {
 	}
 	if ctrl.procRoot != expectedProc {
 		t.Fatalf("expected proc FS root %q but received %q", expectedProc, ctrl.procRoot)
+	}
+}
+
+func TestReadEntryUnknownDeviceShouldNotFail(t *testing.T) {
+	root := t.TempDir()
+	cgroupPath := filepath.Join(root, "blkio", "test")
+	if err := os.MkdirAll(cgroupPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(
+		filepath.Join(cgroupPath, "blkio.throttle.io_service_bytes"),
+		[]byte("(unknown) Read 0\n8:0 Read 1234\nTotal 1234\n"),
+		0o644,
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	ctrl := NewBlkio(root)
+	var entries []*v1.BlkIOEntry
+	if err := ctrl.readEntry(map[deviceKey]string{}, "test", "throttle.io_service_bytes", &entries); err != nil {
+		t.Fatalf("unknown blkio device rows should not fail all stats: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 parseable blkio row after skipping (unknown), got %d", len(entries))
+	}
+	got := entries[0]
+	if got.Major != 8 || got.Minor != 0 || got.Op != "Read" || got.Value != 1234 {
+		t.Fatalf("expected surviving row Major:8 Minor:0 Op:Read Value:1234, got Major:%d Minor:%d Op:%s Value:%d", got.Major, got.Minor, got.Op, got.Value)
 	}
 }

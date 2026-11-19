@@ -191,6 +191,11 @@ func (b *blkioController) readEntry(devices map[deviceKey]string, path, name str
 				return fmt.Errorf("invalid line found while parsing %s: %s", path, sc.Text())
 			}
 		}
+		// Kernel may emit "(unknown)" for hidden devices (e.g. NVMe multipath
+		// path disks). Skip those rows instead of failing the entire parse.
+		if fields[0] == "(unknown)" {
+			continue
+		}
 		major, err := strconv.ParseUint(fields[0], 10, 64)
 		if err != nil {
 			return err
