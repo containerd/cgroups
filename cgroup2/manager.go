@@ -311,6 +311,30 @@ func (c *Manager) Controllers() ([]string, error) {
 	return strings.Fields(string(b)), nil
 }
 
+// CPUQuota returns the CPU quota and period configured for this cgroup, in
+// microseconds. A quota of math.MaxInt64 indicates no limit. Limits imposed by
+// ancestor cgroups are not considered.
+//
+// An error is returned if cpu.max cannot be read or parsed. In particular, the
+// file may not exist at the hierarchy root or when the CPU controller is disabled.
+func (c *Manager) CPUQuota() (int64, uint64, error) {
+	path := filepath.Join(c.path, "cpu.max")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return 0, 0, err
+	}
+	fields := strings.Fields(string(b))
+	// Reads always contain both values, unlike writes which may omit the period.
+	if len(fields) != 2 {
+		return 0, 0, fmt.Errorf("failed to parse %s: %w", path, ErrInvalidFormat)
+	}
+	quota, period, err := CPUMax(strings.Join(fields, " ")).extractQuotaAndPeriod()
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse %s: %w", path, err)
+	}
+	return quota, period, nil
+}
+
 func (c *Manager) Update(resources *Resources) error {
 	return setResources(c.path, resources)
 }

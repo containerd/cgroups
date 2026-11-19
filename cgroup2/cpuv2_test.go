@@ -20,12 +20,127 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
+	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCPUQuota(t *testing.T) {
+	root := t.TempDir()
+	group := filepath.Join(root, "test")
+	require.NoError(t, os.Mkdir(group, 0o755))
+	// The parent's limit must not be substituted for the group's own quota.
+	require.NoError(t, os.WriteFile(filepath.Join(root, "cpu.max"), []byte("50000 100000\n"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(group, "cpu.max"), []byte("200000 100000\n"), 0o644))
+
+	c, err := Load("/test", WithMountpoint(root))
+	require.NoError(t, err)
+	quota, period, err := c.CPUQuota()
+	require.NoError(t, err)
+	assert.Equal(t, int64(200000), quota)
+	assert.Equal(t, uint64(100000), period)
+
+	// Re-read the configuration after an update, including a non-default period.
+	require.NoError(t, os.WriteFile(filepath.Join(group, "cpu.max"), []byte("max 250000\n"), 0o644))
+	quota, period, err = c.CPUQuota()
+	require.NoError(t, err)
+	assert.Equal(t, int64(math.MaxInt64), quota)
+	assert.Equal(t, uint64(250000), period)
+}
+
+func TestCPUQuotaWhitespace(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(root, "cpu.max"), []byte(" \t42000 \t4200\n"), 0o644))
+	c, err := Load("/", WithMountpoint(root))
+	require.NoError(t, err)
+
+	quota, period, err := c.CPUQuota()
+	require.NoError(t, err)
+	assert.Equal(t, int64(42000), quota)
+	assert.Equal(t, uint64(4200), period)
+}
+
+func TestCPUQuotaInvalidContent(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		content string
+		wantErr error
+	}{
+		{name: "empty", content: "", wantErr: ErrInvalidFormat},
+		{name: "whitespace", content: " \n\t", wantErr: ErrInvalidFormat},
+		{name: "missing period", content: "200000\n", wantErr: ErrInvalidFormat},
+		{name: "unlimited missing period", content: "max\n", wantErr: ErrInvalidFormat},
+		{name: "extra field", content: "200000 100000 1\n", wantErr: ErrInvalidFormat},
+		{name: "invalid quota", content: "invalid 100000\n", wantErr: strconv.ErrSyntax},
+		{name: "invalid period", content: "200000 invalid\n", wantErr: strconv.ErrSyntax},
+		{name: "negative period", content: "200000 -1\n", wantErr: strconv.ErrSyntax},
+		{name: "quota overflow", content: "9223372036854775808 100000\n", wantErr: strconv.ErrRange},
+		{name: "period overflow", content: "max 18446744073709551616\n", wantErr: strconv.ErrRange},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			path := filepath.Join(root, "cpu.max")
+			require.NoError(t, os.WriteFile(path, []byte(tc.content), 0o644))
+			c, err := Load("/", WithMountpoint(root))
+			require.NoError(t, err)
+
+			quota, period, err := c.CPUQuota()
+			require.ErrorIs(t, err, tc.wantErr)
+			assert.Contains(t, err.Error(), path)
+			assert.Zero(t, quota)
+			assert.Zero(t, period)
+		})
+	}
+}
+
+func TestCPUQuotaReadErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		setup   func(string) error
+		wantErr error
+	}{
+		{name: "missing file", wantErr: os.ErrNotExist},
+		{
+			name: "permission denied",
+			setup: func(path string) error {
+				return os.WriteFile(path, []byte("max 100000\n"), 0)
+			},
+			wantErr: os.ErrPermission,
+		},
+		{
+			name: "directory",
+			setup: func(path string) error {
+				return os.Mkdir(path, 0o755)
+			},
+			wantErr: syscall.EISDIR,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.wantErr == os.ErrPermission && os.Geteuid() == 0 {
+				t.Skip("root can read files without read permission")
+			}
+			root := t.TempDir()
+			path := filepath.Join(root, "cpu.max")
+			if tc.setup != nil {
+				require.NoError(t, tc.setup(path))
+			}
+			c, err := Load("/", WithMountpoint(root))
+			require.NoError(t, err)
+
+			quota, period, err := c.CPUQuota()
+			require.ErrorIs(t, err, tc.wantErr)
+			var pathErr *os.PathError
+			require.ErrorAs(t, err, &pathErr)
+			assert.Equal(t, path, pathErr.Path)
+			assert.Zero(t, quota)
+			assert.Zero(t, period)
+		})
+	}
+}
 
 func TestCgroupv2CpuStats(t *testing.T) {
 	checkCgroupMode(t)
@@ -54,6 +169,17 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	checkFileContent(t, c.path, "cpu.max", "10000 8000")
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
+
+	gotQuota, gotPeriod, err := c.CPUQuota()
+	require.NoError(t, err)
+	assert.Equal(t, quota, gotQuota)
+	assert.Equal(t, period, gotPeriod)
+
+	require.NoError(t, c.Update(&Resources{CPU: &CPU{Max: NewCPUMax(nil, &period)}}))
+	gotQuota, gotPeriod, err = c.CPUQuota()
+	require.NoError(t, err)
+	assert.Equal(t, int64(math.MaxInt64), gotQuota)
+	assert.Equal(t, period, gotPeriod)
 }
 
 func TestSystemdCgroupCpuController(t *testing.T) {
