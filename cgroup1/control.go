@@ -76,7 +76,14 @@ type Cgroup interface {
 	// subsystems are moved one at a time
 	MoveTo(Cgroup) error
 	// Stat returns the stats for all subsystems in the cgroup
+	// Use StatFiltered to collect metrics for selected subsystems.
 	Stat(...ErrorHandler) (*v1.Metrics, error)
+	// StatFiltered returns metrics for the selected active subsystems without
+	// reading files or resolving paths for other subsystems. An empty list selects
+	// all subsystems, as in Stat. Duplicate and inactive names are ignored.
+	// Select both Cpu and Cpuacct to collect CPU throttling and usage statistics.
+	// The CPU, CPU.Usage and CPU.Throttling fields are always initialized, as in Stat.
+	StatFiltered([]Name, ...ErrorHandler) (*v1.Metrics, error)
 	// Update updates all the subsystems with the provided resource changes
 	Update(resources *specs.LinuxResources) error
 	// Processes returns all the processes in a select subsystem for the cgroup
