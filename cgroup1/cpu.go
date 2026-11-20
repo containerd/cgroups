@@ -96,6 +96,10 @@ func (c *cpuController) Create(path string, resources *specs.LinuxResources) err
 }
 
 func (c *cpuController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.CPU == nil || (resources.CPU.Shares == nil && resources.CPU.Period == nil && resources.CPU.Quota == nil) {
+		return nil
+	}
+
 	return c.Create(path, resources)
 }
 

@@ -72,6 +72,10 @@ func (d *devicesController) Create(path string, resources *specs.LinuxResources)
 }
 
 func (d *devicesController) Update(path string, resources *specs.LinuxResources) error {
+	if resources == nil || resources.Devices == nil {
+		return nil
+	}
+
 	return d.Create(path, resources)
 }
 
