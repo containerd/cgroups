@@ -32,6 +32,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	group := "/cpu-test-cg"
 	groupPath := fmt.Sprintf("%s-%d", group, os.Getpid())
 	var (
+		burst  uint64 = 1000
 		quota  int64  = 10000
 		period uint64 = 8000
 		weight uint64 = 100
@@ -39,10 +40,11 @@ func TestCgroupv2CpuStats(t *testing.T) {
 
 	c, err := NewManager(defaultCgroup2Path, groupPath, &Resources{
 		CPU: &CPU{
-			Weight: &weight,
-			Max:    NewCPUMax(&quota, &period),
-			Cpus:   "0",
-			Mems:   "0",
+			Weight:   &weight,
+			Max:      NewCPUMax(&quota, &period),
+			Cpus:     "0",
+			Mems:     "0",
+			MaxBurst: NewCPUMaxBurst(burst),
 		},
 	})
 	require.NoError(t, err, "failed to init new cgroup manager")
@@ -54,6 +56,7 @@ func TestCgroupv2CpuStats(t *testing.T) {
 	checkFileContent(t, c.path, "cpu.max", "10000 8000")
 	checkFileContent(t, c.path, "cpuset.cpus", "0")
 	checkFileContent(t, c.path, "cpuset.mems", "0")
+	checkFileContent(t, c.path, "cpu.max.burst", strconv.FormatUint(burst, 10))
 }
 
 func TestSystemdCgroupCpuController(t *testing.T) {

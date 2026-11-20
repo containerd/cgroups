@@ -46,11 +46,16 @@ func NewCPUMax(quota *int64, period *uint64) CPUMax {
 	return CPUMax(strings.Join([]string{max, duration}, " "))
 }
 
+func NewCPUMaxBurst(burst uint64) string {
+	return strconv.FormatUint(burst, 10)
+}
+
 type CPU struct {
-	Weight *uint64
-	Max    CPUMax
-	Cpus   string
-	Mems   string
+	Weight   *uint64
+	Max      CPUMax
+	MaxBurst string
+	Cpus     string
+	Mems     string
 }
 
 func (c CPUMax) extractQuotaAndPeriod() (int64, uint64, error) {
@@ -108,5 +113,12 @@ func (r *CPU) Values() (o []Value) {
 			value:    r.Mems,
 		})
 	}
+	if r.MaxBurst != "" {
+		o = append(o, Value{
+			filename: "cpu.max.burst",
+			value:    r.MaxBurst,
+		})
+	}
+
 	return o
 }
