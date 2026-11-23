@@ -42,7 +42,7 @@ jobs:
           cache-dependency-path: src/github.com/containerd/cgroups
 
       - name: Project checks
-        uses: containerd/project-checks@v1.2.2
+        uses: containerd/project-checks@v1.2.3
         with:
           working-directory: src/github.com/containerd/cgroups
 
