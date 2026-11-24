@@ -22,52 +22,55 @@ This creates a new cgroup using a static path for all subsystems under `/test`.
 It uses a single hierarchy and specifies cpu shares as a resource constraint and
 uses the v1 implementation of cgroups.
 
-
 ```go
+import (
+	"github.com/containerd/cgroups/v3/cgroup1"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
+)
 shares := uint64(100)
 control, err := cgroup1.New(cgroup1.StaticPath("/test"), &specs.LinuxResources{
-    CPU: &specs.LinuxCPU{
-        Shares: &shares,
-    },
+	CPU: &specs.LinuxCPU{
+		Shares: &shares,
+	},
 })
 defer control.Delete()
 ```
 
 ### Create with systemd slice support
 
-
 ```go
-control, err := cgroup1.New(cgroup1.Systemd, cgroup1.Slice("system.slice", "runc-test"), &specs.LinuxResources{
-    CPU: &specs.CPU{
-        Shares: &shares,
-    },
-})
-
+shares := uint64(100)
+control, err := cgroup1.New(cgroup1.Slice("system.slice", "system-runc.slice"), &specs.LinuxResources{
+	CPU: &specs.LinuxCPU{
+		Shares: &shares,
+	},
+}, cgroup1.WithHierarchy(cgroup1.Systemd))
+defer control.Delete()
 ```
 
 ### Load an existing cgroup
 
 ```go
-control, err = cgroup1.Load(cgroup1.Default, cgroups.StaticPath("/test"))
+control, err := cgroup1.Load(cgroup1.StaticPath("/test"))
 ```
 
 ### Add a process to the cgroup
 
 ```go
-if err := control.Add(cgroup1.Process{Pid:1234}); err != nil {
+if err := control.Add(cgroup1.Process{Pid: 1234}); err != nil {
 }
 ```
 
-###  Update the cgroup
+### Update the cgroup
 
 To update the resources applied in the cgroup
 
 ```go
-shares = uint64(200)
+shares := uint64(200)
 if err := control.Update(&specs.LinuxResources{
-    CPU: &specs.LinuxCPU{
-        Shares: &shares,
-    },
+	CPU: &specs.LinuxCPU{
+		Shares: &shares,
+	},
 }); err != nil {
 }
 ```
@@ -93,7 +96,7 @@ processes, err := control.Processes(cgroup1.Devices, recursive)
 stats, err := control.Stat()
 ```
 
-By adding `cgroups.IgnoreNotExist` all non-existent files will be ignored, e.g. swap memory stats without swap enabled
+By adding `cgroup1.IgnoreNotExist` all non-existent files will be ignored, e.g. swap memory stats without swap enabled
 ```go
 stats, err := control.Stat(cgroup1.IgnoreNotExist)
 ```
@@ -153,13 +156,13 @@ so the resulting slice would be located here on disk:
 
 ```go
 import (
-    "github.com/containerd/cgroups/v3/cgroup2"
-    specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/containerd/cgroups/v3"
+	"github.com/containerd/cgroups/v3/cgroup2"
 )
 
 res := cgroup2.Resources{}
 // dummy PID of -1 is used for creating a "general slice" to be used as a parent cgroup.
-// see https://github.com/containerd/cgroups/blob/1df78138f1e1e6ee593db155c6b369466f577651/v2/manager.go#L732-L735
+// see https://github.com/containerd/cgroups/blob/60a28d6/cgroup2/manager.go#L976-L979
 m, err := cgroup2.NewSystemd("/", "my-cgroup-abc.slice", -1, &res)
 if err != nil {
 	return err
@@ -206,19 +209,18 @@ if err != nil {
 ```go
 m, err := cgroup2.LoadSystemd("/", "my-cgroup-abc.slice")
 if err != nil {
-    return err
+	return err
 }
-
 // https://www.kernel.org/doc/html/v5.0/admin-guide/cgroup-v2.html#threads
 cgType, err := m.GetType()
 if err != nil {
-    return err
+	return err
 }
 fmt.Println(cgType)
 
 err = m.SetType(cgroup2.Threaded)
 if err != nil {
-    return err
+	return err
 }
 ```
 
